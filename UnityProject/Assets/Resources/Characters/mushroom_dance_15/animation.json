@@ -1,0 +1,33 @@
+{
+  "animationId": "mushroom_dance_15",
+  "frameCount": 11,
+  "fps": 10,
+  "loop": true,
+  "playbackSpeed": 1,
+  "defaultDurationMs": 1100,
+  "transparent": true,
+  "width": 240,
+  "height": 240,
+  "durationMs": 1100,
+  "sourceFps": 10,
+  "sourceLoop": true,
+  "frameDelaysMs": [
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100
+  ],
+  "timing": "average-fps",
+  "sourceGif": "mushroom_dance_15.gif",
+  "sourceSha256": "fc90f3d19ec0480edfd7e98e74aeeb07318074ac054b3504b67709539e52eca8",
+  "framePattern": "%03d.png",
+  "convertedAt": "2026-11-06T22:33:15.999Z",
+  "overrides": null
+}

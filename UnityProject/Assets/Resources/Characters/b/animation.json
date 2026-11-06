@@ -1,0 +1,28 @@
+{
+  "animationId": "b",
+  "frameCount": 12,
+  "fps": 10,
+  "loop": true,
+  "transparent": true,
+  "width": 295,
+  "height": 240,
+  "durationMs": 1200,
+  "frameDelaysMs": [
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100
+  ],
+  "sourceGif": "b.gif",
+  "sourceSha256": "d4109e2d84c0833967d11121d0d9ef0d90aba6978f161d61828e54eae63d7b25",
+  "framePattern": "%03d.png",
+  "convertedAt": "2026-11-06T22:07:32.844Z"
+}

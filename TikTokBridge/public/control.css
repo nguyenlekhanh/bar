@@ -996,6 +996,20 @@ kbd {
     .navbar-copy     { display: none !important; }
 }
 
+/* Gift → animation rows: gift ID, animation picker, delete. */
+.gift-animation-row .rule-row-top {
+    grid-template-columns: minmax(120px, 1fr) minmax(180px, 1.3fr) auto;
+    align-items: end;
+}
+
+.gift-animation-row select {
+    width: 100%;
+}
+
+.gift-animation-row .rule-col-actions {
+    justify-content: flex-end;
+}
+
 @media (max-width: 520px) {
     .stats-grid  { grid-template-columns: repeat(2,1fr); }
     .demo-grid   { grid-template-columns: repeat(2,1fr); }

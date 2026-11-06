@@ -1,0 +1,32 @@
+{
+  "animationId": "mushroom_magic_02",
+  "frameCount": 16,
+  "fps": 33.3,
+  "loop": true,
+  "transparent": true,
+  "width": 240,
+  "height": 240,
+  "durationMs": 480,
+  "frameDelaysMs": [
+    30,
+    30,
+    30,
+    30,
+    30,
+    30,
+    30,
+    30,
+    30,
+    30,
+    30,
+    30,
+    30,
+    30,
+    30,
+    30
+  ],
+  "sourceGif": "mushroom_magic_02.gif",
+  "sourceSha256": "b252d6d0b8ee759cc2b54d1325f01dc56cb67c9971a3d8afdf54926bd238de53",
+  "framePattern": "%03d.png",
+  "convertedAt": "2026-11-06T22:07:42.159Z"
+}

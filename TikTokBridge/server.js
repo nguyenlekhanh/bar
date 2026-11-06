@@ -30,6 +30,14 @@ const initialMasterConfig = require('./config/master.json');
 const initialObservedGifts = require('./config/observed-gifts.json');
 const { normalizeText, sanitizeMasterConfig, resolveMasterRule, applyRule, applyBuiltInChatCommand } = require('./src/master/rules');
 const {
+    catalogMessage: animationCatalogMessage,
+    resolveGiftAnimation,
+    resolveGiftTarget,
+    sanitizeGiftAnimations,
+    loadGiftAnimations,
+    saveGiftAnimations
+} = require('./src/gifts/animations');
+const {
     sanitizeGameEvent,
     isLoopbackAddress,
     isAllowedHost,
@@ -46,6 +54,8 @@ const {
     loadBackgroundConfig,
     saveBackgroundConfig
 } = require('./src/background/registry');
+const { startAutoConversion } = require('./src/gifs/pipeline');
+const gifManager = require('./src/gifs/manager');
 
 const app = express();
 const server = http.createServer(app);
@@ -60,8 +70,13 @@ const wss = new WebSocket.Server({
 const publicDir = path.join(__dirname, 'public');
 const assetsDir = path.join(__dirname, 'assets');
 const gifsDir = path.join(assetsDir, 'gifs');
-const masterConfigPath = path.join(__dirname, 'config', 'master.json');
+const masterConfigPath = process.env.MASTER_CONFIG
+    ? path.resolve(process.env.MASTER_CONFIG)
+    : path.join(__dirname, 'config', 'master.json');
 const observedGiftsPath = path.join(__dirname, 'config', 'observed-gifts.json');
+const giftAnimationsPath = process.env.GIFT_ANIMATIONS_CONFIG
+    ? path.resolve(process.env.GIFT_ANIMATIONS_CONFIG)
+    : path.join(__dirname, 'config', 'gift-animations.json');
 const backgroundsRoot = process.env.BACKGROUND_ROOT
     ? path.resolve(process.env.BACKGROUND_ROOT)
     : path.join(__dirname, '..', 'LiveAssets', 'Backgrounds');
@@ -98,6 +113,9 @@ const observedGifts = new Map((Array.isArray(initialObservedGifts) ? initialObse
     .map(gift => [String(gift.giftId || gift.giftName || ''), gift])
     .filter(([key]) => key));
 let observedGiftSaveTimer = null;
+let giftAnimationMappings = [];
+// Converted GIF folders, refreshed after every manager change and at startup.
+let animationRegistry = new Set();
 let backgroundConfig = defaultBackground();
 let backgroundAck = { file: '', generation: -1, at: 0 };
 
@@ -215,7 +233,251 @@ app.post('/api/background', backgroundBodyParser, async (req, res) => {
     res.json({ background: result.background, message: 'Background sent to Unity.' });
 });
 
+const giftAnimationsBodyParser = express.json({ limit: '64kb' });
+app.get('/api/gift-animations', (_req, res) => {
+    res.json(giftAnimationsMessage());
+});
+
+app.post('/api/gift-animations', giftAnimationsBodyParser, async (req, res) => {
+    const result = sanitizeGiftAnimations(req.body ? req.body.giftAnimations : [], {
+        allowedIds: animationRegistry
+    });
+    if (result.error) return res.status(400).json({ error: result.error });
+    giftAnimationMappings = result.value;
+    await saveGiftAnimations(giftAnimationsPath, giftAnimationMappings);
+    broadcastToRole('control', giftAnimationsMessage());
+    res.json({ giftAnimations: giftAnimationMappings, message: 'Gift animations saved and applied.' });
+});
+
+/* ── GIF Manager (Phase 4) — control panel only ────────── */
+const gifLimits = gifManager.limitsFromEnv();
+
+/**
+ * Administrative routes are refused unless the caller is the same-origin
+ * control panel. The bridge only listens on loopback, so this is layered
+ * defence rather than authentication: overlay clients never call these paths.
+ */
+function controlPanelOnly(req, res, next) {
+    if (req.get('x-control-panel') !== '1') {
+        return res.status(403).json({ error: 'Control panel request required.' });
+    }
+    if (!isAllowedOrigin(req.headers.origin, PORT)) {
+        return res.status(403).json({ error: 'Origin not allowed.' });
+    }
+    next();
+}
+
+const managerJsonBody = express.json({ limit: '16kb' });
+const gifUploadParser = (req, res, next) => {
+    express.raw({ type: () => true, limit: gifLimits.maxBytes })(req, res, error => {
+        if (!error) return next();
+        if (error.type === 'entity.too.large') {
+            const megabytes = Math.round(gifLimits.maxBytes / (1024 * 1024));
+            return res.status(413).json({ error: `GIF is larger than the ${megabytes} MB limit.` });
+        }
+        return res.status(400).json({ error: 'The upload could not be read.' });
+    });
+};
+
+function giftIdsForAnimation(animationId) {
+    return giftAnimationMappings
+        .filter(mapping => mapping.animationId === animationId)
+        .map(mapping => mapping.giftId);
+}
+
+async function managerSnapshot() {
+    const snapshot = await gifManager.librarySnapshot();
+    const usedBy = {};
+    for (const animation of snapshot.animations) {
+        usedBy[animation.animationId] = giftIdsForAnimation(animation.animationId);
+    }
+    return { ...snapshot, giftAnimations: giftAnimationMappings, usedBy };
+}
+
+async function afterAnimationChange() {
+    await refreshGiftAnimations();
+    broadcastToRole('control', giftAnimationsMessage());
+}
+
+async function convertImportedGif(imported) {
+    try {
+        const result = await gifManager.convertAnimation(imported.animationId, { confirm: false });
+        return { ok: true, animationId: result.animationId, frameCount: result.frameCount, folder: result.folder };
+    } catch (error) {
+        // A name clash is reported, never forced: the panel asks first.
+        return { ok: false, code: error.code || '', error: error.message };
+    }
+}
+
+app.get('/api/gif-manager', async (_req, res) => {
+    try {
+        res.json(await managerSnapshot());
+    } catch (error) {
+        console.error('GIF manager snapshot failed:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/gif-manager/upload', controlPanelOnly, gifUploadParser, async (req, res) => {
+    try {
+        if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+            return res.status(400).json({ error: 'No file received.' });
+        }
+        const imported = await gifManager.importGifBuffer(req.body, { filename: req.query.filename });
+        const conversion = req.query.convert === '1' && !imported.duplicate
+            ? await convertImportedGif(imported)
+            : null;
+        if (conversion && conversion.ok) await afterAnimationChange();
+        res.json({
+            imported,
+            conversion,
+            snapshot: await managerSnapshot(),
+            message: imported.duplicate
+                ? `That GIF is already stored as ${imported.storedName}.`
+                : `Added ${imported.storedName}.`
+        });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+app.post('/api/gif-manager/download', controlPanelOnly, managerJsonBody, async (req, res) => {
+    try {
+        const url = req.body ? req.body.url : '';
+        const imported = await gifManager.downloadGifFromUrl(url);
+        const conversion = req.body && req.body.convert === true && !imported.duplicate
+            ? await convertImportedGif(imported)
+            : null;
+        if (conversion && conversion.ok) await afterAnimationChange();
+        res.json({
+            imported,
+            conversion,
+            snapshot: await managerSnapshot(),
+            message: imported.duplicate
+                ? `That GIF is already stored as ${imported.storedName}.`
+                : `Downloaded ${imported.storedName}.`
+        });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+app.post('/api/gif-manager/convert', controlPanelOnly, managerJsonBody, async (req, res) => {
+    try {
+        const body = req.body || {};
+        const result = await gifManager.convertAnimation(body.animationId, { confirm: body.confirm === true });
+        await afterAnimationChange();
+        res.json({ ...result, snapshot: await managerSnapshot(), message: `Converted ${result.animationId}.` });
+    } catch (error) {
+        const status = error.code === 'EEXIST' ? 409 : 400;
+        res.status(status).json({ error: error.message, code: error.code || '' });
+    }
+});
+
+app.post('/api/gif-manager/rename', controlPanelOnly, managerJsonBody, async (req, res) => {
+    try {
+        const body = req.body || {};
+        const previousId = String(body.animationId || '');
+        const result = await gifManager.renameAnimation(previousId, body.newName);
+        let migratedGiftIds = [];
+        if (result.changed) {
+            migratedGiftIds = giftIdsForAnimation(previousId);
+            if (migratedGiftIds.length) {
+                giftAnimationMappings = giftAnimationMappings.map(mapping => (
+                    mapping.animationId === previousId
+                        ? { ...mapping, animationId: result.animationId }
+                        : mapping
+                ));
+                await saveGiftAnimations(giftAnimationsPath, giftAnimationMappings);
+            }
+            await afterAnimationChange();
+        }
+        res.json({
+            ...result,
+            migratedGiftIds,
+            snapshot: await managerSnapshot(),
+            message: result.changed
+                ? `Renamed ${previousId} to ${result.animationId}` +
+                  (migratedGiftIds.length ? ` and moved ${migratedGiftIds.length} gift mapping(s).` : '.')
+                : 'The animation already has that name.'
+        });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+app.post('/api/gif-manager/metadata', controlPanelOnly, managerJsonBody, async (req, res) => {
+    try {
+        const body = req.body || {};
+        const result = await gifManager.updateAnimationMetadata(body.animationId, body);
+        await afterAnimationChange();
+        res.json({
+            metadata: result.metadata,
+            snapshot: await managerSnapshot(),
+            message: `Saved playback settings for ${result.metadata.animationId}.`
+        });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+app.post('/api/gif-manager/delete', controlPanelOnly, managerJsonBody, async (req, res) => {
+    try {
+        const body = req.body || {};
+        const animationId = String(body.animationId || '');
+        const giftIds = giftIdsForAnimation(animationId);
+        const result = await gifManager.deleteAnimation(animationId, {
+            giftIds,
+            confirm: body.confirm === true
+        });
+        if (giftIds.length) {
+            giftAnimationMappings = giftAnimationMappings.filter(mapping => mapping.animationId !== animationId);
+            await saveGiftAnimations(giftAnimationsPath, giftAnimationMappings);
+        }
+        await afterAnimationChange();
+        res.json({
+            ...result,
+            removedGiftMappings: giftIds,
+            snapshot: await managerSnapshot(),
+            message: `Deleted ${animationId}` +
+                (giftIds.length ? ` and removed ${giftIds.length} gift mapping(s).` : '.')
+        });
+    } catch (error) {
+        if (error.code === 'EMAPPED') {
+            return res.status(409).json({ error: error.message, code: error.code, giftIds: error.giftIds });
+        }
+        res.status(400).json({ error: error.message, code: error.code || '' });
+    }
+});
+
 app.use((_req, res) => res.status(404).type('text/plain').send('Not found'));
+
+async function refreshAnimationRegistry() {
+    try {
+        animationRegistry = await gifManager.characterAnimationIds();
+    } catch (error) {
+        console.error('GIF animation registry refresh failed:', error.message);
+    }
+    return animationRegistry;
+}
+
+async function refreshGiftAnimations() {
+    // The registry must exist before mappings load, or mappings that point at
+    // converted GIF folders would be rejected as unknown.
+    await refreshAnimationRegistry();
+    const loaded = await loadGiftAnimations(giftAnimationsPath, { allowedIds: animationRegistry });
+    giftAnimationMappings = loaded.mappings;
+    if (loaded.error) console.error('Gift animation mapping ignored:', loaded.error);
+}
+
+function giftAnimationsMessage() {
+    return {
+        type: 'gift_animations',
+        giftAnimations: giftAnimationMappings,
+        animations: animationCatalogMessage(),
+        characterAnimations: [...animationRegistry].sort()
+    };
+}
 
 function broadcast(data) {
     const payload = JSON.stringify(data);
@@ -600,6 +862,22 @@ function processGameEvent(inputEvent) {
             });
         }
     }
+    if (event.type === 'gift') {
+        // Gift rules decide the action; the mapping only adds an animation on
+        // top of it. Catalog ids carry an overlay effect, converted GIF folders
+        // carry a character animation the avatar plays itself.
+        const target = resolveGiftTarget(giftAnimationMappings, event.giftId, animationRegistry);
+        if (target) {
+            event.animationId = target.animationId;
+            if (target.effect) {
+                event.animationEffect = target.effect;
+                event.animationDurationMs = target.durationMs;
+            }
+            if (target.character) {
+                event.animationCharacter = target.character;
+            }
+        }
+    }
     emitGameEvent(event);
 }
 
@@ -889,6 +1167,7 @@ async function handleClientMessage(ws, message) {
         send(ws, { type: 'background_config', action: 'set', background: backgroundPayload() });
         if (ws.role === 'control') send(ws, { type: 'master_config', master: masterConfig });
         if (ws.role === 'control') send(ws, giftCatalogMessage());
+        if (ws.role === 'control') send(ws, giftAnimationsMessage());
         if (ws.role === 'overlay') {
             send(ws, createSnapshot());
             send(ws, viewerGuideMessage());
@@ -898,7 +1177,9 @@ async function handleClientMessage(ws, message) {
 
     if (!ws.registered) return send(ws, { type: 'error', message: 'Client is not registered.' });
 
-    const controlOnly = message.type === 'master_save' || message.type === 'master_test';
+    const controlOnly = message.type === 'master_save' ||
+        message.type === 'master_test' ||
+        message.type === 'set_gift_animations';
     const operatorOnly = new Set([
         'set_username', 'disconnect_tiktok', 'demo_start', 'demo_stop', 'demo_event', 'reset_game'
     ]).has(message.type);
@@ -968,6 +1249,15 @@ async function handleClientMessage(ws, message) {
             repeatCount: 1,
             diamondCount: Math.max(1, Number(message.diamonds) || 1)
         });
+    }
+
+    if (message.type === 'set_gift_animations') {
+        const result = sanitizeGiftAnimations(message.giftAnimations, { allowedIds: animationRegistry });
+        if (result.error) return send(ws, { type: 'error', message: result.error });
+        giftAnimationMappings = result.value;
+        await saveGiftAnimations(giftAnimationsPath, giftAnimationMappings);
+        broadcastToRole('control', giftAnimationsMessage());
+        return send(ws, { type: 'gift_animations_saved', message: 'Gift animations saved and applied.' });
     }
 
     if (message.type === 'set_username') {
@@ -1094,10 +1384,17 @@ server.maxHeadersCount = 64;
 
 refreshBackgroundConfig()
     .catch(error => console.error('Không thể đọc cấu hình background:', error.message))
+    .then(() => refreshGiftAnimations())
+    .catch(error => console.error('Could not read the gift animation mapping:', error.message))
     .finally(() => {
         server.listen(PORT, HOST, () => {
             console.log(`TikTok Live Game: http://${HOST}:${PORT}`);
             console.log(`Bảng điều khiển: http://${HOST}:${PORT}/control.html`);
+            // Any GIF dropped into assets/gifs becomes a Unity animation on its
+            // own; set GIF_AUTOCONVERT=0 to keep the bridge read-only on disk.
+            if (process.env.GIF_AUTOCONVERT !== '0') {
+                startAutoConversion({ logger: message => console.log(`[gifs] ${message}`) });
+            }
         });
     });
 

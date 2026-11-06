@@ -399,11 +399,37 @@ namespace TikTokLiveGame
             rankLabel.transform.localPosition = new Vector3(0f, bannerY + 0.34f * identityScale, 0f);
         }
 
+        /// <summary>
+        /// Plays one specific converted GIF animation on this actor, used when a
+        /// gift is mapped to an animation folder. A folder that no longer exists
+        /// leaves the current look untouched instead of throwing.
+        /// </summary>
+        public void PlayAnimation(string animationId)
+        {
+            if (string.IsNullOrWhiteSpace(animationId)) return;
+            Sprite[] frames = CharacterLibrary.Frames(animationId);
+            if (frames == null || frames.Length == 0) return;
+
+            characterName = animationId;
+            flipbook.SetFrames(frames, CharacterLibrary.FpsFor(animationId, 12f));
+            flipbook.SetLoop(CharacterLibrary.LoopFor(animationId));
+            flipbook.ResetPlayback();
+            characterBaseScale = Vector3.one * CharacterScale() * GiftPowerScale() * lineupScale;
+            body.localScale = characterBaseScale;
+            action = ActionState.Dance;
+            actionUntil = Time.time + 3f;
+        }
+
         public void ChangeCharacter()
         {
             (string nextName, Sprite[] frames) = CharacterLibrary.RandomCharacter(characterName);
             characterName = nextName;
-            flipbook.SetFrames(frames, nextName == "hanhan_video_dance" ? 15f : Random.Range(10f, 14f));
+            // FPS and looping come from the converted animation metadata; the old
+            // name-based guess stays as the fallback for un-converted folders.
+            flipbook.SetFrames(
+                frames,
+                CharacterLibrary.FpsFor(nextName, nextName == "hanhan_video_dance" ? 15f : Random.Range(10f, 14f)));
+            flipbook.SetLoop(CharacterLibrary.LoopFor(nextName));
             characterBaseScale = Vector3.one * CharacterScale() * GiftPowerScale() * lineupScale;
             body.localScale = characterBaseScale;
             Celebrate(1.2f);
@@ -541,7 +567,8 @@ namespace TikTokLiveGame
 
             float time = Time.time + phase;
             bool isPerforming = action is ActionState.Dance or ActionState.Jump or ActionState.Celebrate;
-            flipbook.SetPlaybackSpeed(isPerforming ? 2.7f : 1.5f);
+            // Per-animation playback speed from the GIF metadata scales the mood.
+            flipbook.SetPlaybackSpeed((isPerforming ? 2.7f : 1.5f) * CharacterLibrary.SpeedFor(characterName));
             float bounce = isPerforming ? Mathf.Abs(Mathf.Sin(time * 13.125f)) * 0.16f : 0f;
             body.localRotation = isPerforming
                 ? Quaternion.Euler(0f, Mathf.Sin(time * 3.75f) * 5f, Mathf.Sin(time * 9.375f) * 2.5f)

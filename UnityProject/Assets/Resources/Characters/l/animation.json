@@ -1,0 +1,31 @@
+{
+  "animationId": "l",
+  "frameCount": 9,
+  "fps": 100,
+  "loop": true,
+  "playbackSpeed": 1,
+  "defaultDurationMs": 90,
+  "transparent": true,
+  "width": 480,
+  "height": 480,
+  "durationMs": 90,
+  "sourceFps": 100,
+  "sourceLoop": true,
+  "frameDelaysMs": [
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10,
+    10
+  ],
+  "timing": "average-fps",
+  "sourceGif": "l.gif",
+  "sourceSha256": "351103324623722a803ebc02ccce58653b8163d9be341e4e67a3906650313f7d",
+  "framePattern": "%03d.png",
+  "convertedAt": "2026-11-06T22:33:11.477Z",
+  "overrides": null
+}

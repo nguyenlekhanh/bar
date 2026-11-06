@@ -7,6 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/favicon.svg">
     <link rel="stylesheet" href="control.css">
+    <link rel="stylesheet" href="gif-manager.css">
 </head>
 <body>
 
@@ -22,6 +23,7 @@
         <button class="tab-btn" data-tab="testlab">🧪 Test Lab</button>
         <button class="tab-btn" data-tab="events">🎯 Events</button>
         <button class="tab-btn" data-tab="background">🖼 Background</button>
+        <button class="tab-btn" data-tab="gifs">🎞 GIF Manager</button>
         <button class="tab-btn" data-tab="session">📊 Session</button>
         <button class="tab-btn" data-tab="guide">📖 Guide</button>
     </div>
@@ -144,7 +146,42 @@
         <div class="divider"></div>
         <div id="master-rules" class="rule-list"></div>
     </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <p class="card-label">Gift → animation</p>
+                <h2 class="card-title">Gift Animations</h2>
+            </div>
+            <div class="card-actions">
+                <button id="add-gift-animation" class="btn btn-secondary btn-sm">+ Add mapping</button>
+                <button id="save-gift-animations" class="btn btn-green btn-sm">✓ Save &amp; apply</button>
+            </div>
+        </div>
+        <p class="help" style="margin-bottom:12px;">Any gift ID can point at one animation, and several gifts may share the same one. Only the animations listed here are accepted; unknown gifts keep their normal gift-rule behaviour.</p>
+        <div id="gift-animations" class="rule-list"></div>
+        <div id="gift-animations-message" class="master-msg" aria-live="polite"></div>
+    </div>
 </section>
+
+<!-- ── Gift Animation Row Template ── -->
+<template id="gift-animation-template">
+    <article class="master-rule-row gift-animation-row">
+        <div class="rule-row-top">
+            <div class="rule-field">
+                <span class="rule-field-label">Gift ID</span>
+                <input data-field="giftId" placeholder="5655" inputmode="numeric">
+            </div>
+            <div class="rule-field">
+                <span class="rule-field-label">Animation</span>
+                <select data-field="animationId"></select>
+            </div>
+            <div class="rule-col-actions">
+                <button data-command="delete" class="btn btn-danger btn-sm">Delete</button>
+            </div>
+        </div>
+    </article>
+</template>
 
 <!-- ── TEST LAB ── -->
 <section class="tab-panel" id="tab-testlab">
@@ -324,6 +361,96 @@
     </div>
 </section>
 
+<!-- ── GIF MANAGER ── -->
+<section class="tab-panel" id="tab-gifs">
+    <div class="page-header">
+        <p class="page-eyebrow">Media pipeline</p>
+        <h1 class="page-title">🎞 GIF Manager</h1>
+        <p class="page-desc">Import, inspect, convert and map GIF animations. Converted folders land in Unity's <code>Resources/Characters</code> automatically.</p>
+    </div>
+
+    <div class="gm-stats">
+        <div class="stat-item"><p class="stat-label">🎞 Source GIFs</p><p class="stat-value" id="gm-stat-gifs">—</p></div>
+        <div class="stat-item"><p class="stat-label">🧩 Animations</p><p class="stat-value" id="gm-stat-animations">—</p></div>
+        <div class="stat-item"><p class="stat-label">⚠️ Failed</p><p class="stat-value" id="gm-stat-failed">—</p></div>
+        <div class="stat-item"><p class="stat-label">🖼 Frames</p><p class="stat-value" id="gm-stat-frames">—</p></div>
+    </div>
+    <p class="gm-pipeline" id="gm-pipeline">Loading pipeline status…</p>
+    <div id="gm-message" class="master-msg" aria-live="polite"></div>
+
+    <div class="grid-2">
+        <div class="card">
+            <p class="card-label">Import</p>
+            <h2 class="card-title">📤 Upload a GIF</h2>
+            <input type="file" id="gm-file" accept="image/gif,.gif">
+            <label class="gm-check"><input type="checkbox" id="gm-upload-convert" checked> Convert immediately</label>
+            <div class="gm-progress" id="gm-upload-progress" hidden><div id="gm-upload-bar"></div></div>
+            <div class="card-actions"><button id="gm-upload" class="btn btn-primary btn-sm">Upload</button></div>
+            <p class="help" id="gm-upload-hint">GIF87a/GIF89a only. The file is validated before anything is written.</p>
+        </div>
+        <div class="card">
+            <p class="card-label">Import</p>
+            <h2 class="card-title">🌐 Download from URL</h2>
+            <input id="gm-url" placeholder="https://example.com/dance.gif">
+            <label class="gm-check"><input type="checkbox" id="gm-download-convert" checked> Convert immediately</label>
+            <div class="gm-progress" id="gm-download-progress" hidden><div id="gm-download-bar"></div></div>
+            <div class="card-actions"><button id="gm-download" class="btn btn-primary btn-sm">Download</button></div>
+            <p class="help" id="gm-download-hint">Direct GIF links only. Private, loopback and non-HTTP addresses are refused.</p>
+        </div>
+    </div>
+
+    <div class="card" id="gm-preview-card" hidden>
+        <div class="card-header">
+            <div>
+                <p class="card-label">Parsed metadata</p>
+                <h2 class="card-title" id="gm-preview-title">Preview</h2>
+            </div>
+            <button id="gm-preview-close" class="btn btn-secondary btn-sm">Close</button>
+        </div>
+        <div class="gm-preview-body">
+            <div class="gm-preview-media"><img id="gm-preview-img" alt="GIF preview"></div>
+            <dl class="gm-spec" id="gm-preview-spec"></dl>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <p class="card-label">Library</p>
+                <h2 class="card-title">🎬 Animation library</h2>
+            </div>
+            <div class="card-actions">
+                <input id="gm-search" class="gm-search" placeholder="Search animation or GIF…">
+                <select id="gm-filter">
+                    <option value="all">All</option>
+                    <option value="converted">Converted</option>
+                    <option value="pending">Not converted</option>
+                    <option value="invalid">Invalid</option>
+                </select>
+                <button id="gm-refresh" class="btn btn-secondary btn-sm">↻ Refresh</button>
+            </div>
+        </div>
+        <p class="help" id="gm-library-count">—</p>
+        <div id="gm-library" class="gm-grid"><span class="muted">Loading…</span></div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <p class="card-label">Gift mappings</p>
+                <h2 class="card-title">🎁 Gifts using animations</h2>
+            </div>
+            <button id="gm-mappings-refresh" class="btn btn-secondary btn-sm">↻ Refresh</button>
+        </div>
+        <input id="gm-mapping-search" class="gm-search" placeholder="Search gift ID or animation…">
+        <div id="gm-mappings" class="gm-mapping-list"><span class="muted">Loading…</span></div>
+        <div class="card-actions">
+            <button id="gm-mappings-save" class="btn btn-primary btn-sm">Save mappings</button>
+        </div>
+        <p class="help">Only registered animations can be mapped. Deleting an animation that gifts use asks for confirmation first.</p>
+    </div>
+</section>
+
 <!-- ── SESSION ── -->
 <section class="tab-panel" id="tab-session">
     <div class="page-header">
@@ -487,5 +614,6 @@
 </template>
 
 <script src="control.js"></script>
+<script src="gif-manager.js"></script>
 </body>
 </html>

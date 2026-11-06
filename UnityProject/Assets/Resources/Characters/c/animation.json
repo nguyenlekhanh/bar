@@ -1,0 +1,24 @@
+{
+  "animationId": "c",
+  "frameCount": 8,
+  "fps": 10,
+  "loop": true,
+  "transparent": true,
+  "width": 283,
+  "height": 283,
+  "durationMs": 800,
+  "frameDelaysMs": [
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100
+  ],
+  "sourceGif": "c.gif",
+  "sourceSha256": "065ae6623e0e11a201aa8753309290081e8440ae32aa3e4e9c685efde8b4c315",
+  "framePattern": "%03d.png",
+  "convertedAt": "2026-11-06T22:07:32.990Z"
+}

@@ -1,0 +1,24 @@
+{
+  "animationId": "e",
+  "frameCount": 8,
+  "fps": 14.3,
+  "loop": true,
+  "transparent": true,
+  "width": 240,
+  "height": 240,
+  "durationMs": 560,
+  "frameDelaysMs": [
+    70,
+    70,
+    70,
+    70,
+    70,
+    70,
+    70,
+    70
+  ],
+  "sourceGif": "e.gif",
+  "sourceSha256": "7ec22f9ea2d28490ce5514870b468a3ab5694a3a414ea8b1a15b6e8583934509",
+  "framePattern": "%03d.png",
+  "convertedAt": "2026-11-06T22:07:33.335Z"
+}

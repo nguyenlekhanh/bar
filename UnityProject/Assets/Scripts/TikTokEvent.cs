@@ -28,6 +28,12 @@ namespace TikTokLiveGame
         public int giftPower;
         public int durationMs;
         public int fireworkBursts;
+        // Gift → animation mapping resolved by the bridge. `animationEffect` is
+        // an allow-listed effect name, never a file or resource path.
+        public string animationId;
+        public string animationEffect;
+        public string animationCharacter;
+        public int animationDurationMs;
         public bool spectatorOnly;
         public bool joinedNow;
         public long titleExpiresAt;

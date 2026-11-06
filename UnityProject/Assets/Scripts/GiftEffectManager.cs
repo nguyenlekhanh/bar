@@ -38,6 +38,56 @@ namespace TikTokLiveGame
             if (actor != null && spotlightAction && data.diamondCount >= 20) StartCoroutine(Spotlight(actor, data));
             if (data.action == "fireworks" || data.action == "topdj" || data.diamondCount >= 500)
                 LaunchFireworks(Mathf.Clamp(Mathf.Max(2, data.fireworkBursts), 4, 7));
+
+            // The gift → animation mapping is layered on top of the rule action,
+            // so an existing gift rule keeps behaving exactly as before.
+            PlayMappedAnimation(data, actor);
+        }
+
+        /// <summary>
+        /// Plays the animation the bridge mapped to this gift. The effect name is
+        /// allow-listed on the bridge, so anything unrecognised here simply keeps
+        /// the rule-driven behaviour that already ran above.
+        /// </summary>
+        private void PlayMappedAnimation(TikTokEvent data, PlayerActor actor)
+        {
+            // A converted GIF animation is played on the gifting actor itself.
+            if (!string.IsNullOrWhiteSpace(data.animationCharacter))
+            {
+                if (actor != null) actor.PlayAnimation(data.animationCharacter);
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(data.animationEffect)) return;
+            float seconds = data.animationDurationMs > 0 ? data.animationDurationMs / 1000f : 4f;
+            switch (data.animationEffect)
+            {
+                case "dance":
+                    if (actor != null) actor.Dance(seconds);
+                    break;
+                case "jump":
+                    if (actor != null) actor.Jump(seconds);
+                    break;
+                case "walk":
+                    if (actor != null) actor.Walk(seconds);
+                    break;
+                case "change":
+                    if (actor != null) actor.ChangeCharacter();
+                    break;
+                case "grow":
+                    if (actor != null) actor.Grow(seconds);
+                    break;
+                case "spotlight":
+                    if (actor != null) StartCoroutine(Spotlight(actor, data));
+                    break;
+                case "fireworks":
+                    LaunchFireworks(Mathf.Clamp(Mathf.Max(2, data.fireworkBursts), 3, 7));
+                    break;
+                case "party":
+                    PartyBurst();
+                    break;
+                default:
+                    break;
+            }
         }
 
         public void PartyBurst()

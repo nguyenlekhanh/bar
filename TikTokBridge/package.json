@@ -7,7 +7,9 @@
   "scripts": {
     "start": "node server.js",
     "check": "node --check server.js && node --check src/config/environment.js && node --check src/security.js && node --check src/tiktok/normalize-event.js && node --check src/tiktok/normalize-tikfinity-event.js && node --check public/control.js && node --check scripts/download-mushroom-gifs.js",
-    "download:gifs": "node scripts/download-mushroom-gifs.js",
+    "download:gifs": "node scripts/download-mushroom-gifs.js && node scripts/convert-gifs.js",
+    "gifs:convert": "node scripts/convert-gifs.js",
+    "gifs:watch": "node scripts/convert-gifs.js --watch",
     "security:smoke": "node scripts/security-smoke.js",
     "test": "npm run check && node --test"
   },

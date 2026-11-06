@@ -50,6 +50,10 @@ DJ_VIDEO/*.mp4.bak
 LiveAssets/Backgrounds/images/*
 LiveAssets/Backgrounds/videos/*
 
+# ── Generated GIF conversion artefacts ───────
+TikTokBridge/logs/
+TikTokBridge/assets/gifs/.conversion-state.json
+
 # ── OS & IDE ─────────────────────────────────
 .DS_Store
 Thumbs.db

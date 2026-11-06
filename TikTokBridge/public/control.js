@@ -42,6 +42,12 @@ const ui = {
     saveMaster:     document.getElementById('save-master'),
     masterMessage:  document.getElementById('master-message'),
     recentGifts:    document.getElementById('recent-gifts'),
+    // Gift → animation mapping
+    giftAnimations: document.getElementById('gift-animations'),
+    giftAnimationTemplate: document.getElementById('gift-animation-template'),
+    addGiftAnimation: document.getElementById('add-gift-animation'),
+    saveGiftAnimations: document.getElementById('save-gift-animations'),
+    giftAnimationsMessage: document.getElementById('gift-animations-message'),
     // Background manager
     bgList:         document.getElementById('bg-list'),
     bgPreview:      document.getElementById('bg-preview'),
@@ -74,6 +80,9 @@ let socket;
 let reconnectTimer;
 let masterConfig = { joinMode: 'keyword_only', giftAlwaysJoins: true, rules: [] };
 const recentGifts = new Map();
+let animationCatalog = [];
+// Converted GIF folders, so gift rules can target them as well.
+let characterAnimations = [];
 
 /* ═══ WEBSOCKET ══════════════════════════════════════════ */
 function send(message) {
@@ -227,6 +236,58 @@ function renderGiftCatalog() {
             return btn;
         })
     );
+}
+
+/* ═══ GIFT → ANIMATION MAPPING ═══════════════════════════ */
+function setGiftAnimationsMessage(text, error = false) {
+    if (!ui.giftAnimationsMessage) return;
+    ui.giftAnimationsMessage.textContent = text || '';
+    ui.giftAnimationsMessage.classList.toggle('error', error);
+}
+
+function createGiftAnimationRow(mapping = { giftId: '', animationId: '' }) {
+    const row = ui.giftAnimationTemplate.content.firstElementChild.cloneNode(true);
+    row.querySelector('[data-field="giftId"]').value = mapping.giftId || '';
+
+    const select = row.querySelector('[data-field="animationId"]');
+    const selected = mapping.animationId || (animationCatalog[0] ? animationCatalog[0].id : '');
+    for (const animation of animationCatalog) {
+        const option = document.createElement('option');
+        option.value = animation.id;
+        option.textContent = `${animation.label} (${animation.id})`;
+        if (animation.id === selected) option.selected = true;
+        select.append(option);
+    }
+    for (const id of characterAnimations) {
+        if (animationCatalog.some(animation => animation.id === id)) continue;
+        const option = document.createElement('option');
+        option.value = id;
+        option.textContent = `${id} (GIF)`;
+        if (id === selected) option.selected = true;
+        select.append(option);
+    }
+
+    row.querySelector('[data-command="delete"]').addEventListener('click', () => row.remove());
+    return row;
+}
+
+function renderGiftAnimations(data) {
+    if (!ui.giftAnimations) return;
+    if (Array.isArray(data.animations) && data.animations.length) animationCatalog = data.animations;
+    if (Array.isArray(data.characterAnimations)) characterAnimations = data.characterAnimations;
+    const mappings = Array.isArray(data.giftAnimations) ? data.giftAnimations : [];
+    ui.giftAnimations.replaceChildren(...mappings.map(createGiftAnimationRow));
+    if (!mappings.length) {
+        setGiftAnimationsMessage('No gift animations yet. Press + Add mapping to start.');
+    }
+}
+
+function readGiftAnimationsFromUi() {
+    if (!ui.giftAnimations) return [];
+    return [...ui.giftAnimations.querySelectorAll('.gift-animation-row')].map(row => ({
+        giftId: row.querySelector('[data-field="giftId"]').value.trim(),
+        animationId: row.querySelector('[data-field="animationId"]').value,
+    }));
 }
 
 /* ═══ BACKGROUND MANAGER ═════════════════════════════════ */
@@ -739,6 +800,8 @@ function connectSocket() {
         if (data.type === 'background_config') renderBackgroundCurrent(data.background, null);
         if (data.type === 'background_saved')  applyBackgroundReply(data);
         if (data.type === 'background_ack')    confirmBackgroundAck(data);
+        if (data.type === 'gift_animations')        renderGiftAnimations(data);
+        if (data.type === 'gift_animations_saved')  setGiftAnimationsMessage(data.message || 'Gift animations saved and applied.');
         if (data.type === 'error') setMasterMessage(data.message || 'Something went wrong.', true);
     });
 
@@ -763,6 +826,31 @@ ui.addMasterRule.addEventListener('click', () => ui.masterRules.append(createRul
 ui.saveMaster.addEventListener('click', () => {
     send({ type: 'master_save', master: readMasterFromUi() });
     setMasterMessage('Saving and applying…');
+});
+
+if (ui.addGiftAnimation) ui.addGiftAnimation.addEventListener('click', () => {
+    ui.giftAnimations.append(createGiftAnimationRow());
+    setGiftAnimationsMessage('Mapping added. Fill in the gift ID, then press Save & apply.');
+});
+
+if (ui.saveGiftAnimations) ui.saveGiftAnimations.addEventListener('click', () => {
+    const giftAnimations = readGiftAnimationsFromUi();
+    if (socket?.readyState === WebSocket.OPEN) {
+        send({ type: 'set_gift_animations', giftAnimations });
+        setGiftAnimationsMessage('Saving…');
+        return;
+    }
+    fetch('/api/gift-animations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ giftAnimations }),
+    }).then(response => response.json().then(body => ({ ok: response.ok, body })))
+      .then(({ ok, body }) => {
+          if (!ok) throw new Error(body.error || 'Could not save the gift animations.');
+          renderGiftAnimations(body);
+          setGiftAnimationsMessage(body.message || 'Gift animations saved and applied.');
+      })
+      .catch(error => setGiftAnimationsMessage(error.message, true));
 });
 
 document.querySelectorAll('[data-demo-count]').forEach(btn => {
