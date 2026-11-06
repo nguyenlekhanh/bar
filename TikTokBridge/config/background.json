@@ -1,0 +1,14 @@
+{
+  "id": "bg-mw5hjh6t",
+  "type": "video",
+  "file": "video2.mp4",
+  "fitMode": "native",
+  "loop": true,
+  "rotation": 180,
+  "transform": {
+    "rotation": 180,
+    "flipHorizontal": false,
+    "flipVertical": false
+  },
+  "generation": 22
+}

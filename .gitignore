@@ -45,6 +45,10 @@ DJ_VIDEO/*.m4v
 DJ_VIDEO/*.webm
 DJ_VIDEO/*.mp4.bak
 
+# ── Background Manager media (người dùng tự thêm) ──────────
+LiveAssets/Backgrounds/images/*
+LiveAssets/Backgrounds/videos/*
+
 # ── OS & IDE ─────────────────────────────────
 .DS_Store
 Thumbs.db

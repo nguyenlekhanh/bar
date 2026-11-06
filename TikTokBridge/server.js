@@ -36,6 +36,16 @@ const {
     isAllowedOrigin,
     consumeRateLimit
 } = require('./src/security');
+const {
+    LEGACY_FILE,
+    defaultBackground,
+    validateBackground,
+    listBackgroundFiles,
+    resolveBackgroundPath,
+    backgroundUrl,
+    loadBackgroundConfig,
+    saveBackgroundConfig
+} = require('./src/background/registry');
 
 const app = express();
 const server = http.createServer(app);
@@ -52,6 +62,18 @@ const assetsDir = path.join(__dirname, 'assets');
 const gifsDir = path.join(assetsDir, 'gifs');
 const masterConfigPath = path.join(__dirname, 'config', 'master.json');
 const observedGiftsPath = path.join(__dirname, 'config', 'observed-gifts.json');
+const backgroundsRoot = process.env.BACKGROUND_ROOT
+    ? path.resolve(process.env.BACKGROUND_ROOT)
+    : path.join(__dirname, '..', 'LiveAssets', 'Backgrounds');
+const legacyBackgroundPath = path.join(__dirname, '..', 'LiveAssets', LEGACY_FILE);
+// Operators keep their clips in DJ_VIDEO, so it is part of the catalogue.
+const djVideoDir = process.env.BACKGROUND_EXTRA_VIDEO_DIR
+    ? path.resolve(process.env.BACKGROUND_EXTRA_VIDEO_DIR)
+    : path.join(__dirname, '..', 'DJ_VIDEO');
+const backgroundScanOptions = { extraVideoDirs: [djVideoDir] };
+const backgroundConfigPath = process.env.BACKGROUND_CONFIG
+    ? path.resolve(process.env.BACKGROUND_CONFIG)
+    : path.join(__dirname, 'config', 'background.json');
 const LIVE_PROVIDER = String(process.env.LIVE_PROVIDER || gameConfig.liveProvider || 'tikfinity').toLowerCase();
 const TIKFINITY_WS_URL = String(process.env.TIKFINITY_WS_URL || gameConfig.tikfinityWsUrl || 'ws://127.0.0.1:21213/');
 
@@ -76,6 +98,8 @@ const observedGifts = new Map((Array.isArray(initialObservedGifts) ? initialObse
     .map(gift => [String(gift.giftId || gift.giftName || ''), gift])
     .filter(([key]) => key));
 let observedGiftSaveTimer = null;
+let backgroundConfig = defaultBackground();
+let backgroundAck = { file: '', generation: -1, at: 0 };
 
 if (!ALLOW_LAN && !isLoopbackAddress(HOST) && HOST.toLowerCase() !== 'localhost') {
     throw new Error('Từ chối mở Node ra mạng LAN. Chỉ đặt ALLOW_LAN=1 khi đã có lớp xác thực bên ngoài.');
@@ -127,6 +151,30 @@ app.get('/', (_req, res) => res.redirect('/control.html'));
 app.use(express.static(publicDir, staticOptions));
 app.use('/assets', express.static(assetsDir, staticOptions));
 app.use('/vendor/three', express.static(path.join(__dirname, 'node_modules', 'three', 'build'), staticOptions));
+app.get(`/backgrounds/legacy/${LEGACY_FILE}`, (_req, res) => {
+    res.sendFile(legacyBackgroundPath, error => {
+        if (error && !res.headersSent) res.status(404).type('text/plain').send('Not found');
+    });
+});
+
+/**
+ * Serves background media from wherever it actually lives
+ * (LiveAssets/Backgrounds/{images,videos} or DJ_VIDEO). The path is rebuilt
+ * from the folder root on every request, so a crafted name cannot escape, and
+ * sendFile keeps HTTP Range support, which video playback needs.
+ */
+app.get('/backgrounds/:kind/:file', (req, res) => {
+    const type = req.params.kind === 'videos' ? 'video' : req.params.kind === 'images' ? 'image' : null;
+    if (!type) return res.status(404).type('text/plain').send('Not found');
+
+    const resolved = resolveBackgroundPath(backgroundsRoot, { type, file: req.params.file }, backgroundScanOptions);
+    if (resolved.error || !resolved.exists) return res.status(404).type('text/plain').send('Not found');
+
+    res.setHeader('Cache-Control', 'no-cache');
+    res.sendFile(resolved.absolute, error => {
+        if (error && !res.headersSent) res.status(404).type('text/plain').send('Not found');
+    });
+});
 
 app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok', appId: 'ongchu-mmo-live-bridge', version: '1.0.0' });
@@ -147,6 +195,26 @@ app.get('/api/gifs', async (_req, res) => {
     }
 });
 
+app.get('/api/backgrounds', async (_req, res) => {
+    try {
+        res.json(await backgroundCatalog());
+    } catch (error) {
+        console.error('Không thể đọc thư mục background:', error.message);
+        res.status(500).json({ error: 'Không thể đọc danh sách background.' });
+    }
+});
+
+app.get('/api/background', (_req, res) => {
+    res.json({ background: backgroundPayload(), ack: backgroundAck });
+});
+
+const backgroundBodyParser = express.json({ limit: '16kb' });
+app.post('/api/background', backgroundBodyParser, async (req, res) => {
+    const result = await applyBackgroundRequest(req.body?.background ?? req.body);
+    if (!result.ok) return res.status(400).json({ error: result.error });
+    res.json({ background: result.background, message: 'Đã gửi background tới Unity.' });
+});
+
 app.use((_req, res) => res.status(404).type('text/plain').send('Not found'));
 
 function broadcast(data) {
@@ -165,6 +233,90 @@ function send(ws, data) {
     if (ws.readyState !== WebSocket.OPEN) return;
     if (ws.bufferedAmount > 512 * 1024) return ws.terminate();
     ws.send(JSON.stringify(data));
+}
+
+function broadcastToRole(role, data) {
+    const payload = JSON.stringify(data);
+    for (const client of wss.clients) {
+        if (client.readyState !== WebSocket.OPEN || client.role !== role) continue;
+        if (client.bufferedAmount > 512 * 1024) {
+            client.terminate();
+            continue;
+        }
+        client.send(payload);
+    }
+}
+
+async function backgroundCatalog() {
+    const listing = await listBackgroundFiles(backgroundsRoot, backgroundScanOptions);
+    let legacyBytes = 0;
+    try {
+        const info = await fs.stat(legacyBackgroundPath);
+        if (info.isFile()) legacyBytes = info.size;
+    } catch {
+        legacyBytes = 0;
+    }
+    if (legacyBytes > 0 && !listing.images.some(item => item.file.toLowerCase() === LEGACY_FILE)) {
+        listing.images.unshift({ file: LEGACY_FILE, type: 'image', bytes: legacyBytes, legacy: true });
+        listing.all = [...listing.images, ...listing.videos];
+    }
+    return listing;
+}
+
+function backgroundPayload() {
+    return { ...backgroundConfig, url: backgroundUrl(backgroundConfig) };
+}
+
+function clampDimension(value) {
+    const size = Math.round(Number(value) || 0);
+    return size > 0 && size <= 16384 ? size : 0;
+}
+
+function clampDuration(value) {
+    const seconds = Number(value);
+    return Number.isFinite(seconds) ? Math.max(0, Math.min(86400, seconds)) : 0;
+}
+
+async function applyBackgroundRequest(input) {
+    const catalog = await backgroundCatalog();
+    const available = [...catalog.images, ...catalog.videos];
+    const validation = validateBackground(input || {}, { available });
+    if (validation.error) return { ok: false, error: validation.error };
+
+    // When the operator sends a transform, that is the approved orientation. When
+    // they don't, fall back to the rotation the media declares for itself — never
+    // to a rotation invented by the client.
+    const source = input && typeof input === 'object' ? input : {};
+    const explicitTransform = source.transform !== undefined || source.rotation !== undefined;
+    const entry = available.find(item => String(item.file).toLowerCase() === validation.value.file.toLowerCase());
+    const autoRotation = validation.value.type === 'video' ? Number(entry && entry.rotation) || 0 : 0;
+    const transform = validation.value.type !== 'video'
+        ? { rotation: 0, flipHorizontal: false, flipVertical: false }
+        : explicitTransform
+            ? validation.value.transform
+            : { rotation: autoRotation, flipHorizontal: false, flipVertical: false };
+
+    const next = {
+        ...validation.value,
+        rotation: transform.rotation,
+        transform,
+        generation: (Number(backgroundConfig.generation) || 0) + 1
+    };
+    backgroundConfig = next;
+    await saveBackgroundConfig(backgroundConfigPath, next);
+    backgroundAck = { file: '', generation: -1, ok: true, error: '', width: 0, height: 0, duration: 0, at: 0 };
+
+    const message = { type: 'background_config', action: 'set', background: backgroundPayload() };
+    broadcastToRole('overlay', message);
+    broadcastToRole('control', message);
+    return { ok: true, background: backgroundPayload() };
+}
+
+async function refreshBackgroundConfig() {
+    const catalog = await backgroundCatalog();
+    backgroundConfig = await loadBackgroundConfig(backgroundConfigPath, {
+        available: [...catalog.images, ...catalog.videos]
+    });
 }
 
 function setStatus(state, username, message) {
@@ -734,6 +886,7 @@ async function handleClientMessage(ws, message) {
         send(ws, { type: 'config', game: gameConfig, gifts: giftConfig });
         send(ws, { type: 'status', ...connectionStatus });
         send(ws, { type: 'metrics', ...metrics });
+        send(ws, { type: 'background_config', action: 'set', background: backgroundPayload() });
         if (ws.role === 'control') send(ws, { type: 'master_config', master: masterConfig });
         if (ws.role === 'control') send(ws, giftCatalogMessage());
         if (ws.role === 'overlay') {
@@ -754,6 +907,36 @@ async function handleClientMessage(ws, message) {
     }
     if (operatorOnly && ws.role !== 'control' && !ws.nativeClient) {
         return send(ws, { type: 'error', message: 'Client không có quyền điều khiển.' });
+    }
+
+    if (message.type === 'set_background') {
+        if (ws.role !== 'control') {
+            return send(ws, { type: 'error', message: 'Lệnh này chỉ dành cho bảng điều khiển.' });
+        }
+        const result = await applyBackgroundRequest(message.background);
+        if (!result.ok) return send(ws, { type: 'error', message: result.error });
+        return send(ws, {
+            type: 'background_saved',
+            background: result.background,
+            message: 'Đã áp dụng background.'
+        });
+    }
+
+    if (message.type === 'background_ack') {
+        if (ws.role !== 'overlay') {
+            return send(ws, { type: 'error', message: 'Chỉ Unity mới gửi được xác nhận background.' });
+        }
+        backgroundAck = {
+            file: String(message.file || '').slice(0, 80),
+            generation: Number.isInteger(message.generation) ? message.generation : 0,
+            ok: message.ok !== false,
+            error: typeof message.error === 'string' ? message.error.slice(0, 160) : '',
+            width: clampDimension(message.width),
+            height: clampDimension(message.height),
+            duration: clampDuration(message.duration),
+            at: Date.now()
+        };
+        return broadcastToRole('control', { type: 'background_ack', ...backgroundAck });
     }
 
     if (message.type === 'master_save') {
@@ -909,10 +1092,14 @@ server.headersTimeout = 5000;
 server.keepAliveTimeout = 5000;
 server.maxHeadersCount = 64;
 
-server.listen(PORT, HOST, () => {
-    console.log(`TikTok Live Game: http://${HOST}:${PORT}`);
-    console.log(`Bảng điều khiển: http://${HOST}:${PORT}/control.html`);
-});
+refreshBackgroundConfig()
+    .catch(error => console.error('Không thể đọc cấu hình background:', error.message))
+    .finally(() => {
+        server.listen(PORT, HOST, () => {
+            console.log(`TikTok Live Game: http://${HOST}:${PORT}`);
+            console.log(`Bảng điều khiển: http://${HOST}:${PORT}/control.html`);
+        });
+    });
 
 server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {

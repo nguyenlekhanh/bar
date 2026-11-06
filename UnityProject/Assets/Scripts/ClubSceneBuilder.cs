@@ -81,7 +81,7 @@ namespace TikTokLiveGame
             GameObject centerQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
             centerQuad.name = "AmPhuBackdrop_Center";
             centerQuad.transform.SetParent(bgRoot.transform);
-            centerQuad.transform.localPosition = new Vector3(0, -3.0f, -12.5f);
+            centerQuad.transform.localPosition = new Vector3(0, -3.0f, BackgroundManager.BackdropZ);
             centerQuad.transform.localScale = new Vector3(W, H, 1);
             centerQuad.transform.localRotation = Quaternion.Euler(0, 180, 0);
             centerQuad.GetComponent<Renderer>().sharedMaterial = centerMat;
@@ -89,7 +89,7 @@ namespace TikTokLiveGame
             GameObject leftQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
             leftQuad.name = "AmPhuBackdrop_Left";
             leftQuad.transform.SetParent(bgRoot.transform);
-            leftQuad.transform.localPosition = new Vector3(W / 2f, -3.0f, -12.5f + D / 2f);
+            leftQuad.transform.localPosition = new Vector3(W / 2f, -3.0f, BackgroundManager.BackdropZ + D / 2f);
             leftQuad.transform.localScale = new Vector3(D, H, 1);
             leftQuad.transform.localRotation = Quaternion.Euler(0, -90, 0);
             leftQuad.GetComponent<Renderer>().sharedMaterial = leftMat;
@@ -97,7 +97,7 @@ namespace TikTokLiveGame
             GameObject rightQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
             rightQuad.name = "AmPhuBackdrop_Right";
             rightQuad.transform.SetParent(bgRoot.transform);
-            rightQuad.transform.localPosition = new Vector3(-W / 2f, -3.0f, -12.5f + D / 2f);
+            rightQuad.transform.localPosition = new Vector3(-W / 2f, -3.0f, BackgroundManager.BackdropZ + D / 2f);
             rightQuad.transform.localScale = new Vector3(D, H, 1);
             rightQuad.transform.localRotation = Quaternion.Euler(0, 90, 0);
             rightQuad.GetComponent<Renderer>().sharedMaterial = rightMat;
@@ -106,10 +106,24 @@ namespace TikTokLiveGame
             GameObject ceilingQuad = GameObject.CreatePrimitive(PrimitiveType.Quad);
             ceilingQuad.name = "AmPhuBackdrop_Ceiling";
             ceilingQuad.transform.SetParent(bgRoot.transform);
-            ceilingQuad.transform.localPosition = new Vector3(0, -3.0f + H / 2f, -12.5f + D / 2f);
+            ceilingQuad.transform.localPosition = new Vector3(0, -3.0f + H / 2f, BackgroundManager.BackdropZ + D / 2f);
             ceilingQuad.transform.localScale = new Vector3(W, D, 1);
             ceilingQuad.transform.localRotation = Quaternion.Euler(90, 180, 0); // Xoay 180 để mặt Quad hướng xuống dưới đất
             ceilingQuad.GetComponent<Renderer>().sharedMaterial = ceilingMat;
+
+            // Hands the four quads to the runtime background manager so the PNG/MP4
+            // background can be swapped from the Control Panel without a rebuild.
+            BackgroundManager.Attach(
+                bgRoot,
+                centerQuad.transform,
+                leftQuad.transform,
+                rightQuad.transform,
+                ceilingQuad.transform,
+                centerMat,
+                rightMat,
+                leftMat,
+                ceilingMat,
+                tex);
 
             GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
             floor.name = "Invisible Dance Floor";

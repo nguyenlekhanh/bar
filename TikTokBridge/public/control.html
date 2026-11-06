@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ÔNG CHÚ MMO — TikTok Live</title>
+    <title>TikTok Live</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/favicon.svg">
     <link rel="stylesheet" href="control.css">
@@ -13,14 +13,15 @@
 <!-- ═══════════ NAVBAR ═══════════ -->
 <nav class="navbar">
     <div class="navbar-brand">
-        <img src="/favicon.svg" alt="ÔNG CHÚ MMO">
-        <span class="navbar-brand-text">ÔNG CHÚ MMO <span>Live</span></span>
+        <img src="/favicon.svg" alt="TikTok Live">
+        <span class="navbar-brand-text">TikTok <span>Live</span></span>
     </div>
     <div class="tab-nav">
         <button class="tab-btn active" data-tab="live">🔴 Live</button>
         <button class="tab-btn" data-tab="rules">⚙️ Master Rules</button>
         <button class="tab-btn" data-tab="testlab">🧪 Test Lab</button>
         <button class="tab-btn" data-tab="events">🎯 Events</button>
+        <button class="tab-btn" data-tab="background">🖼 Background</button>
         <button class="tab-btn" data-tab="session">📊 Session</button>
         <button class="tab-btn" data-tab="guide">📖 Hướng Dẫn</button>
     </div>
@@ -29,7 +30,7 @@
             <span class="status-dot" id="status-dot"></span>
             <span id="status-title">Đang kết nối</span>
         </div>
-        <span class="navbar-copy">© 2025 ÔNG CHÚ MMO</span>
+        <span class="navbar-copy">© 2026 TikTok Live</span>
     </div>
 </nav>
 
@@ -247,6 +248,82 @@
     </div>
 </section>
 
+<!-- ── BACKGROUND ── -->
+<section class="tab-panel" id="tab-background">
+    <div class="page-header">
+        <p class="page-eyebrow">Hình nền</p>
+        <h1 class="page-title">Background Manager</h1>
+        <p class="page-desc">Chọn ảnh (PNG/JPG) hoặc video (MP4/WebM) làm nền sân khấu. Áp dụng ngay, không cần build lại Unity.</p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <p class="card-label">Đang áp dụng</p>
+                <h2 class="card-title">Current Background</h2>
+            </div>
+            <div class="card-actions">
+                <button id="bg-refresh" class="btn btn-secondary btn-sm">↻ Refresh</button>
+                <button id="bg-default" class="btn btn-secondary btn-sm">Mặc định</button>
+            </div>
+        </div>
+
+        <div class="bg-current">
+            <div class="bg-preview" id="bg-preview"><span class="muted">Chưa có background</span></div>
+            <div class="bg-current-meta">
+                <p class="field-label">Tên file</p>
+                <p class="bg-current-name" id="bg-current-name">—</p>
+                <p class="help" id="bg-current-detail">—</p>
+                <p class="bg-status" id="bg-status">Đang đọc cấu hình…</p>
+            </div>
+        </div>
+
+        <div class="master-settings">
+            <div class="field-group">
+                <label class="field-label" for="bg-fit">Chế độ hiển thị</label>
+                <select id="bg-fit" style="width:auto;">
+                    <option value="native">Native — giữ đúng tỷ lệ gốc</option>
+                    <option value="fit">Fit — vừa khung, có viền</option>
+                    <option value="fill">Fill — phủ kín, cắt bớt</option>
+                </select>
+            </div>
+            <p class="help" style="margin:0;">Đổi chế độ sẽ áp dụng lại background đang chọn.</p>
+        </div>
+
+        <div id="bg-transform" class="bg-transform" hidden>
+            <div class="divider"></div>
+            <p class="section-label">Video Transform</p>
+            <div class="bg-transform-row">
+                <div class="field-group">
+                    <span class="field-label">Xoay (chiều kim đồng hồ)</span>
+                    <div id="bg-rot-buttons" class="bg-rot-buttons" role="group" aria-label="Góc xoay video">
+                        <button type="button" class="btn btn-secondary btn-sm" data-rot="0" aria-pressed="true">0°</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-rot="90" aria-pressed="false">90°</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-rot="180" aria-pressed="false">180°</button>
+                        <button type="button" class="btn btn-secondary btn-sm" data-rot="270" aria-pressed="false">270°</button>
+                    </div>
+                </div>
+                <label class="bg-check"><input type="checkbox" id="bg-flip-h"> Lật ngang</label>
+                <label class="bg-check"><input type="checkbox" id="bg-flip-v"> Lật dọc</label>
+            </div>
+            <div class="card-actions">
+                <button id="bg-transform-apply" class="btn btn-primary btn-sm">Áp dụng cho Live</button>
+                <button id="bg-transform-reset" class="btn btn-secondary btn-sm">Đặt lại (0°)</button>
+            </div>
+            <p class="help" id="bg-transform-current">Đang áp dụng: 0°</p>
+            <p class="help" id="bg-transform-hint">Chỉ áp dụng cho video. Ảnh PNG/JPG không bị đổi hướng.</p>
+        </div>
+
+        <div id="bg-message" class="master-msg" aria-live="polite"></div>
+
+        <div class="divider"></div>
+        <p class="section-label">Thư viện background</p>
+        <div id="bg-list" class="bg-grid"><span class="muted">Đang đọc thư mục…</span></div>
+        <p class="help">Thả ảnh vào <code>LiveAssets/Backgrounds/images</code> (PNG, JPG, JPEG ≤ 16 MB) và video vào <code>DJ_VIDEO</code> hoặc <code>LiveAssets/Backgrounds/videos</code> (MP4, M4V, MOV, WebM ≤ 512 MB), rồi bấm <strong>↻ Refresh</strong>. Nền cũ <code>LiveAssets/nenamphu.png</code> vẫn dùng được.</p>
+        <p class="help">Nên dùng <strong>MP4 (H.264)</strong>: WebM (VP8/VP9) phụ thuộc bộ giải mã của Windows nên có thể không phát được trong Unity.</p>
+    </div>
+</section>
+
 <!-- ── SESSION ── -->
 <section class="tab-panel" id="tab-session">
     <div class="page-header">
@@ -328,9 +405,9 @@
 
 <!-- ── FOOTER ── -->
 <footer class="page-footer" style="max-width:1100px;margin:0 auto;padding-left:24px;padding-right:24px;">
-    © 2025 <strong>ÔNG CHÚ MMO</strong> &nbsp;|&nbsp; <a href="https://ongchummo.com" target="_blank">ongchummo.com</a>
-    &nbsp;&bull;&nbsp; Zalo: <a href="https://zalo.me/0977896644" target="_blank">0977.896.644</a>
-    &nbsp;&bull;&nbsp; Email: <a href="mailto:toanhvan90@gmail.com">toanhvan90@gmail.com</a>
+    © 2025 <strong>TikTok Live</strong> &nbsp;|&nbsp; <a href="https://xxx.com" target="_blank">xxx.com</a>
+    &nbsp;&bull;&nbsp; Zalo: <a href="https://zalo.me/xxx" target="_blank">0977.896.644</a>
+    &nbsp;&bull;&nbsp; Email: <a href="mailto:xxx@gmail.com">xxx@gmail.com</a>
 </footer>
 
 </div><!-- end app-shell -->

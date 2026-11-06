@@ -33,6 +33,28 @@ namespace TikTokLiveGame
         public long titleExpiresAt;
         public TikTokPlayerData[] players;
         public TikTokPlayerData[] vipScores;
+        public BackgroundConfigPayload background;
+    }
+
+    [Serializable]
+    public class BackgroundTransformPayload
+    {
+        public int rotation;
+        public bool flipHorizontal;
+        public bool flipVertical;
+    }
+
+    [Serializable]
+    public class BackgroundConfigPayload
+    {
+        public string id;
+        public string type;
+        public string file;
+        public string fitMode;
+        public bool loop;
+        public int rotation;
+        public BackgroundTransformPayload transform;
+        public int generation;
     }
 
     [Serializable]
@@ -57,8 +79,15 @@ namespace TikTokLiveGame
         public string username;
         public string action;
         public string giftName;
+        public string file;
         public int count;
         public int userIndex;
         public int value;
+        public int generation;
+        public bool ok;
+        public string error;
+        public int width;
+        public int height;
+        public double duration;
     }
 }

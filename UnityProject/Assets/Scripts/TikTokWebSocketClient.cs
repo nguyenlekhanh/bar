@@ -167,6 +167,19 @@ namespace TikTokLiveGame
         public void StartDemo(int count) => Send(new ClientMessage { type = "demo_start", count = count });
         public void StopDemo() => Send(new ClientMessage { type = "demo_stop" });
         public void ResetGame() => Send(new ClientMessage { type = "reset_game" });
+
+        public void SendBackgroundAck(string file, int generation, bool ok = true, string error = null,
+            int width = 0, int height = 0, double duration = 0d) => Send(new ClientMessage
+        {
+            type = "background_ack",
+            file = file ?? string.Empty,
+            generation = generation,
+            ok = ok,
+            error = string.IsNullOrWhiteSpace(error) ? string.Empty : error.Trim(),
+            width = width,
+            height = height,
+            duration = duration
+        });
         public void DemoGift(int diamonds, int userIndex = 1) => Send(new ClientMessage
         {
             type = "demo_event",

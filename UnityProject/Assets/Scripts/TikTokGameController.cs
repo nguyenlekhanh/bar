@@ -62,6 +62,12 @@ namespace TikTokLiveGame
 
         private void HandleEvent(TikTokEvent liveEvent)
         {
+            if (liveEvent.type == "background_config")
+            {
+                ApplyBackground(liveEvent);
+                return;
+            }
+
             if (liveEvent.type == "status") connectionStatus = liveEvent.message;
             if (liveEvent.type is "member" or "chat" or "gift" or "like" or "follow" or "share") events++;
 
@@ -147,6 +153,21 @@ namespace TikTokLiveGame
                     StartCoroutine(CinematicGift(focusSeconds));
                 }
             }
+        }
+
+        /// <summary>Applies a background pushed by the Node bridge and acknowledges it.</summary>
+        private void ApplyBackground(TikTokEvent liveEvent)
+        {
+            BackgroundManager manager = BackgroundManager.Instance;
+            if (manager == null)
+            {
+                Debug.LogWarning("Background config received but no BackgroundManager exists.");
+                return;
+            }
+
+            // BackgroundManager reports the ack itself once the texture is really on
+            // screen (or when playback fails), so the panel never claims success early.
+            manager.Apply(liveEvent.background);
         }
 
         private System.Collections.IEnumerator CinematicGift(float seconds)
