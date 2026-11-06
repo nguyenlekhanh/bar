@@ -1,0 +1,20 @@
+THA NHAC NEN VAO THU MUC NAY
+
+- Ho tro on dinh: MP3, WAV, OGG.
+- Neu dang co M4A/AAC, hay doi sang MP3 truoc khi dua vao game.
+- Nhac duoc phat theo thu tu ten file.
+- Het danh sach se quay lai bai dau.
+- Neu chi co mot bai, bai do se lap vo han.
+- Neu audio bi dung/loi, watchdog se tu khoi phuc hoac chuyen bai.
+- Game van phat tieng gift/phao hoa chong len nhac binh thuong.
+
+KHONG CAN TAT GAME KHI THEM NHAC
+
+- Game tu quet lai thu muc nay moi 4 giay.
+- Tha file moi vao la nhac tu phat; xoa file thi danh sach tu cap nhat.
+- Bai dang phat se khong bi ngat khi danh sach thay doi.
+
+AM LUONG
+
+Mo VOLUME.txt va nhap tu 0 den 100. Mac dinh la 35.
+Doi so trong VOLUME.txt la game tu ap dung lai (khong can khoi dong lai).
