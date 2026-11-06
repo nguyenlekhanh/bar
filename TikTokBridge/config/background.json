@@ -1,14 +1,14 @@
 {
-  "id": "bg-mw5hjh6t",
-  "type": "video",
-  "file": "video2.mp4",
+  "id": "bg-mw5i4zzb",
+  "type": "image",
+  "file": "nenamphu.png",
   "fitMode": "native",
   "loop": true,
-  "rotation": 180,
+  "rotation": 0,
   "transform": {
-    "rotation": 180,
+    "rotation": 0,
     "flipHorizontal": false,
     "flipVertical": false
   },
-  "generation": 22
+  "generation": 25
 }

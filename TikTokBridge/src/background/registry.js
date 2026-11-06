@@ -28,7 +28,7 @@ const ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
 const MAX_IMAGE_BYTES = 16 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 512 * 1024 * 1024;
 
-const WEBM_WARNING = 'WebM phụ thuộc bộ giải mã của Windows; nên dùng MP4 (H.264) nếu Unity không phát được.';
+const WEBM_WARNING = 'WebM depends on the Windows codecs; prefer MP4 (H.264) if Unity cannot play it.';
 
 const LEGACY_FILE = 'nenamphu.png';
 const DEFAULT_TRANSFORM = Object.freeze({ rotation: 0, flipHorizontal: false, flipVertical: false });
@@ -86,18 +86,18 @@ function defaultBackground(overrides = {}) {
  */
 function validateTransform(input) {
     if (input === undefined || input === null) return { value: null };
-    if (typeof input !== 'object' || Array.isArray(input)) return { error: 'Transform không hợp lệ.' };
+    if (typeof input !== 'object' || Array.isArray(input)) return { error: 'Invalid transform.' };
 
     for (const key of Object.keys(input)) {
-        if (!TRANSFORM_KEYS.has(key)) return { error: `Transform có trường không hợp lệ: ${key}.` };
+        if (!TRANSFORM_KEYS.has(key)) return { error: `Unknown transform field: ${key}.` };
     }
 
     const rotation = input.rotation === undefined ? 0 : input.rotation;
-    if (!ROTATIONS.has(rotation)) return { error: 'Góc xoay chỉ được 0, 90, 180 hoặc 270.' };
+    if (!ROTATIONS.has(rotation)) return { error: 'Rotation must be 0, 90, 180 or 270.' };
 
     for (const key of ['flipHorizontal', 'flipVertical']) {
         if (input[key] !== undefined && typeof input[key] !== 'boolean') {
-            return { error: `${key} phải là true hoặc false.` };
+            return { error: `${key} must be true or false.` };
         }
     }
 
@@ -117,13 +117,13 @@ function validateBackground(input = {}, options = {}) {
     const source = input && typeof input === 'object' ? input : {};
     const file = typeof source.file === 'string' ? source.file.trim() : '';
 
-    if (!isSafeFileName(file)) return { error: 'Tên file background không hợp lệ.' };
+    if (!isSafeFileName(file)) return { error: 'Invalid background file name.' };
 
     const kind = kindForFile(file);
-    if (!kind) return { error: 'Chỉ hỗ trợ PNG, JPG, JPEG, MP4, M4V, MOV hoặc WebM.' };
+    if (!kind) return { error: 'Only PNG, JPG, JPEG, MP4, M4V, MOV or WebM are supported.' };
 
     const requestedType = String(source.type || kind).trim().toLowerCase();
-    if (requestedType !== kind) return { error: 'Loại background không khớp với định dạng file.' };
+    if (requestedType !== kind) return { error: 'Background type does not match the file format.' };
 
     if (Array.isArray(options.available)) {
         const present = options.available.some(item =>
@@ -131,7 +131,7 @@ function validateBackground(input = {}, options = {}) {
                 ? item.toLowerCase() === file.toLowerCase()
                 : String(item.file || '').toLowerCase() === file.toLowerCase()
         );
-        if (!present) return { error: 'Background không có trong thư mục cho phép.' };
+        if (!present) return { error: 'Background is not in an allowed folder.' };
     }
 
     const generation = Number.isInteger(source.generation) && source.generation >= 0
@@ -154,7 +154,7 @@ function validateBackground(input = {}, options = {}) {
     const neutral = suppliedTransform.rotation === 0 &&
         !suppliedTransform.flipHorizontal && !suppliedTransform.flipVertical;
     if (kind === 'image' && !neutral) {
-        return { error: 'Ảnh PNG/JPG không hỗ trợ xoay hoặc lật.' };
+        return { error: 'PNG/JPG images do not support rotation or flipping.' };
     }
     const transform = kind === 'video' ? suppliedTransform : { ...DEFAULT_TRANSFORM };
 
@@ -279,7 +279,7 @@ function resolveBackgroundPath(root, background, options = {}) {
     const type = background && background.type === 'video' ? 'video' : 'image';
     const file = background && background.file;
     if (!isSafeFileName(file) || kindForFile(file) !== type) {
-        return { error: 'Tên file background không hợp lệ.' };
+        return { error: 'Invalid background file name.' };
     }
 
     const base = path.resolve(root);
@@ -292,10 +292,10 @@ function resolveBackgroundPath(root, background, options = {}) {
         const directory = path.resolve(entry.dir);
         const absolute = path.resolve(directory, String(file));
         if (absolute !== path.join(directory, String(file))) {
-            return { error: 'Đường dẫn ngoài thư mục cho phép.' };
+            return { error: 'Path is outside the allowed folders.' };
         }
         if (!absolute.startsWith(directory + path.sep)) {
-            return { error: 'Đường dẫn ngoài thư mục cho phép.' };
+            return { error: 'Path is outside the allowed folders.' };
         }
 
         if (!fallback) fallback = { directory, folder: entry.folder, absolute, exists: false };
@@ -309,7 +309,7 @@ function resolveBackgroundPath(root, background, options = {}) {
         if (exists) return { directory, folder: entry.folder, absolute, exists: true };
     }
 
-    return fallback || { error: 'Không tìm thấy file background.' };
+    return fallback || { error: 'Background file not found.' };
 }
 
 function backgroundUrl(background) {

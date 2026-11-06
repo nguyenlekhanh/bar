@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,12 +23,12 @@
         <button class="tab-btn" data-tab="events">🎯 Events</button>
         <button class="tab-btn" data-tab="background">🖼 Background</button>
         <button class="tab-btn" data-tab="session">📊 Session</button>
-        <button class="tab-btn" data-tab="guide">📖 Hướng Dẫn</button>
+        <button class="tab-btn" data-tab="guide">📖 Guide</button>
     </div>
     <div class="navbar-right">
         <div class="status-pill" id="live-badge">
             <span class="status-dot" id="status-dot"></span>
-            <span id="status-title">Đang kết nối</span>
+            <span id="status-title">Connecting</span>
         </div>
         <span class="navbar-copy">© 2026 TikTok Live</span>
     </div>
@@ -40,16 +40,16 @@
 <!-- ── LIVE ── -->
 <section class="tab-panel active" id="tab-live">
     <div class="page-header">
-        <p class="page-eyebrow">Kết nối</p>
+        <p class="page-eyebrow">Connection</p>
         <h1 class="page-title">TikTok Live</h1>
-        <p class="page-desc">Kết nối tài khoản đang live để nhận sự kiện realtime.</p>
+        <p class="page-desc">Connect a live account to receive realtime events.</p>
     </div>
 
     <div class="status-card">
         <span class="status-card-dot" id="status-card-dot"></span>
         <div>
-            <strong id="status-title-card">Đang kết nối máy chủ</strong>
-            <p id="status-message">Vui lòng chờ…</p>
+            <strong id="status-title-card">Connecting to server</strong>
+            <p id="status-message">Please wait…</p>
         </div>
     </div>
 
@@ -58,37 +58,37 @@
             <div class="card-header">
                 <div>
                     <p class="card-label">TikFinity Desktop</p>
-                    <h2 class="card-title">🔴 Kết nối LIVE</h2>
+                    <h2 class="card-title">🔴 Connect LIVE</h2>
                 </div>
             </div>
-            <label class="field-label" for="username">Username đang live</label>
+            <label class="field-label" for="username">Live username</label>
             <div class="input-row">
                 <input id="username" type="text" maxlength="25" placeholder="@username" autocomplete="off">
-                <button id="connect" class="btn btn-primary">Kết nối</button>
+                <button id="connect" class="btn btn-primary">Connect</button>
             </div>
-            <p class="help">Mở TikFinity Desktop → kết nối tài khoản LIVE → quay lại đây nhập username.</p>
+            <p class="help">Open TikFinity Desktop → connect the LIVE account → come back here and enter the username.</p>
             <div class="divider"></div>
-            <button id="disconnect" class="btn btn-secondary btn-full">Ngắt kết nối</button>
+            <button id="disconnect" class="btn btn-secondary btn-full">Disconnect</button>
         </div>
 
         <div class="card">
             <div class="card-header">
                 <div>
-                    <p class="card-label">Phím tắt</p>
-                    <h2 class="card-title">Điều khiển Game</h2>
+                    <p class="card-label">Shortcuts</p>
+                    <h2 class="card-title">Game Controls</h2>
                 </div>
             </div>
             <div class="shortcut-list">
                 <div class="shortcut-row">
-                    <span>Ẩn / hiện bảng điều khiển</span>
+                    <span>Show / hide control panel</span>
                     <kbd>F1</kbd>
                 </div>
                 <div class="shortcut-row">
-                    <span>Bật / tắt nền xanh Chroma</span>
+                    <span>Toggle Chroma green background</span>
                     <kbd>F2</kbd>
                 </div>
                 <div class="shortcut-row" style="border-bottom:none;">
-                    <span>Toàn màn hình</span>
+                    <span>Fullscreen</span>
                     <kbd>F11</kbd>
                 </div>
             </div>
@@ -99,45 +99,45 @@
 <!-- ── MASTER RULES ── -->
 <section class="tab-panel" id="tab-rules">
     <div class="page-header">
-        <p class="page-eyebrow">Cấu hình</p>
+        <p class="page-eyebrow">Configuration</p>
         <h1 class="page-title">Master Rules</h1>
-        <p class="page-desc">Điều kiện → hành động. Thay đổi áp dụng ngay, không cần build lại Unity.</p>
+        <p class="page-desc">Condition → action. Changes apply instantly, no Unity rebuild needed.</p>
     </div>
 
     <div class="card">
         <div class="card-header">
             <div>
-                <p class="card-label">Cài đặt chung</p>
-                <h2 class="card-title">Điều kiện tham gia sàn</h2>
+                <p class="card-label">General settings</p>
+                <h2 class="card-title">Floor join conditions</h2>
             </div>
             <div class="card-actions">
-                <button id="add-master-rule" class="btn btn-secondary btn-sm">+ Thêm luật</button>
-                <button id="save-master" class="btn btn-green btn-sm">✓ Lưu &amp; áp dụng</button>
+                <button id="add-master-rule" class="btn btn-secondary btn-sm">+ Add rule</button>
+                <button id="save-master" class="btn btn-green btn-sm">✓ Save &amp; apply</button>
             </div>
         </div>
 
         <div class="master-settings">
             <div class="field-group">
-                <label class="field-label" for="join-mode">Người chơi vào sàn khi</label>
+                <label class="field-label" for="join-mode">Players join the floor when they</label>
                 <select id="join-mode" style="width:auto;">
-                    <option value="keyword_only">Gõ đúng lệnh tham gia</option>
-                    <option value="all_interactions">Có bất kỳ tương tác nào</option>
+                    <option value="keyword_only">Type the join command</option>
+                    <option value="all_interactions">Send any interaction</option>
                 </select>
             </div>
             <label class="toggle-wrap">
                 <input id="gift-always-joins" type="checkbox" checked>
                 <span class="toggle-track"></span>
-                Người tặng gift luôn được vào sàn
+                Gifters always join the floor
             </label>
         </div>
 
         <div id="master-message" class="master-msg" aria-live="polite"></div>
 
         <div class="gift-catalog-wrap">
-            <p class="gift-catalog-label">Thư viện Gift TikFinity đã học</p>
-            <p class="help" style="margin-bottom:10px;">Mỗi gift thật sẽ tự lưu ID, tên, kim cương và ảnh. Bấm vào gift để thêm luật nhanh.</p>
+            <p class="gift-catalog-label">Learned TikFinity gift library</p>
+            <p class="help" style="margin-bottom:10px;">Every real gift automatically saves its ID, name, diamonds and image. Click a gift to add a rule quickly.</p>
             <div id="recent-gifts" class="gift-catalog">
-                <span class="muted">Chưa nhận gift thật nào từ TikFinity.</span>
+                <span class="muted">No real gifts received from TikFinity yet.</span>
             </div>
         </div>
 
@@ -149,9 +149,9 @@
 <!-- ── TEST LAB ── -->
 <section class="tab-panel" id="tab-testlab">
     <div class="page-header">
-        <p class="page-eyebrow">Thử nghiệm</p>
+        <p class="page-eyebrow">Testing</p>
         <h1 class="page-title">Test Lab</h1>
-        <p class="page-desc">Tạo người xem giả và phát sự kiện liên tục qua đúng pipeline live.</p>
+        <p class="page-desc">Spawn fake viewers and fire events continuously through the real live pipeline.</p>
     </div>
 
     <div class="grid-2">
@@ -159,31 +159,31 @@
             <div class="card-header">
                 <div>
                     <p class="card-label">Demo Mode</p>
-                    <h2 class="card-title">Chạy phòng demo</h2>
+                    <h2 class="card-title">Run a demo room</h2>
                 </div>
             </div>
-            <p class="help" style="margin-bottom:14px;">Chọn số người xem giả để test hiệu ứng sàn nhảy mà không cần kết nối TikTok.</p>
+            <p class="help" style="margin-bottom:14px;">Pick a fake viewer count to test the dance floor effects without connecting to TikTok.</p>
             <div class="demo-grid">
-                <button data-demo-count="10"  class="btn btn-secondary">10 người</button>
-                <button data-demo-count="30"  class="btn btn-secondary">30 người</button>
-                <button data-demo-count="60"  class="btn btn-secondary">60 người</button>
-                <button data-demo-count="400" class="btn btn-secondary">400 người</button>
+                <button data-demo-count="10"  class="btn btn-secondary">10 viewers</button>
+                <button data-demo-count="30"  class="btn btn-secondary">30 viewers</button>
+                <button data-demo-count="60"  class="btn btn-secondary">60 viewers</button>
+                <button data-demo-count="400" class="btn btn-secondary">400 viewers</button>
             </div>
             <div class="divider"></div>
-            <button id="stop-demo" class="btn btn-danger btn-full">Dừng demo</button>
+            <button id="stop-demo" class="btn btn-danger btn-full">Stop demo</button>
         </div>
 
         <div class="card">
             <div class="card-header">
                 <div>
-                    <p class="card-label">Ghi chú</p>
-                    <h2 class="card-title">Cách hoạt động</h2>
+                    <p class="card-label">Notes</p>
+                    <h2 class="card-title">How it works</h2>
                 </div>
             </div>
             <div class="info-list">
-                <p class="info-item">Demo tạo avatar ngẫu nhiên, phát sự kiện gift / chat / like liên tục.</p>
-                <p class="info-item">Sự kiện đi qua đúng WebSocket pipeline — kết quả phản ánh chính xác hành vi production.</p>
-                <p class="info-item">Bấm <strong>Dừng demo</strong> để xóa toàn bộ người dùng giả.</p>
+                <p class="info-item">The demo generates random avatars and fires gift / chat / like events continuously.</p>
+                <p class="info-item">Events travel through the real WebSocket pipeline — results reflect production behaviour exactly.</p>
+                <p class="info-item">Press <strong>Stop demo</strong> to remove every fake viewer.</p>
             </div>
         </div>
     </div>
@@ -192,15 +192,15 @@
 <!-- ── EVENTS ── -->
 <section class="tab-panel" id="tab-events">
     <div class="page-header">
-        <p class="page-eyebrow">Giả lập</p>
+        <p class="page-eyebrow">Simulation</p>
         <h1 class="page-title">Event Triggers</h1>
-        <p class="page-desc">Kích hoạt từng sự kiện thủ công để kiểm tra phản ứng của dancer.</p>
+        <p class="page-desc">Fire a single event by hand to check how the dancer reacts.</p>
     </div>
 
     <div class="card">
         <div class="card-header">
             <div>
-                <p class="card-label">Mục tiêu</p>
+                <p class="card-label">Target</p>
                 <h2 class="card-title">Dancer Index</h2>
             </div>
             <div class="mini-inline">
@@ -209,19 +209,19 @@
             </div>
         </div>
 
-        <p class="section-label">Tương tác cơ bản</p>
+        <p class="section-label">Basic interactions</p>
         <div class="action-grid" style="margin-bottom:16px;">
-            <button data-action="member"                               class="btn btn-secondary">👋 Vào sàn</button>
+            <button data-action="member"                               class="btn btn-secondary">👋 Join floor</button>
             <button data-action="like"   data-value="50"               class="btn btn-secondary">♥ Like ×50</button>
             <button data-action="follow"                               class="btn btn-secondary">💖 Follow</button>
             <button data-action="share"                                class="btn btn-secondary">📣 Share</button>
-            <button data-action="dance"                                class="btn btn-secondary">🕺 Nhảy</button>
-            <button data-action="jump"                                 class="btn btn-secondary">⬆️ Nhảy cao</button>
-            <button data-action="walk"                                 class="btn btn-secondary">🚶 Đi vòng</button>
-            <button data-action="change"                               class="btn btn-secondary">🎭 Đổi nhân vật</button>
+            <button data-action="dance"                                class="btn btn-secondary">🕺 Dance</button>
+            <button data-action="jump"                                 class="btn btn-secondary">⬆️ Jump</button>
+            <button data-action="walk"                                 class="btn btn-secondary">🚶 Walk around</button>
+            <button data-action="change"                               class="btn btn-secondary">🎭 Change character</button>
         </div>
 
-        <p class="section-label">🎁 Gift nhỏ <span class="section-label-sub">1–9 💎</span></p>
+        <p class="section-label">🎁 Small gifts <span class="section-label-sub">1–9 💎</span></p>
         <div class="action-grid" style="margin-bottom:16px;">
             <button data-action="gift" data-value="1"  class="btn btn-secondary">🌹 Rose · 1💎</button>
             <button data-action="gift" data-value="1"  data-gift-name="TikTok"       class="btn btn-secondary">🎵 TikTok · 1💎</button>
@@ -229,20 +229,20 @@
             <button data-action="gift" data-value="5"  class="btn btn-secondary">🕺 Gift · 5💎</button>
         </div>
 
-        <p class="section-label">🎁 Gift trung <span class="section-label-sub">10–99 💎</span></p>
+        <p class="section-label">🎁 Mid-tier gifts <span class="section-label-sub">10–99 💎</span></p>
         <div class="action-grid" style="margin-bottom:16px;">
             <button data-action="gift" data-value="20"  data-gift-name="Portal"  class="btn btn-secondary">🌀 Portal · 20💎</button>
             <button data-action="gift" data-value="20"  class="btn btn-secondary">📸 Camera · 20💎</button>
-            <button data-action="gift" data-value="50"  class="btn btn-secondary">🔥 Vua sàn · 50💎</button>
+            <button data-action="gift" data-value="50"  class="btn btn-secondary">🔥 Floor King · 50💎</button>
             <button data-action="gift" data-value="99"  class="btn btn-secondary">✨ Gift · 99💎</button>
         </div>
 
-        <p class="section-label">👑 Gift VIP <span class="section-label-sub">100+ 💎</span></p>
+        <p class="section-label">👑 VIP gifts <span class="section-label-sub">100+ 💎</span></p>
         <div class="action-grid">
             <button data-action="gift" data-value="100"  class="btn btn-gold">👑 VIP · 100💎</button>
-            <button data-action="gift" data-value="200"  class="btn btn-gold">💎 Siêu VIP · 200💎</button>
-            <button data-action="gift" data-value="500"  class="btn btn-gold">🎇 Pháo hoa · 500💎</button>
-            <button data-action="gift" data-value="1000" class="btn btn-gold">🏆 Đại gia · 1000💎</button>
+            <button data-action="gift" data-value="200"  class="btn btn-gold">💎 Super VIP · 200💎</button>
+            <button data-action="gift" data-value="500"  class="btn btn-gold">🎇 Fireworks · 500💎</button>
+            <button data-action="gift" data-value="1000" class="btn btn-gold">🏆 Big Spender · 1000💎</button>
             <button data-action="gift" data-value="1000" data-gift-name="TikTok Universe" class="btn btn-gold">🌌 Universe · 1000💎</button>
         </div>
     </div>
@@ -251,43 +251,43 @@
 <!-- ── BACKGROUND ── -->
 <section class="tab-panel" id="tab-background">
     <div class="page-header">
-        <p class="page-eyebrow">Hình nền</p>
+        <p class="page-eyebrow">Backdrop</p>
         <h1 class="page-title">Background Manager</h1>
-        <p class="page-desc">Chọn ảnh (PNG/JPG) hoặc video (MP4/WebM) làm nền sân khấu. Áp dụng ngay, không cần build lại Unity.</p>
+        <p class="page-desc">Pick an image (PNG/JPG) or video (MP4/WebM) for the stage backdrop. Applies instantly, no Unity rebuild needed.</p>
     </div>
 
     <div class="card">
         <div class="card-header">
             <div>
-                <p class="card-label">Đang áp dụng</p>
+                <p class="card-label">Currently applied</p>
                 <h2 class="card-title">Current Background</h2>
             </div>
             <div class="card-actions">
                 <button id="bg-refresh" class="btn btn-secondary btn-sm">↻ Refresh</button>
-                <button id="bg-default" class="btn btn-secondary btn-sm">Mặc định</button>
+                <button id="bg-default" class="btn btn-secondary btn-sm">Default</button>
             </div>
         </div>
 
         <div class="bg-current">
-            <div class="bg-preview" id="bg-preview"><span class="muted">Chưa có background</span></div>
+            <div class="bg-preview" id="bg-preview"><span class="muted">No background yet</span></div>
             <div class="bg-current-meta">
-                <p class="field-label">Tên file</p>
+                <p class="field-label">File name</p>
                 <p class="bg-current-name" id="bg-current-name">—</p>
                 <p class="help" id="bg-current-detail">—</p>
-                <p class="bg-status" id="bg-status">Đang đọc cấu hình…</p>
+                <p class="bg-status" id="bg-status">Reading configuration…</p>
             </div>
         </div>
 
         <div class="master-settings">
             <div class="field-group">
-                <label class="field-label" for="bg-fit">Chế độ hiển thị</label>
+                <label class="field-label" for="bg-fit">Display mode</label>
                 <select id="bg-fit" style="width:auto;">
-                    <option value="native">Native — giữ đúng tỷ lệ gốc</option>
-                    <option value="fit">Fit — vừa khung, có viền</option>
-                    <option value="fill">Fill — phủ kín, cắt bớt</option>
+                    <option value="native">Native — keep the original aspect</option>
+                    <option value="fit">Fit — fits the frame, letterboxed</option>
+                    <option value="fill">Fill — covers the frame, crops the edges</option>
                 </select>
             </div>
-            <p class="help" style="margin:0;">Đổi chế độ sẽ áp dụng lại background đang chọn.</p>
+            <p class="help" style="margin:0;">Changing the mode re-applies the selected background.</p>
         </div>
 
         <div id="bg-transform" class="bg-transform" hidden>
@@ -295,109 +295,109 @@
             <p class="section-label">Video Transform</p>
             <div class="bg-transform-row">
                 <div class="field-group">
-                    <span class="field-label">Xoay (chiều kim đồng hồ)</span>
-                    <div id="bg-rot-buttons" class="bg-rot-buttons" role="group" aria-label="Góc xoay video">
+                    <span class="field-label">Rotation (clockwise)</span>
+                    <div id="bg-rot-buttons" class="bg-rot-buttons" role="group" aria-label="Video rotation angle">
                         <button type="button" class="btn btn-secondary btn-sm" data-rot="0" aria-pressed="true">0°</button>
                         <button type="button" class="btn btn-secondary btn-sm" data-rot="90" aria-pressed="false">90°</button>
                         <button type="button" class="btn btn-secondary btn-sm" data-rot="180" aria-pressed="false">180°</button>
                         <button type="button" class="btn btn-secondary btn-sm" data-rot="270" aria-pressed="false">270°</button>
                     </div>
                 </div>
-                <label class="bg-check"><input type="checkbox" id="bg-flip-h"> Lật ngang</label>
-                <label class="bg-check"><input type="checkbox" id="bg-flip-v"> Lật dọc</label>
+                <label class="bg-check"><input type="checkbox" id="bg-flip-h"> Flip horizontal</label>
+                <label class="bg-check"><input type="checkbox" id="bg-flip-v"> Flip vertical</label>
             </div>
             <div class="card-actions">
-                <button id="bg-transform-apply" class="btn btn-primary btn-sm">Áp dụng cho Live</button>
-                <button id="bg-transform-reset" class="btn btn-secondary btn-sm">Đặt lại (0°)</button>
+                <button id="bg-transform-apply" class="btn btn-primary btn-sm">Apply to Live</button>
+                <button id="bg-transform-reset" class="btn btn-secondary btn-sm">Reset (0°)</button>
             </div>
-            <p class="help" id="bg-transform-current">Đang áp dụng: 0°</p>
-            <p class="help" id="bg-transform-hint">Chỉ áp dụng cho video. Ảnh PNG/JPG không bị đổi hướng.</p>
+            <p class="help" id="bg-transform-current">Applied: 0°</p>
+            <p class="help" id="bg-transform-hint">Only applies to video. PNG/JPG images are never reoriented.</p>
         </div>
 
         <div id="bg-message" class="master-msg" aria-live="polite"></div>
 
         <div class="divider"></div>
-        <p class="section-label">Thư viện background</p>
-        <div id="bg-list" class="bg-grid"><span class="muted">Đang đọc thư mục…</span></div>
-        <p class="help">Thả ảnh vào <code>LiveAssets/Backgrounds/images</code> (PNG, JPG, JPEG ≤ 16 MB) và video vào <code>DJ_VIDEO</code> hoặc <code>LiveAssets/Backgrounds/videos</code> (MP4, M4V, MOV, WebM ≤ 512 MB), rồi bấm <strong>↻ Refresh</strong>. Nền cũ <code>LiveAssets/nenamphu.png</code> vẫn dùng được.</p>
-        <p class="help">Nên dùng <strong>MP4 (H.264)</strong>: WebM (VP8/VP9) phụ thuộc bộ giải mã của Windows nên có thể không phát được trong Unity.</p>
+        <p class="section-label">Background library</p>
+        <div id="bg-list" class="bg-grid"><span class="muted">Reading folder…</span></div>
+        <p class="help">Drop images into <code>LiveAssets/Backgrounds/images</code> (PNG, JPG, JPEG ≤ 16 MB) and videos into <code>DJ_VIDEO</code> or <code>LiveAssets/Backgrounds/videos</code> (MP4, M4V, MOV, WebM ≤ 512 MB), then press <strong>↻ Refresh</strong>. The legacy <code>LiveAssets/nenamphu.png</code> still works.</p>
+        <p class="help">Prefer <strong>MP4 (H.264)</strong>: WebM (VP8/VP9) depends on the Windows codecs, so it may not play inside Unity.</p>
     </div>
 </section>
 
 <!-- ── SESSION ── -->
 <section class="tab-panel" id="tab-session">
     <div class="page-header">
-        <p class="page-eyebrow">Thống kê</p>
+        <p class="page-eyebrow">Analytics</p>
         <h1 class="page-title">Session</h1>
-        <p class="page-desc">Số liệu theo dõi phiên live hiện tại.</p>
+        <p class="page-desc">Metrics for the current live session.</p>
     </div>
 
     <div class="card">
         <div class="card-header">
             <div>
                 <p class="card-label">Realtime Analytics</p>
-                <h2 class="card-title">📊 Thống kê phiên LIVE</h2>
+                <h2 class="card-title">📊 Live session stats</h2>
             </div>
             <button id="reset" class="btn btn-danger btn-sm">↺ Reset game</button>
         </div>
         <div class="stats-grid">
-            <div class="stat-item"><p class="stat-label">⚡ Sự kiện</p><p class="stat-value" id="metric-events">0</p></div>
-            <div class="stat-item"><p class="stat-label">👁 Người vào</p><p class="stat-value" id="metric-members">0</p></div>
-            <div class="stat-item"><p class="stat-label">💬 Bình luận</p><p class="stat-value" id="metric-chats">0</p></div>
-            <div class="stat-item"><p class="stat-label">🎁 Gift</p><p class="stat-value" id="metric-gifts">0</p></div>
-            <div class="stat-item"><p class="stat-label">💎 Diamond</p><p class="stat-value" id="metric-diamonds">0</p></div>
-            <div class="stat-item"><p class="stat-label">♥ Like</p><p class="stat-value" id="metric-likes">0</p></div>
+            <div class="stat-item"><p class="stat-label">⚡ Events</p><p class="stat-value" id="metric-events">0</p></div>
+            <div class="stat-item"><p class="stat-label">👁 Joined</p><p class="stat-value" id="metric-members">0</p></div>
+            <div class="stat-item"><p class="stat-label">💬 Comments</p><p class="stat-value" id="metric-chats">0</p></div>
+            <div class="stat-item"><p class="stat-label">🎁 Gifts</p><p class="stat-value" id="metric-gifts">0</p></div>
+            <div class="stat-item"><p class="stat-label">💎 Diamonds</p><p class="stat-value" id="metric-diamonds">0</p></div>
+            <div class="stat-item"><p class="stat-label">♥ Likes</p><p class="stat-value" id="metric-likes">0</p></div>
         </div>
     </div>
 </section>
 
-<!-- ── HƯỚNG DẪN ── -->
+<!-- ── GUIDE ── -->
 <section class="tab-panel" id="tab-guide">
     <div class="page-header">
-        <p class="page-eyebrow">Bắt đầu nhanh</p>
-        <h1 class="page-title">📖 Hướng Dẫn Sử Dụng</h1>
-        <p class="page-desc">4 bước để phát sóng TikTok LIVE với sàn nhảy 3D.</p>
+        <p class="page-eyebrow">Quick start</p>
+        <h1 class="page-title">📖 User Guide</h1>
+        <p class="page-desc">Four steps to go live on TikTok with a 3D dance floor.</p>
     </div>
 
     <div class="grid-2" style="margin-bottom:14px;">
         <div class="card step-card">
-            <p class="card-label">Bước 1</p>
-            <h2 class="card-title" style="margin-bottom:8px;">🖥️ Khởi động ÔNG CHÚ MMO Live</h2>
-            <p class="help">Mở file <strong>OngChuMMO_Live.exe</strong>. Chờ hiện <strong>NODE ONLINE</strong> ở góc màn hình game.</p>
+            <p class="card-label">Step 1</p>
+            <h2 class="card-title" style="margin-bottom:8px;">🖥️ Launch ÔNG CHÚ MMO Live</h2>
+            <p class="help">Open <strong>OngChuMMO_Live.exe</strong>. Wait until <strong>NODE ONLINE</strong> appears in the corner of the game window.</p>
         </div>
         <div class="card">
-            <p class="card-label">Bước 2</p>
-            <h2 class="card-title" style="margin-bottom:8px;">📱 Kết nối TikFinity</h2>
-            <p class="help">Mở TikFinity Desktop → đăng nhập → bật LIVE. Sang tab <strong>🔴 Live</strong> → nhập username → <strong>Kết nối LIVE</strong>.</p>
+            <p class="card-label">Step 2</p>
+            <h2 class="card-title" style="margin-bottom:8px;">📱 Connect TikFinity</h2>
+            <p class="help">Open TikFinity Desktop → sign in → start the LIVE. Go to the <strong>🔴 Live</strong> tab → enter the username → <strong>Connect LIVE</strong>.</p>
         </div>
         <div class="card">
-            <p class="card-label">Bước 3</p>
-            <h2 class="card-title" style="margin-bottom:8px;">📺 Thêm vào OBS</h2>
-            <p class="help">Thêm source <strong>Game Capture</strong> → chọn cửa sổ ÔNG CHÚ MMO Live. Bấm <strong>F2</strong> trong game để bật Chroma Key.</p>
+            <p class="card-label">Step 3</p>
+            <h2 class="card-title" style="margin-bottom:8px;">📺 Add to OBS</h2>
+            <p class="help">Add a <strong>Game Capture</strong> source → select the ÔNG CHÚ MMO Live window. Press <strong>F2</strong> in game to enable Chroma Key.</p>
         </div>
         <div class="card">
-            <p class="card-label">Bước 4</p>
-            <h2 class="card-title" style="margin-bottom:8px;">🎮 Test thử</h2>
-            <p class="help">Vào tab <strong>🧪 Test Lab</strong> → bấm <strong>30 người</strong>. Vào <strong>🎯 Events</strong> để test gift thủ công.</p>
+            <p class="card-label">Step 4</p>
+            <h2 class="card-title" style="margin-bottom:8px;">🎮 Test it</h2>
+            <p class="help">Go to <strong>🧪 Test Lab</strong> → press <strong>30 viewers</strong>. Use <strong>🎯 Events</strong> to test gifts by hand.</p>
         </div>
     </div>
 
     <div class="grid-2">
         <div class="card">
-            <p class="card-label" style="margin-bottom:12px;">⌨️ Phím tắt trong game</p>
+            <p class="card-label" style="margin-bottom:12px;">⌨️ In-game shortcuts</p>
             <div class="shortcut-list">
-                <div class="shortcut-row"><span>Ẩn / hiện bảng điều khiển</span><kbd>F1</kbd></div>
-                <div class="shortcut-row"><span>Bật / tắt nền xanh Chroma</span><kbd>F2</kbd></div>
-                <div class="shortcut-row" style="border-bottom:none;"><span>Toàn màn hình</span><kbd>F11</kbd></div>
+                <div class="shortcut-row"><span>Show / hide control panel</span><kbd>F1</kbd></div>
+                <div class="shortcut-row"><span>Toggle Chroma green background</span><kbd>F2</kbd></div>
+                <div class="shortcut-row" style="border-bottom:none;"><span>Fullscreen</span><kbd>F11</kbd></div>
             </div>
         </div>
 
         <div class="card">
-            <p class="card-label" style="margin-bottom:12px;">💬 Lệnh chat người xem gửi</p>
+            <p class="card-label" style="margin-bottom:12px;">💬 Chat commands viewers type</p>
             <div class="cmd-list">
-                <div class="cmd-item"><code>nhảy / dance</code><span>Nhân vật nhảy</span></div>
-                <div class="cmd-item"><code>đi vòng / walk</code><span>Đi vòng tại chỗ</span></div>
-                <div class="cmd-item"><code>đổi nv</code><span>Đổi nhân vật ngẫu nhiên</span></div>
+                <div class="cmd-item"><code>nhảy / dance</code><span>The dancer dances</span></div>
+                <div class="cmd-item"><code>đi vòng / walk</code><span>Walks in a circle</span></div>
+                <div class="cmd-item"><code>đổi nv</code><span>Switches to a random character</span></div>
             </div>
         </div>
     </div>
@@ -416,7 +416,7 @@
 <template id="master-rule-template">
     <article class="master-rule-row">
         <div class="rule-row-top">
-            <label class="toggle-wrap" title="Bật / Tắt luật này">
+            <label class="toggle-wrap" title="Toggle this rule on or off">
                 <input data-field="enabled" type="checkbox" checked>
                 <span class="toggle-track"></span>
             </label>
@@ -427,60 +427,60 @@
                     <option value="chat">💬 Chat</option>
                 </select>
                 <select data-field="match">
-                    <option value="exact">Chính xác</option>
-                    <option value="contains">Có chứa</option>
+                    <option value="exact">Exact</option>
+                    <option value="contains">Contains</option>
                 </select>
             </div>
             <div class="rule-field">
-                <span class="rule-field-label">Từ khoá / Tên gift</span>
-                <input data-field="trigger" placeholder="rose, hoa hồng, hey…">
+                <span class="rule-field-label">Keyword / gift name</span>
+                <input data-field="trigger" placeholder="rose, gift name, hey…">
             </div>
             <div class="rule-field">
                 <span class="rule-field-label">Gift ID</span>
-                <input data-field="giftId" placeholder="ID (nếu có)">
+                <input data-field="giftId" placeholder="ID (if any)">
             </div>
         </div>
         <div class="rule-row-bot">
             <div class="rule-field">
-                <span class="rule-field-label">Hành động</span>
+                <span class="rule-field-label">Action</span>
                 <select data-field="action">
-                    <option value="join">Tham gia sàn</option>
-                    <option value="dance">Nhảy</option>
-                    <option value="camera">Zoom camera</option>
-                    <option value="change">Đổi nhân vật</option>
-                    <option value="walk">Đi vòng</option>
-                    <option value="grow">Phóng lớn</option>
-                    <option value="medal">Cánh + huy hiệu</option>
+                    <option value="join">Join floor</option>
+                    <option value="dance">Dance</option>
+                    <option value="camera">Camera zoom</option>
+                    <option value="change">Change character</option>
+                    <option value="walk">Walk around</option>
+                    <option value="grow">Grow</option>
+                    <option value="medal">Wings + medal</option>
                     <option value="vip">VIP camera</option>
-                    <option value="topdj">Top DJ + pháo hoa</option>
-                    <option value="fireworks">Pháo hoa</option>
+                    <option value="topdj">Top DJ + fireworks</option>
+                    <option value="fireworks">Fireworks</option>
                 </select>
             </div>
             <div class="rule-field">
-                <span class="rule-field-label">Giây</span>
+                <span class="rule-field-label">Seconds</span>
                 <input data-field="durationSeconds" type="number" min="0" max="300" step="0.5" placeholder="3">
             </div>
             <div class="rule-field">
-                <span class="rule-field-label">Banner / Huy hiệu</span>
-                <input data-field="label" placeholder="Chữ hiển thị…">
+                <span class="rule-field-label">Banner / badge</span>
+                <input data-field="label" placeholder="Display text…">
             </div>
             <div class="rule-field">
                 <span class="rule-field-label">Variant</span>
                 <select data-field="variant">
-                    <option value="">Mặc định</option>
+                    <option value="">Default</option>
                     <option value="aura">Aura</option>
                     <option value="neon">Neon</option>
-                    <option value="fire">Lửa</option>
-                    <option value="royal">Hoàng gia</option>
+                    <option value="fire">Fire</option>
+                    <option value="royal">Royal</option>
                 </select>
             </div>
             <div class="rule-field">
-                <span class="rule-field-label">🎆 Pháo</span>
+                <span class="rule-field-label">🎆 Fireworks</span>
                 <input data-field="fireworkBursts" type="number" min="0" max="12" placeholder="0">
             </div>
             <div class="rule-col-actions">
                 <button data-command="test"   class="btn btn-gold btn-sm">Test</button>
-                <button data-command="delete" class="btn btn-danger btn-sm">Xóa</button>
+                <button data-command="delete" class="btn btn-danger btn-sm">Delete</button>
             </div>
         </div>
     </article>

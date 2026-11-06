@@ -88,13 +88,13 @@ function setStatus(data) {
     if (ui.statusCardDot) ui.statusCardDot.className = 'status-card-dot ' + state;
 
     const names = {
-        idle:         'Sẵn sàng',
-        connecting:   'Đang kết nối…',
+        idle:         'Ready',
+        connecting:   'Connecting…',
         connected:    '🔴 LIVE',
         demo:         '🧪 DEMO',
-        disconnected: 'Mất kết nối',
-        ended:        'Live kết thúc',
-        error:        'Lỗi kết nối',
+        disconnected: 'Disconnected',
+        ended:        'Live ended',
+        error:        'Connection error',
     };
     const label = names[state] || state;
     ui.statusTitle.textContent = label;
@@ -102,14 +102,14 @@ function setStatus(data) {
     if (ui.statusMessage)   ui.statusMessage.textContent = data.message || '';
     ui.connect.disabled = state === 'connecting';
 
-    // Badge đỏ nhấp nháy khi đang LIVE thật
+    // Pulse the badge while a real LIVE is running
     const liveBadge = document.getElementById('live-badge');
     if (liveBadge) liveBadge.classList.toggle('is-live', state === 'connected');
 }
 
 function setMetrics(data) {
     for (const [key, el] of Object.entries(ui.metrics)) {
-        el.textContent = Number(data[key] || 0).toLocaleString('vi-VN');
+        el.textContent = Number(data[key] || 0).toLocaleString('en-US');
     }
 }
 
@@ -135,9 +135,9 @@ function updateRuleSource(row) {
     const source  = row.querySelector('[data-field="source"]').value;
     const giftId  = row.querySelector('[data-field="giftId"]');
     giftId.disabled     = source !== 'gift';
-    giftId.placeholder  = source === 'gift' ? 'ID (nếu có)' : 'Không dùng cho chat';
+    giftId.placeholder  = source === 'gift' ? 'ID (if any)' : 'Not used for chat';
 
-    // Cập nhật border + badge màu theo loại
+    // Update the left border and badge colour by source type
     row.dataset.src = source;
     const badge = row.querySelector('[data-src-label]');
     if (badge) {
@@ -161,7 +161,7 @@ function createRuleRow(rule) {
         const config = readMasterFromUi();
         send({ type: 'master_save', master: config });
         send({ type: 'master_test', ruleId: row.dataset.ruleId, diamonds: 100 });
-        setMasterMessage('Đang test luật trên Unity…');
+        setMasterMessage('Testing this rule on Unity…');
     });
     updateRuleSource(row);
     return row;
@@ -222,7 +222,7 @@ function renderGiftCatalog() {
                     giftId: String(gift.giftId || ''),
                     displayDiamonds: Number(gift.diamondCount) || 0, action: 'dance',
                 })));
-                setMasterMessage('Đã thêm gift vào cuối bảng. Chọn hành động rồi bấm Lưu & áp dụng.');
+                setMasterMessage('Gift added to the bottom of the list. Choose an action, then press Save & apply.');
             });
             return btn;
         })
@@ -248,7 +248,7 @@ function setBackgroundStatus(text, state = '') {
 
 const bgVideoMeta = new Map();
 // Big clips are not fetched just to draw a thumbnail; the operator presses
-// "Xem trước" and the browser downloads only what it needs then.
+// "Preview" and the browser downloads only what it needs then.
 const BG_AUTO_THUMB_BYTES = 20 * 1024 * 1024;
 
 function formatBytes(bytes) {
@@ -267,7 +267,7 @@ function formatDuration(seconds) {
 }
 
 function backgroundKindLabel(background) {
-    return background && background.type === 'video' ? 'VIDEO' : 'ẢNH';
+    return background && background.type === 'video' ? 'VIDEO' : 'IMAGE';
 }
 
 function backgroundUrlFor(item) {
@@ -375,14 +375,14 @@ function previewBackground(item) {
         ui.bgPreview.replaceChildren(image);
     }
 
-    setBackgroundMessage(`Đang xem trước ${item.file} (chưa áp dụng).`);
+    setBackgroundMessage(`Previewing ${item.file} (not applied yet).`);
 }
 
 function setAckStatus(ack) {
-    const at = ack.at ? new Date(ack.at).toLocaleTimeString('vi-VN') : '—';
+    const at = ack.at ? new Date(ack.at).toLocaleTimeString('en-US') : '—';
     if (ack.ok === false) {
         return setBackgroundStatus(
-            `Unity không áp dụng được ${ack.file || 'background'}: ${ack.error || 'lỗi không rõ'} (${at}).`,
+            `Unity could not apply ${ack.file || 'background'}: ${ack.error || 'unknown error'} (${at}).`,
             'error'
         );
     }
@@ -391,7 +391,7 @@ function setAckStatus(ack) {
     const transform = backgroundState && backgroundState.type === 'video'
         ? ` · ${transformLabel(transformFromConfig(backgroundState))}`
         : '';
-    setBackgroundStatus(`Unity đã áp dụng ${ack.file}${dims}${duration}${transform} lúc ${at}.`, 'ok');
+    setBackgroundStatus(`Unity applied ${ack.file}${dims}${duration}${transform} at ${at}.`, 'ok');
 }
 
 function renderBackgroundCurrent(background, ack) {
@@ -414,7 +414,7 @@ function renderBackgroundCurrent(background, ack) {
         ui.bgPreview.replaceChildren(element);
     } else {
         ui.bgPreview.replaceChildren(Object.assign(document.createElement('span'), {
-            className: 'muted', textContent: 'Chưa có background'
+            className: 'muted', textContent: 'No background yet'
         }));
     }
 
@@ -434,11 +434,11 @@ function renderBackgroundCurrent(background, ack) {
     }
 
     if (!background) {
-        setBackgroundStatus('Chưa có cấu hình background.', '');
+        setBackgroundStatus('No background configured.', '');
     } else if (backgroundAck && backgroundAck.generation === background.generation) {
         setAckStatus(backgroundAck);
     } else {
-        setBackgroundStatus('Đã lưu cấu hình. Unity chưa xác nhận (chưa kết nối hoặc đang tải).', 'pending');
+        setBackgroundStatus('Saved. Unity has not confirmed yet (not connected or still loading).', 'pending');
     }
 
     renderBackgroundList();
@@ -450,7 +450,7 @@ function renderBackgroundList() {
     if (!items.length) {
         ui.bgList.replaceChildren(Object.assign(document.createElement('span'), {
             className: 'muted',
-            textContent: 'Chưa có file nào. Thả ảnh vào LiveAssets/Backgrounds/images, video vào DJ_VIDEO hoặc LiveAssets/Backgrounds/videos, rồi bấm ↻ Refresh.',
+            textContent: 'No files yet. Drop images into LiveAssets/Backgrounds/images, videos into DJ_VIDEO or LiveAssets/Backgrounds/videos, then press ↻ Refresh.',
         }));
         return;
     }
@@ -485,7 +485,7 @@ function buildBackgroundCard(item) {
 
     const kind = document.createElement('span');
     kind.className = `bg-kind${isVideo ? ' is-video' : ''}`;
-    kind.textContent = isVideo ? 'VIDEO' : 'ẢNH';
+    kind.textContent = isVideo ? 'VIDEO' : 'IMAGE';
     thumb.append(kind);
 
     const name = document.createElement('p');
@@ -523,7 +523,7 @@ function buildBackgroundCard(item) {
     const apply = document.createElement('button');
     apply.type = 'button';
     apply.className = isActive ? 'btn btn-secondary btn-sm' : 'btn btn-primary btn-sm';
-    apply.textContent = isActive ? 'Đang dùng' : 'Apply';
+    apply.textContent = isActive ? 'In use' : 'Apply';
     apply.disabled = isActive;
     apply.addEventListener('click', () => applyBackground(item));
     actions.append(apply);
@@ -532,7 +532,7 @@ function buildBackgroundCard(item) {
         const watch = document.createElement('button');
         watch.type = 'button';
         watch.className = 'btn btn-secondary btn-sm';
-        watch.textContent = Number(item.bytes) > BG_AUTO_THUMB_BYTES ? 'Xem trước' : 'Xem';
+        watch.textContent = Number(item.bytes) > BG_AUTO_THUMB_BYTES ? 'Preview' : 'View';
         watch.addEventListener('click', () => previewBackground({ ...item, url }));
         actions.append(watch);
     }
@@ -550,7 +550,7 @@ function buildBackgroundCard(item) {
 }
 
 async function refreshBackgrounds() {
-    setBackgroundMessage('Đang làm mới danh sách…');
+    setBackgroundMessage('Refreshing the list…');
     try {
         const [listResponse, currentResponse] = await Promise.all([
             fetch('/api/backgrounds', { cache: 'no-store' }),
@@ -562,9 +562,9 @@ async function refreshBackgrounds() {
             renderBackgroundCurrent(current.background, current.ack || null);
         }
         renderBackgroundList();
-        setBackgroundMessage(`Đã đọc ${backgroundList.images.length + backgroundList.videos.length} background.`);
+        setBackgroundMessage(`Loaded ${backgroundList.images.length + backgroundList.videos.length} background file(s).`);
     } catch (error) {
-        setBackgroundMessage('Không đọc được danh sách background: ' + error.message, true);
+        setBackgroundMessage('Could not read the background list: ' + error.message, true);
     }
 }
 
@@ -588,21 +588,21 @@ function applyBackground(item, transformOverride) {
             body: JSON.stringify({ background }),
         }).then(response => response.json().then(body => ({ ok: response.ok, body })))
           .then(({ ok, body }) => {
-              if (!ok) throw new Error(body.error || 'Không áp dụng được background.');
+              if (!ok) throw new Error(body.error || 'Could not apply the background.');
               renderBackgroundCurrent(body.background, null);
-              setBackgroundMessage(body.message || 'Đã áp dụng background.');
+              setBackgroundMessage(body.message || 'Background applied.');
           })
           .catch(error => setBackgroundMessage(error.message, true));
         return;
     }
-    setBackgroundStatus('Đang gửi cấu hình tới Unity…', 'pending');
-    setBackgroundMessage('Đang áp dụng ' + item.file + '…');
+    setBackgroundStatus('Sending the configuration to Unity…', 'pending');
+    setBackgroundMessage('Applying ' + item.file + '…');
 }
 
 function applyBackgroundReply(data) {
     if (!data.background) return;
     renderBackgroundCurrent(data.background, null);
-    setBackgroundMessage(data.message || 'Đã áp dụng background.');
+    setBackgroundMessage(data.message || 'Background applied.');
 }
 
 function confirmBackgroundAck(data) {
@@ -635,8 +635,8 @@ function transformFromConfig(background) {
 
 function transformLabel(transform) {
     const parts = [`${transform.rotation}°`];
-    if (transform.flipHorizontal) parts.push('lật ngang');
-    if (transform.flipVertical) parts.push('lật dọc');
+    if (transform.flipHorizontal) parts.push('flip H');
+    if (transform.flipVertical) parts.push('flip V');
     return parts.join(' · ');
 }
 
@@ -652,7 +652,7 @@ function syncTransformControls(transform) {
     });
     if (ui.bgFlipH) ui.bgFlipH.checked = transform.flipHorizontal;
     if (ui.bgFlipV) ui.bgFlipV.checked = transform.flipVertical;
-    if (ui.bgTransformCurrent) ui.bgTransformCurrent.textContent = `Đang áp dụng: ${transformLabel(transform)}`;
+    if (ui.bgTransformCurrent) ui.bgTransformCurrent.textContent = `Applied: ${transformLabel(transform)}`;
 }
 
 function readTransformControls() {
@@ -674,8 +674,8 @@ function transformControlsAvailable() {
     });
     if (ui.bgTransformHint) {
         ui.bgTransformHint.textContent = video
-            ? 'Bấm "Áp dụng cho Live" để gửi ngay sang Unity, không cần restart.'
-            : 'Chọn một video để xoay hoặc lật. Ảnh PNG/JPG giữ nguyên.';
+            ? 'Press "Apply to Live" to push it to Unity now, no restart needed.'
+            : 'Select a video to rotate or flip. PNG/JPG images are unaffected.';
     }
 }
 
@@ -728,7 +728,7 @@ function connectSocket() {
         if (data.type === 'status' || data.type === 'error') setStatus(data);
         if (data.type === 'metrics')        setMetrics(data);
         if (data.type === 'master_config')  renderMaster(data.master);
-        if (data.type === 'master_saved')   setMasterMessage(data.message || 'Đã lưu Master.');
+        if (data.type === 'master_saved')   setMasterMessage(data.message || 'Master saved.');
         if (data.type === 'gift_observed')  observeGift(data);
         if (data.type === 'gift_catalog') {
             recentGifts.clear();
@@ -739,11 +739,11 @@ function connectSocket() {
         if (data.type === 'background_config') renderBackgroundCurrent(data.background, null);
         if (data.type === 'background_saved')  applyBackgroundReply(data);
         if (data.type === 'background_ack')    confirmBackgroundAck(data);
-        if (data.type === 'error') setMasterMessage(data.message || 'Có lỗi.', true);
+        if (data.type === 'error') setMasterMessage(data.message || 'Something went wrong.', true);
     });
 
     socket.addEventListener('close', () => {
-        setStatus({ state: 'disconnected', message: 'Đang kết nối lại máy chủ…' });
+        setStatus({ state: 'disconnected', message: 'Reconnecting to the server…' });
         reconnectTimer = setTimeout(connectSocket, 2000);
     });
 
@@ -762,7 +762,7 @@ ui.reset.addEventListener('click',     () => send({ type: 'reset_game' }));
 ui.addMasterRule.addEventListener('click', () => ui.masterRules.append(createRuleRow(emptyRule())));
 ui.saveMaster.addEventListener('click', () => {
     send({ type: 'master_save', master: readMasterFromUi() });
-    setMasterMessage('Đang lưu và áp dụng…');
+    setMasterMessage('Saving and applying…');
 });
 
 document.querySelectorAll('[data-demo-count]').forEach(btn => {

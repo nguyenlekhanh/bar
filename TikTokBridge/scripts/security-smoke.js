@@ -78,8 +78,8 @@ async function unregisteredTest() {
         socket.once('error', reject);
     });
     socket.send(JSON.stringify({ type: 'reset_game' }));
-    const denial = await expectMessage(waiters, message => message.type === 'error' && /chưa đăng ký/.test(message.message));
-    assert.match(denial.message, /chưa đăng ký/);
+    const denial = await expectMessage(waiters, message => message.type === 'error' && /not registered/i.test(message.message));
+    assert.match(denial.message, /not registered/i);
     socket.close();
 }
 

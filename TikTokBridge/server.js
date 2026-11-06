@@ -87,7 +87,7 @@ const demoTimeouts = new Set();
 let connectionStatus = {
     state: 'idle',
     username: null,
-    message: 'Chưa kết nối'
+    message: 'Not connected'
 };
 let metrics = createMetrics();
 let masterConfig = sanitizeMasterConfig(initialMasterConfig);
@@ -191,7 +191,7 @@ app.get('/api/gifs', async (_req, res) => {
     } catch (error) {
         if (error.code === 'ENOENT') return res.json([]);
         console.error('Không thể đọc thư mục GIF:', error);
-        res.status(500).json({ error: 'Không thể đọc danh sách GIF' });
+        res.status(500).json({ error: 'Could not read the GIF list.' });
     }
 });
 
@@ -200,7 +200,7 @@ app.get('/api/backgrounds', async (_req, res) => {
         res.json(await backgroundCatalog());
     } catch (error) {
         console.error('Không thể đọc thư mục background:', error.message);
-        res.status(500).json({ error: 'Không thể đọc danh sách background.' });
+        res.status(500).json({ error: 'Could not read the background list.' });
     }
 });
 
@@ -212,7 +212,7 @@ const backgroundBodyParser = express.json({ limit: '16kb' });
 app.post('/api/background', backgroundBodyParser, async (req, res) => {
     const result = await applyBackgroundRequest(req.body?.background ?? req.body);
     if (!result.ok) return res.status(400).json({ error: result.error });
-    res.json({ background: result.background, message: 'Đã gửi background tới Unity.' });
+    res.json({ background: result.background, message: 'Background sent to Unity.' });
 });
 
 app.use((_req, res) => res.status(404).type('text/plain').send('Not found'));
@@ -677,7 +677,7 @@ function emitDemoAction(action, userIndex = 1, value = 1, giftName = '', manualN
 function startDemo(count) {
     stopDemo();
     resetSessionState('demo');
-    setStatus('demo', null, `Chế độ demo: ${count} người`);
+    setStatus('demo', null, `Demo mode: ${count} viewer${count === 1 ? '' : 's'}`);
     broadcast({ type: 'reset' });
 
     for (let index = 1; index <= count; index += 1) {
@@ -724,8 +724,8 @@ function scheduleReconnect(username) {
         'reconnecting',
         username,
         LIVE_PROVIDER === 'tikfinity'
-            ? `Chưa thấy TikFinity Desktop. Tự thử lại sau ${Math.ceil(delayMs / 1000)} giây...`
-            : `Mất kết nối TikTok. Tự kết nối lại sau ${Math.ceil(delayMs / 1000)} giây...`
+            ? `TikFinity Desktop not found. Retrying in ${Math.ceil(delayMs / 1000)}s...`
+            : `TikTok disconnected. Reconnecting in ${Math.ceil(delayMs / 1000)}s...`
     );
     reconnectTimer = setTimeout(() => {
         reconnectTimer = null;
@@ -752,7 +752,7 @@ async function connectToTikFinity(username, options = {}) {
     setStatus(
         isReconnect ? 'reconnecting' : 'connecting',
         username,
-        isReconnect ? 'Đang kết nối lại TikFinity Desktop...' : 'Đang kết nối TikFinity Desktop...'
+        isReconnect ? 'Reconnecting to TikFinity Desktop...' : 'Connecting to TikFinity Desktop...'
     );
 
     const connection = new WebSocket(TIKFINITY_WS_URL);
@@ -762,7 +762,7 @@ async function connectToTikFinity(username, options = {}) {
     connection.on('open', () => {
         if (!active()) return;
         reconnectFailures = 0;
-        setStatus('connected', username, `Đã kết nối TikFinity cho @${username}`);
+        setStatus('connected', username, `TikFinity connected for @${username}`);
         broadcastMetrics();
         console.log(`Đã kết nối TikFinity tại ${TIKFINITY_WS_URL}`);
     });
@@ -822,7 +822,7 @@ async function connectToTikTok(username, options = {}) {
     setStatus(
         isReconnect ? 'reconnecting' : 'connecting',
         username,
-        isReconnect ? `Đang kết nối lại @${username}...` : `Đang kết nối @${username}...`
+        isReconnect ? `Reconnecting to @${username}...` : `Connecting to @${username}...`
     );
     let connection;
     try {
@@ -834,7 +834,7 @@ async function connectToTikTok(username, options = {}) {
     } catch (error) {
         liveConnection = null;
         console.error(`Không thể tạo kết nối @${username}:`, error.message);
-        setStatus('error', username, `Không thể khởi tạo kết nối TikTok: ${error.message}`);
+        setStatus('error', username, `Could not start the TikTok connection: ${error.message}`);
         return;
     }
     liveConnection = connection;
@@ -845,7 +845,7 @@ async function connectToTikTok(username, options = {}) {
         liveConnection = null;
         desiredUsername = null;
         cancelReconnect();
-        setStatus('ended', username, `Live @${username} đã kết thúc`);
+        setStatus('ended', username, `Live @${username} has ended`);
     });
     connection.on('disconnected', () => {
         if (liveConnection !== connection) return;
@@ -860,7 +860,7 @@ async function connectToTikTok(username, options = {}) {
             return;
         }
         reconnectFailures = 0;
-        setStatus('connected', username, `Đã kết nối @${username}`);
+        setStatus('connected', username, `Connected @${username}`);
         broadcastMetrics();
         console.log(`Đã kết nối @${username}, room ${state.roomId}`);
     } catch (error) {
@@ -877,9 +877,9 @@ async function handleClientMessage(ws, message) {
     }
 
     if (message.type === 'register') {
-        if (ws.registered) return send(ws, { type: 'error', message: 'Client đã đăng ký quyền.' });
+        if (ws.registered) return send(ws, { type: 'error', message: 'Client is already registered.' });
         if (message.role !== 'control' && message.role !== 'overlay') {
-            return send(ws, { type: 'error', message: 'Vai trò client không hợp lệ.' });
+            return send(ws, { type: 'error', message: 'Invalid client role.' });
         }
         ws.role = message.role;
         ws.registered = true;
@@ -896,35 +896,35 @@ async function handleClientMessage(ws, message) {
         return;
     }
 
-    if (!ws.registered) return send(ws, { type: 'error', message: 'Client chưa đăng ký quyền.' });
+    if (!ws.registered) return send(ws, { type: 'error', message: 'Client is not registered.' });
 
     const controlOnly = message.type === 'master_save' || message.type === 'master_test';
     const operatorOnly = new Set([
         'set_username', 'disconnect_tiktok', 'demo_start', 'demo_stop', 'demo_event', 'reset_game'
     ]).has(message.type);
     if (controlOnly && ws.role !== 'control') {
-        return send(ws, { type: 'error', message: 'Lệnh này chỉ dành cho bảng Master.' });
+        return send(ws, { type: 'error', message: 'This command is only for the Master panel.' });
     }
     if (operatorOnly && ws.role !== 'control' && !ws.nativeClient) {
-        return send(ws, { type: 'error', message: 'Client không có quyền điều khiển.' });
+        return send(ws, { type: 'error', message: 'Client has no control permission.' });
     }
 
     if (message.type === 'set_background') {
         if (ws.role !== 'control') {
-            return send(ws, { type: 'error', message: 'Lệnh này chỉ dành cho bảng điều khiển.' });
+            return send(ws, { type: 'error', message: 'This command is only for the Control panel.' });
         }
         const result = await applyBackgroundRequest(message.background);
         if (!result.ok) return send(ws, { type: 'error', message: result.error });
         return send(ws, {
             type: 'background_saved',
             background: result.background,
-            message: 'Đã áp dụng background.'
+            message: 'Background applied.'
         });
     }
 
     if (message.type === 'background_ack') {
         if (ws.role !== 'overlay') {
-            return send(ws, { type: 'error', message: 'Chỉ Unity mới gửi được xác nhận background.' });
+            return send(ws, { type: 'error', message: 'Only Unity can acknowledge a background change.' });
         }
         backgroundAck = {
             file: String(message.file || '').slice(0, 80),
@@ -944,12 +944,12 @@ async function handleClientMessage(ws, message) {
         await fs.writeFile(masterConfigPath, `${JSON.stringify(masterConfig, null, 2)}\n`, 'utf8');
         broadcast({ type: 'master_config', master: masterConfig });
         broadcast(viewerGuideMessage());
-        return send(ws, { type: 'master_saved', message: 'Đã lưu và áp dụng Master.' });
+        return send(ws, { type: 'master_saved', message: 'Master saved and applied.' });
     }
 
     if (message.type === 'master_test') {
         const rule = masterConfig.rules.find(item => item.id === message.ruleId && item.enabled);
-        if (!rule) return send(ws, { type: 'error', message: 'Không tìm thấy luật Master để test.' });
+        if (!rule) return send(ws, { type: 'error', message: 'Master rule to test was not found.' });
         const user = { userId: 'master-test', uniqueId: 'master_test', nickname: 'Master Test', avatar: '' };
         if (rule.source === 'chat') {
             return processGameEvent({
@@ -975,7 +975,7 @@ async function handleClientMessage(ws, message) {
         if (!username) {
             return send(ws, {
                 type: 'error',
-                message: 'Username chỉ được gồm chữ, số, dấu chấm hoặc gạch dưới.'
+                message: 'Username may only contain letters, digits, dots or underscores.'
             });
         }
         return connectToLiveProvider(username);
@@ -987,7 +987,7 @@ async function handleClientMessage(ws, message) {
         cancelReconnect();
         connectionAttempt += 1;
         await disconnectCurrentConnection();
-        setStatus('idle', null, 'Đã ngắt kết nối');
+        setStatus('idle', null, 'Disconnected');
         return;
     }
 
@@ -1002,7 +1002,7 @@ async function handleClientMessage(ws, message) {
     }
     if (message.type === 'demo_stop') {
         stopDemo();
-        setStatus('idle', null, 'Đã dừng demo');
+        setStatus('idle', null, 'Demo stopped');
         return;
     }
     if (message.type === 'demo_event') {
@@ -1024,7 +1024,7 @@ async function handleClientMessage(ws, message) {
         return;
     }
 
-    send(ws, { type: 'error', message: 'Lệnh không được hỗ trợ.' });
+    send(ws, { type: 'error', message: 'Unsupported command.' });
 }
 
 function rejectUpgrade(socket, status = '403 Forbidden') {
@@ -1061,15 +1061,15 @@ wss.on('connection', (ws, request) => {
         } catch {
             ws.invalidMessages += 1;
             if (ws.invalidMessages >= 3) return ws.close(1008, 'Invalid messages');
-            return send(ws, { type: 'error', message: 'Dữ liệu không hợp lệ' });
+            return send(ws, { type: 'error', message: 'Invalid payload.' });
         }
         if (!message || typeof message !== 'object' || Array.isArray(message) ||
             typeof message.type !== 'string' || message.type.length > 40) {
-            return send(ws, { type: 'error', message: 'Cấu trúc lệnh không hợp lệ.' });
+            return send(ws, { type: 'error', message: 'Invalid command structure.' });
         }
         void handleClientMessage(ws, message).catch(error => {
             console.error('Không thể xử lý lệnh WebSocket:', error?.message || error);
-            send(ws, { type: 'error', message: 'Không thể xử lý lệnh.' });
+            send(ws, { type: 'error', message: 'Could not process the command.' });
         });
     });
     ws.on('error', error => console.warn('WebSocket client error:', error.message));
