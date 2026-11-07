@@ -99,23 +99,16 @@ namespace TikTokLiveGame
 
         private IEnumerator Spotlight(PlayerActor actor, TikTokEvent data)
         {
-            GameObject lightObject = new($"Gift Spotlight — {actor.Nickname}");
-            Light light = lightObject.AddComponent<Light>();
-            light.type = LightType.Spot;
-            light.color = data.diamondCount >= 100 ? new Color(1f, 0.22f, 0.68f) : new Color(0.2f, 0.9f, 1f);
-            light.intensity = data.diamondCount >= 100 ? 35f : 22f;
-            light.range = 14f;
-            light.spotAngle = 38f;
-
             float duration = Mathf.Clamp(data.durationMs / 1000f, 3f, 12f);
-            float end = Time.time + duration;
-            while (actor != null && Time.time < end)
+            BarLightController barLights = BarLightController.Instance;
+            if (barLights != null && actor != null)
             {
-                lightObject.transform.position = actor.transform.position + new Vector3(0f, 7f, 2f);
-                lightObject.transform.LookAt(actor.transform.position + Vector3.up);
-                yield return null;
+                // Visual spotlight cone (no UnityEngine.Light); the controller owns
+                // follow, fade and pooling so gift bursts never allocate a rig.
+                barLights.PlayGiftSpotlight(actor.transform, data.diamondCount >= 100, duration);
+                barLights.TriggerColorSweep();
             }
-            Destroy(lightObject);
+            yield break;
         }
 
         private void LaunchFireworks(int burstCount)

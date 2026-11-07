@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using TikTokLiveBar;
 using UnityEngine;
 
@@ -8,11 +7,13 @@ namespace TikTokLiveGame
     {
         private const int FloorLightingLayer = 8;
         private const float DjBoothHeightOffset = 0.85f;
-        private static readonly List<DiscoLight> discoLights = new();
+
+        private enum MovingHeadStyle { Spot, Wash, Beam, GoboDots, GoboStar }
 
         public static void Build()
         {
-            RenderSettings.ambientLight = new Color(0.15f, 0.02f, 0.05f);
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(0.055f, 0.028f, 0.075f);
             RenderSettings.fog = false;
             RenderSettings.fogColor = new Color(0.04f, 0.005f, 0.01f);
             RenderSettings.fogMode = FogMode.ExponentialSquared;
@@ -158,11 +159,12 @@ namespace TikTokLiveGame
             }
             clubRoot.transform.position = new Vector3(0, 0, -12f);
 
-            new GameObject("Club Beat").AddComponent<ClubPulseController>();
+            // Visual, shader-driven club lighting (no UnityEngine.Light components).
+            GameObject barLights = new("Bar Lights");
+            barLights.transform.SetParent(clubRoot.transform, false);
+            barLights.AddComponent<BarLightController>();
 
-            AddLight("Hell Red Light", new Vector3(-6f, 7f, 1f), new Color(1f, 0.1f, 0.1f), 4.8f, 20f);
-            AddLight("Hell Orange Light", new Vector3(6f, 7f, 0f), new Color(1f, 0.4f, 0f), 4.6f, 20f);
-            AddLight("Stage Demon Light", new Vector3(0f, 8f, -7f), new Color(0.8f, 0f, 0.2f), 5.8f, 23f);
+            new GameObject("Club Beat").AddComponent<ClubPulseController>();
         }
 
         private static string ResolveBackdropPath(string fileName)
@@ -287,45 +289,6 @@ namespace TikTokLiveGame
             
             gifPlayer.FrameDirectory = frameDir;
             gifPlayer.FrameRate = 30f; // Tốc độ khung hình mượt mà
-
-            // Ánh sáng chiếu vào nhân vật
-            AddDjKeyLight("DJ Warm Key", new Vector3(-2.2f, 4.25f, -5.8f), new Color(1f, 0.55f, 0.38f), 3.2f);
-            AddDjKeyLight("DJ Cool Rim", new Vector3(2.4f, 4.55f, -8.7f), new Color(0.22f, 0.55f, 1f), 2.7f);
-        }
-
-        private static void AddDjKeyLight(string name, Vector3 position, Color color, float intensity)
-        {
-            GameObject lightObject = new(name);
-            lightObject.transform.position = position;
-            lightObject.transform.LookAt(new Vector3(0f, 2.45f, -8.05f));
-            Light light = lightObject.AddComponent<Light>();
-            light.type = LightType.Spot;
-            light.color = color;
-            light.intensity = intensity;
-            light.range = 9f;
-            light.spotAngle = 46f;
-            
-            light.innerSpotAngle = 24f;
-            light.shadows = LightShadows.Soft;
-            light.cullingMask = ~(1 << FloorLightingLayer);
-            
-            for (int i = 0; i < 4; i++)
-            {
-                GameObject obj = new($"Disco Light {i}");
-                obj.transform.position = new Vector3(-6f + i * 4f, 6.5f, 5f);
-                obj.transform.rotation = Quaternion.Euler(50f, 180f, 0f);
-                Light l = obj.AddComponent<Light>();
-                l.type = LightType.Spot;
-                l.range = 25f;
-                l.spotAngle = 60f;
-                l.innerSpotAngle = 30f;
-                l.intensity = 0f;
-                l.shadows = LightShadows.Soft;
-                l.cullingMask = -1; 
-                DiscoLight disco = obj.AddComponent<DiscoLight>();
-                disco.index = i;
-                discoLights.Add(disco);
-            }
         }
 
         private static void CreateDjVideoScreen()
@@ -548,8 +511,7 @@ namespace TikTokLiveGame
                     2 => MovingHeadStyle.GoboStar,
                     _ => MovingHeadStyle.Beam
                 };
-                bool castsFloorLight = index % 3 == 0;
-                CreateMovingHead($"Moving Head Ring {index}", origin, beamColors[index % beamColors.Length], index * 0.82f, style, castsFloorLight);
+                CreateMovingHead($"Moving Head Ring {index}", origin, beamColors[index % beamColors.Length], index * 0.82f, style);
             }
 
             for (int index = 0; index < 8; index++)
@@ -558,7 +520,7 @@ namespace TikTokLiveGame
                 Vector3 origin = RingPoint(3.2f, angle, -0.47f);
                 MovingHeadStyle style = index % 2 == 0 ? MovingHeadStyle.GoboDots : MovingHeadStyle.Beam;
                 Color color = beamColors[(index + 1) % beamColors.Length];
-                CreateMovingHead($"Moving Head Floor FX {index}", origin, color, index * 1.16f + 0.4f, style, false);
+                CreateMovingHead($"Moving Head Floor FX {index}", origin, color, index * 1.16f + 0.4f, style);
             }
         }
 
@@ -578,7 +540,7 @@ namespace TikTokLiveGame
             bar.GetComponent<Renderer>().sharedMaterial = material;
         }
 
-        private static void CreateMovingHead(string name, Vector3 origin, Color color, float phase, MovingHeadStyle style, bool castsLight)
+        private static void CreateMovingHead(string name, Vector3 origin, Color color, float phase, MovingHeadStyle style)
         {
             GameObject fixture = new(name);
             fixture.transform.position = origin;
@@ -592,9 +554,6 @@ namespace TikTokLiveGame
             CreateFixturePart("Yoke Right", fixture.transform, PrimitiveType.Cube, new Vector3(0.19f, 0f, 0.02f), new Vector3(0.055f, 0.34f, 0.085f), metal);
             CreateFixturePart("Lamp Body", fixture.transform, PrimitiveType.Cylinder, new Vector3(0f, 0.08f, 0.08f), new Vector3(0.2f, 0.22f, 0.2f), metal, new Vector3(90f, 0f, 0f));
             CreateFixturePart("Lens", fixture.transform, PrimitiveType.Sphere, new Vector3(0f, 0.08f, 0.29f), wash ? new Vector3(0.16f, 0.16f, 0.055f) : new Vector3(0.125f, 0.125f, 0.045f), lens);
-            MovingHeadFixture head = fixture.AddComponent<MovingHeadFixture>();
-            head.Initialize(origin, color, phase, style, castsLight);
-            if (castsLight) head.GetComponent<Light>().cullingMask = -1;
         }
 
         private static void CreateFixturePart(string name, Transform parent, PrimitiveType type, Vector3 localPosition, Vector3 localScale, Material material, Vector3 localEuler = default)
@@ -637,19 +596,11 @@ namespace TikTokLiveGame
             for (int index = 0; index < positions.Length; index++)
             {
                 float x = positions[index];
-                GameObject strobeObject = new($"Strobe Light {index}");
+                GameObject strobeObject = new($"Strobe Fixture {index}");
                 strobeObject.transform.position = new Vector3(x, index is 1 or 2 ? 7.15f : 6.3f, index is 1 or 2 ? -4.15f : -5.2f);
                 CreateFixturePart("Strobe Housing", strobeObject.transform, PrimitiveType.Cube, Vector3.zero, new Vector3(0.58f, 0.24f, 0.28f), housing);
                 CreateFixturePart("Strobe Lens", strobeObject.transform, PrimitiveType.Cube, new Vector3(0f, 0f, 0.16f), new Vector3(0.46f, 0.14f, 0.045f), lens);
-                Light strobe = strobeObject.AddComponent<Light>();
-                strobe.type = LightType.Spot;
-                strobe.color = Color.white;
-                strobe.range = 22f;
-                strobe.spotAngle = 72f;
-                strobe.intensity = 0f;
-                strobe.cullingMask = ~(1 << FloorLightingLayer);
                 strobeObject.transform.LookAt(new Vector3(x * 0.3f, 0.7f, 0.8f));
-                strobeObject.AddComponent<ClubStrobeLight>().Initialize(strobe, index * 0.055f);
             }
         }
 
@@ -734,18 +685,6 @@ namespace TikTokLiveGame
             cylinder.transform.localEulerAngles = euler;
             cylinder.transform.localScale = scale;
             cylinder.GetComponent<Renderer>().sharedMaterial = material;
-        }
-
-        private static void AddLight(string name, Vector3 position, Color color, float intensity, float range)
-        {
-            GameObject lightObject = new(name);
-            lightObject.transform.position = position;
-            Light light = lightObject.AddComponent<Light>();
-            light.type = LightType.Point;
-            light.color = color;
-            light.intensity = intensity;
-            light.range = range;
-            light.cullingMask = ~(1 << FloorLightingLayer);
         }
 
         private static void CreateBackgroundQuad()

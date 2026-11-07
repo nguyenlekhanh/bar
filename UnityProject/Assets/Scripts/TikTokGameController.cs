@@ -23,7 +23,6 @@ namespace TikTokLiveGame
         private int cinematicVersion;
         private bool restoreControlsAfterCinematic;
         private readonly List<Renderer> environmentRenderers = new();
-        private readonly List<Light> environmentLights = new();
         private bool stylesReady;
         private GUIStyle panelStyle;
         private GUIStyle titleStyle;
@@ -327,10 +326,9 @@ namespace TikTokLiveGame
             {
                 foreach (Renderer renderer in FindObjectsByType<Renderer>(FindObjectsSortMode.None))
                     if (!renderer.transform.IsChildOf(playerManager.transform)) environmentRenderers.Add(renderer);
-                environmentLights.AddRange(FindObjectsByType<Light>(FindObjectsSortMode.None));
             }
             foreach (Renderer renderer in environmentRenderers) if (renderer != null) renderer.enabled = !chromaMode;
-            foreach (Light light in environmentLights) if (light != null) light.enabled = !chromaMode;
+            if (BarLightController.Instance != null) BarLightController.Instance.SetLightingEnabled(!chromaMode);
             RenderSettings.fog = !chromaMode;
             if (Camera.main != null) Camera.main.backgroundColor = chromaMode ? new Color(0f, 1f, 0f) : new Color(0.01f, 0.005f, 0.025f);
         }
