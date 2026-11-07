@@ -118,11 +118,15 @@ namespace TikTokLiveGame
 
             activeClip = clip;
             voiceSource.clip = clip;
+            // The bridge already applied loudness normalization and the output
+            // gain before caching this WAV. This is the only Unity gain stage;
+            // keeping it at the configured value avoids applying +dB twice.
             voiceSource.volume = Mathf.Clamp01(announcement.volume);
             voiceSource.Play();
             client?.VoiceAck(id, true);
             Debug.Log($"[Voice] Playing {announcement.categoryLabel} ({announcement.provider}/{announcement.voice}) " +
-                      $"duration={clip.length:0.00}s text='{announcement.text}'");
+                      $"duration={clip.length:0.00}s sourceVolume={voiceSource.volume:0.00} listenerVolume={AudioListener.volume:0.00} " +
+                      $"duckLevel={announcement.duckLevel:0.00} duckFadeMs={announcement.duckFadeMs:0} text='{announcement.text}'");
 
             while (voiceSource != null && voiceSource.isPlaying && !stopRequested)
                 yield return null;

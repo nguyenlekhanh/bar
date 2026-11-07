@@ -8,8 +8,8 @@
   "language": "en-US",
   "speed": 1,
   "volume": 1,
-  "boostDb": 3,
-  "duckLevel": 0.22,
+  "boostDb": 6,
+  "duckLevel": 0.18,
   "duckFadeMs": 350,
   "maxQueue": 12,
   "expireMs": 45000,
@@ -415,7 +415,533 @@
         "text": "This party does not stop! Keep dancing!",
         "enabled": true
       }
+    ],
+    "quiet": [
+      {
+        "id": "quiet-01",
+        "text": "It's a little quiet in here tonight, but the music never stops!",
+        "enabled": true
+      },
+      {
+        "id": "quiet-02",
+        "text": "Where's everybody hiding? Come join the party!",
+        "enabled": true
+      },
+      {
+        "id": "quiet-03",
+        "text": "Don't be shy! Come say hello!",
+        "enabled": true
+      },
+      {
+        "id": "quiet-04",
+        "text": "I'm keeping this dance floor alive tonight!",
+        "enabled": true
+      },
+      {
+        "id": "quiet-05",
+        "text": "The room is calm, but the beat is about to wake it up!",
+        "enabled": true
+      },
+      {
+        "id": "quiet-06",
+        "text": "A little breathing room before the next big moment. Enjoy the groove!",
+        "enabled": true
+      },
+      {
+        "id": "quiet-07",
+        "text": "You don't need a crowd to have a good time. Just press play and move!",
+        "enabled": true
+      },
+      {
+        "id": "quiet-08",
+        "text": "The lights are low and the music is warm. Settle in and enjoy!",
+        "enabled": true
+      },
+      {
+        "id": "quiet-09",
+        "text": "This is your sign to turn the volume up and let loose!",
+        "enabled": true
+      },
+      {
+        "id": "quiet-10",
+        "text": "Quiet moments are just the intro to something bigger. Stay with me!",
+        "enabled": true
+      },
+      {
+        "id": "quiet-11",
+        "text": "I've got the music covered. You bring the good vibes!",
+        "enabled": true
+      },
+      {
+        "id": "quiet-12",
+        "text": "Take a breath, feel the rhythm, and get ready for the next drop!",
+        "enabled": true
+      },
+      {
+        "id": "quiet-13",
+        "text": "Cloud Disco is open all night. Pull up a chair or hit the floor!",
+        "enabled": true
+      },
+      {
+        "id": "quiet-14",
+        "text": "The party doesn't need a countdown. It needs you to enjoy the moment!",
+        "enabled": true
+      },
+      {
+        "id": "quiet-15",
+        "text": "Soft lights, smooth beat, good company. This is the life!",
+        "enabled": true
+      },
+      {
+        "id": "quiet-16",
+        "text": "Let the music settle in. We're just getting comfortable!",
+        "enabled": true
+      },
+      {
+        "id": "quiet-17",
+        "text": "No rush, no pressure. Just good music and a little late-night magic!",
+        "enabled": true
+      },
+      {
+        "id": "quiet-18",
+        "text": "If you're listening right now, this next one is for you!",
+        "enabled": true
+      },
+      {
+        "id": "quiet-19",
+        "text": "The floor might be cool, but this playlist is on fire!",
+        "enabled": true
+      },
+      {
+        "id": "quiet-20",
+        "text": "Stay a while. The best part of the night is still ahead!",
+        "enabled": true
+      }
+    ],
+    "music": [
+      {
+        "id": "music-01",
+        "text": "Now that's a beat you can move to!",
+        "enabled": true
+      },
+      {
+        "id": "music-02",
+        "text": "Feel that rhythm! Let the music take over!",
+        "enabled": true
+      },
+      {
+        "id": "music-03",
+        "text": "We're bringing nothing but good vibes tonight!",
+        "enabled": true
+      },
+      {
+        "id": "music-04",
+        "text": "This track has a pulse, and the dance floor knows it!",
+        "enabled": true
+      },
+      {
+        "id": "music-05",
+        "text": "Turn it up and let the bass do the talking!",
+        "enabled": true
+      },
+      {
+        "id": "music-06",
+        "text": "A smooth groove for the late-night crowd!",
+        "enabled": true
+      },
+      {
+        "id": "music-07",
+        "text": "That drop hit just right. Let's run it back in our heads!",
+        "enabled": true
+      },
+      {
+        "id": "music-08",
+        "text": "Good music, good lights, good energy. That's the Cloud Disco recipe!",
+        "enabled": true
+      },
+      {
+        "id": "music-09",
+        "text": "Listen to that melody. It's got midnight written all over it!",
+        "enabled": true
+      },
+      {
+        "id": "music-10",
+        "text": "The rhythm is locked in. All you have to do is move!",
+        "enabled": true
+      },
+      {
+        "id": "music-11",
+        "text": "This one is pure dance-floor fuel!",
+        "enabled": true
+      },
+      {
+        "id": "music-12",
+        "text": "Feel the kick, catch the groove, and stay in the pocket!",
+        "enabled": true
+      },
+      {
+        "id": "music-13",
+        "text": "That's the kind of track that makes the whole room move!",
+        "enabled": true
+      },
+      {
+        "id": "music-14",
+        "text": "Smooth, loud, and full of life. That's how we do it!",
+        "enabled": true
+      },
+      {
+        "id": "music-15",
+        "text": "Let the beat carry you into the next hour!",
+        "enabled": true
+      },
+      {
+        "id": "music-16",
+        "text": "The DJ booth is warm and the speakers are singing!",
+        "enabled": true
+      },
+      {
+        "id": "music-17",
+        "text": "This is the soundtrack to a night you won't forget!",
+        "enabled": true
+      },
+      {
+        "id": "music-18",
+        "text": "Big sound, clean groove, nothing but good energy!",
+        "enabled": true
+      },
+      {
+        "id": "music-19",
+        "text": "If this beat feels good, you already know what to do!",
+        "enabled": true
+      },
+      {
+        "id": "music-20",
+        "text": "We keep the music moving so the night never loses its rhythm!",
+        "enabled": true
+      }
+    ],
+    "energy": [
+      {
+        "id": "energy-01",
+        "text": "Come on, everybody! Let's turn up the energy!",
+        "enabled": true
+      },
+      {
+        "id": "energy-02",
+        "text": "Who's ready to dance?",
+        "enabled": true
+      },
+      {
+        "id": "energy-03",
+        "text": "Let's keep this party going!",
+        "enabled": true
+      },
+      {
+        "id": "energy-04",
+        "text": "I want to feel that energy!",
+        "enabled": true
+      },
+      {
+        "id": "energy-05",
+        "text": "Hands up, Cloud Disco! It's time to move!",
+        "enabled": true
+      },
+      {
+        "id": "energy-06",
+        "text": "The night is young, so let's make it loud!",
+        "enabled": true
+      },
+      {
+        "id": "energy-07",
+        "text": "Bring the heat! This dance floor is waiting!",
+        "enabled": true
+      },
+      {
+        "id": "energy-08",
+        "text": "Turn that energy all the way up!",
+        "enabled": true
+      },
+      {
+        "id": "energy-09",
+        "text": "Let's go, party people! The beat is in charge now!",
+        "enabled": true
+      },
+      {
+        "id": "energy-10",
+        "text": "Feel the rush and keep on moving!",
+        "enabled": true
+      },
+      {
+        "id": "energy-11",
+        "text": "This is the moment to let loose and have fun!",
+        "enabled": true
+      },
+      {
+        "id": "energy-12",
+        "text": "Cloud Disco, show me what you've got!",
+        "enabled": true
+      },
+      {
+        "id": "energy-13",
+        "text": "The speakers are hot and the night is ours!",
+        "enabled": true
+      },
+      {
+        "id": "energy-14",
+        "text": "Let's make some noise for the best party online!",
+        "enabled": true
+      },
+      {
+        "id": "energy-15",
+        "text": "No sitting still tonight! Get up and groove!",
+        "enabled": true
+      },
+      {
+        "id": "energy-16",
+        "text": "The energy is rising and I'm here for it!",
+        "enabled": true
+      },
+      {
+        "id": "energy-17",
+        "text": "Keep that fire burning, Cloud Disco!",
+        "enabled": true
+      },
+      {
+        "id": "energy-18",
+        "text": "We're going all in on good vibes and great music!",
+        "enabled": true
+      },
+      {
+        "id": "energy-19",
+        "text": "Let the rhythm pull you onto the floor!",
+        "enabled": true
+      },
+      {
+        "id": "energy-20",
+        "text": "This party has no brakes! Let's keep it rolling!",
+        "enabled": true
+      }
+    ],
+    "engage": [
+      {
+        "id": "engage-01",
+        "text": "Where are you all tuning in from tonight?",
+        "enabled": true
+      },
+      {
+        "id": "engage-02",
+        "text": "What's your favorite dance track?",
+        "enabled": true
+      },
+      {
+        "id": "engage-03",
+        "text": "Who's still rocking with me?",
+        "enabled": true
+      },
+      {
+        "id": "engage-04",
+        "text": "Drop a hello in the chat!",
+        "enabled": true
+      },
+      {
+        "id": "engage-05",
+        "text": "What song would you play next?",
+        "enabled": true
+      },
+      {
+        "id": "engage-06",
+        "text": "Are you dancing at home or just vibing? Either way, I see you!",
+        "enabled": true
+      },
+      {
+        "id": "engage-07",
+        "text": "What's the one song that always gets you moving?",
+        "enabled": true
+      },
+      {
+        "id": "engage-08",
+        "text": "Tell me your go-to karaoke track!",
+        "enabled": true
+      },
+      {
+        "id": "engage-09",
+        "text": "Who's got the best dance move in the room?",
+        "enabled": true
+      },
+      {
+        "id": "engage-10",
+        "text": "If you could request one song right now, what would it be?",
+        "enabled": true
+      },
+      {
+        "id": "engage-11",
+        "text": "Are you a front-row dancer or a chill in the back kind of person?",
+        "enabled": true
+      },
+      {
+        "id": "engage-12",
+        "text": "What's your favorite part of a night out?",
+        "enabled": true
+      },
+      {
+        "id": "engage-13",
+        "text": "Who's listening with headphones right now? Turn it up!",
+        "enabled": true
+      },
+      {
+        "id": "engage-14",
+        "text": "What city is bringing the late-night energy tonight?",
+        "enabled": true
+      },
+      {
+        "id": "engage-15",
+        "text": "If you're having a good time, let me know in the chat!",
+        "enabled": true
+      },
+      {
+        "id": "engage-16",
+        "text": "What's the last song that gave you chills?",
+        "enabled": true
+      },
+      {
+        "id": "engage-17",
+        "text": "Are you here for the music, the vibe, or both?",
+        "enabled": true
+      },
+      {
+        "id": "engage-18",
+        "text": "What's your current favorite artist? I'm taking notes!",
+        "enabled": true
+      },
+      {
+        "id": "engage-19",
+        "text": "Who's ready for a surprise track later tonight?",
+        "enabled": true
+      },
+      {
+        "id": "engage-20",
+        "text": "Give me a shout if you're dancing along!",
+        "enabled": true
+      }
+    ],
+    "dj": [
+      {
+        "id": "dj-01",
+        "text": "I told the speakers to behave tonight. They didn't listen!",
+        "enabled": true
+      },
+      {
+        "id": "dj-02",
+        "text": "My dance moves are powered by coffee and good bass!",
+        "enabled": true
+      },
+      {
+        "id": "dj-03",
+        "text": "I'm not saying I'm a legend, but the playlist is doing most of the work!",
+        "enabled": true
+      },
+      {
+        "id": "dj-04",
+        "text": "If this beat were a flavor, it would be extra spicy!",
+        "enabled": true
+      },
+      {
+        "id": "dj-05",
+        "text": "I tried to take a break, but the music had other plans!",
+        "enabled": true
+      },
+      {
+        "id": "dj-06",
+        "text": "The DJ booth is officially a no-sleep zone!",
+        "enabled": true
+      },
+      {
+        "id": "dj-07",
+        "text": "I've got two settings: smooth and smoother. This one is smooth!",
+        "enabled": true
+      },
+      {
+        "id": "dj-08",
+        "text": "You bring the energy, I'll bring the tracks. Deal?",
+        "enabled": true
+      },
+      {
+        "id": "dj-09",
+        "text": "I'm pretty sure the bass just asked for a raise!",
+        "enabled": true
+      },
+      {
+        "id": "dj-10",
+        "text": "No requests for the DJ? Perfect, because I've already got the good stuff!",
+        "enabled": true
+      },
+      {
+        "id": "dj-11",
+        "text": "This next transition is smoother than a fresh haircut!",
+        "enabled": true
+      },
+      {
+        "id": "dj-12",
+        "text": "I'm here all night, and the playlist is not running out of ideas!",
+        "enabled": true
+      },
+      {
+        "id": "dj-13",
+        "text": "The dance floor called. It wants more bass!",
+        "enabled": true
+      },
+      {
+        "id": "dj-14",
+        "text": "I keep the party moving so you don't have to think about the clock!",
+        "enabled": true
+      },
+      {
+        "id": "dj-15",
+        "text": "If you're smiling right now, my job is done!",
+        "enabled": true
+      },
+      {
+        "id": "dj-16",
+        "text": "The lights are flashing, the beat is bouncing, and we're just getting started!",
+        "enabled": true
+      },
+      {
+        "id": "dj-17",
+        "text": "I don't skip tracks. I create moments!",
+        "enabled": true
+      },
+      {
+        "id": "dj-18",
+        "text": "Somewhere between the bass and the melody, we found the perfect vibe!",
+        "enabled": true
+      },
+      {
+        "id": "dj-19",
+        "text": "This is the part of the night where the music does all the talking!",
+        "enabled": true
+      },
+      {
+        "id": "dj-20",
+        "text": "You stay for the vibe, I'll stay for the bass. Everybody wins!",
+        "enabled": true
+      }
     ]
   },
-  "pronunciations": []
+  "pronunciations": [],
+  "autonomous": {
+    "enabled": true,
+    "idleDetection": true,
+    "idleSeconds": 10,
+    "allowZeroViewers": true,
+    "randomDialogue": true,
+    "maxPerHour": 180,
+    "categories": [
+      "quiet",
+      "music",
+      "energy",
+      "engage",
+      "dj",
+      "random"
+    ]
+  }
 }

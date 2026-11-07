@@ -44,7 +44,7 @@ namespace TikTokLiveGame
         public string voice;
         public string provider;
         public float volume = 1f;
-        public float duckLevel = 0.22f;
+        public float duckLevel = 0.18f;
         public float duckFadeMs = 350f;
         public string[] userIds;
         public int animationDurationMs;

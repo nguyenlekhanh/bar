@@ -12,7 +12,8 @@
     "gifs:convert": "node scripts/convert-gifs.js",
     "gifs:watch": "node scripts/convert-gifs.js --watch",
     "security:smoke": "node scripts/security-smoke.js",
-    "test": "npm run check && node --test"
+    "test": "npm run check && node --test",
+    "test:voice:scheduler": "node scripts/voice-scheduler-test.js"
   },
   "keywords": [],
   "author": "ÔNG CHÚ MMO <https://ongchummo.com>",

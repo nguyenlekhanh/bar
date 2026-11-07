@@ -496,8 +496,8 @@
                 <label class="voice-field">Language<input value="English (US)" disabled></label>
                 <label class="voice-field">Speech speed <span class="voice-range"><input id="voice-speed" type="range" min="0.7" max="1.35" step="0.01" value="1"><output id="voice-speed-value">1.00×</output></span></label>
                 <label class="voice-field">Voice volume <span class="voice-range"><input id="voice-volume" type="range" min="0" max="1" step="0.01" value="1"><output id="voice-volume-value">100%</output></span></label>
-                <label class="voice-field">Output boost <span class="voice-range"><input id="voice-boost-db" type="range" min="0" max="12" step="1" value="3"><output id="voice-boost-db-value">+3 dB</output></span></label>
-                <label class="voice-field">Music duck level <span class="voice-range"><input id="voice-duck-level" type="range" min="0.05" max="1" step="0.01" value="0.22"><output id="voice-duck-level-value">22%</output></span></label>
+                <label class="voice-field">Output gain (dB) <span class="voice-range"><input id="voice-boost-db" type="range" min="0" max="18" step="1" value="6"><output id="voice-boost-db-value">+6 dB</output></span></label>
+                <label class="voice-field">Music duck level <span class="voice-range"><input id="voice-duck-level" type="range" min="0.05" max="1" step="0.01" value="0.18"><output id="voice-duck-level-value">18%</output></span></label>
                 <label class="voice-field">Ducking fade <span class="voice-range"><input id="voice-duck-fade" type="range" min="80" max="2000" step="10" value="350"><output id="voice-duck-fade-value">350 ms</output></span></label>
             </div>
             <p class="help">Kokoro runs locally after its one-time model download. Windows SAPI is the offline fallback; OpenAI is optional and reads its key only from the bridge environment.</p>
@@ -518,8 +518,8 @@
             <div class="voice-fields voice-fields-compact">
                 <label class="voice-field">Max queue<input id="voice-max-queue" type="number" min="1" max="50" value="12"></label>
                 <label class="voice-field">Expire after (ms)<input id="voice-expire" type="number" min="5000" max="300000" step="1000" value="45000"></label>
-                <label class="voice-field">Random MC min (s)<input id="voice-random-min" type="number" min="30" max="3600" value="150"></label>
-                <label class="voice-field">Random MC max (s)<input id="voice-random-max" type="number" min="60" max="7200" value="300"></label>
+                <label class="voice-field">Fallback random min (s)<input id="voice-random-min" type="number" min="30" max="3600" value="150"></label>
+                <label class="voice-field">Fallback random max (s)<input id="voice-random-max" type="number" min="60" max="7200" value="300"></label>
             </div>
             <p class="section-label" style="margin-top:16px;">Per-event cooldowns (ms)</p>
             <div class="voice-fields voice-fields-compact">
@@ -532,6 +532,38 @@
                 <label class="voice-field">Random<input data-voice-cooldown="random" type="number" min="0" max="600000" step="1000" value="45000"></label>
             </div>
         </div>
+        <p class="help">Fallback interval is used only when Idle Detection is off. The default autonomous cycle is the 10-second inactivity rule below.</p>
+    </div>
+
+    <div class="card voice-autonomous-card">
+        <div class="card-header">
+            <div><p class="card-label">Always-on host</p><h2 class="card-title">Autonomous MC</h2></div>
+            <label class="toggle-wrap"><input id="voice-auto-enabled" type="checkbox" checked><span class="toggle-track"></span> Autonomous MC</label>
+        </div>
+        <div class="voice-fields voice-fields-compact">
+            <label class="voice-field">Idle threshold (seconds)<input id="voice-auto-idle-seconds" type="number" min="3" max="300" value="10"></label>
+            <label class="voice-field">Max announcements / hour<input id="voice-auto-max-hour" type="number" min="1" max="360" value="180"></label>
+            <div class="voice-field">Idle detection
+                <div class="voice-auto-options">
+                    <label class="check-row"><input id="voice-auto-idle" type="checkbox" checked> Reset on activity</label>
+                    <label class="check-row"><input id="voice-auto-zero" type="checkbox" checked> Allow with zero viewers</label>
+                    <label class="check-row"><input id="voice-auto-random" type="checkbox" checked> Random dialogue</label>
+                </div>
+            </div>
+        </div>
+        <p class="section-label" style="margin-top:16px;">Autonomous dialogue categories</p>
+        <div class="voice-checks voice-auto-categories">
+            <label class="check-row"><input data-voice-auto-category="quiet" type="checkbox" checked> Quiet room engagement</label>
+            <label class="check-row"><input data-voice-auto-category="music" type="checkbox" checked> Music commentary</label>
+            <label class="check-row"><input data-voice-auto-category="energy" type="checkbox" checked> Party energy</label>
+            <label class="check-row"><input data-voice-auto-category="engage" type="checkbox" checked> Audience engagement</label>
+            <label class="check-row"><input data-voice-auto-category="dj" type="checkbox" checked> DJ personality</label>
+            <label class="check-row"><input data-voice-auto-category="random" type="checkbox" checked> Random MC lines</label>
+        </div>
+        <div class="card-actions voice-actions" style="margin-top:14px;">
+            <button id="voice-auto-test" class="btn btn-secondary btn-sm">Test Autonomous MC</button>
+        </div>
+        <p class="help">Starts once when the bridge becomes LIVE, waits for the idle threshold with no chat, gifts, follows, shares or joins, speaks, waits for playback to finish, then starts another idle countdown. It works with zero viewers.</p>
     </div>
 
     <div class="card">
@@ -590,9 +622,17 @@
         <div class="card">
             <div class="card-header"><div><p class="card-label">Live status</p><h2 class="card-title">TTS + Audio</h2></div></div>
             <dl class="voice-status-list">
-                <dt>Engine</dt><dd id="voice-status-engine">Loading…</dd>
-                <dt>Current speaking</dt><dd id="voice-status-current">Idle</dd>
+                <dt>LIVE session</dt><dd id="voice-status-live">Inactive</dd>
+                <dt>Autonomous MC</dt><dd id="voice-status-autonomous">Off</dd>
+                <dt>Current announcement</dt><dd id="voice-status-current">Idle</dd>
+                <dt>Last activity</dt><dd id="voice-status-last-activity">—</dd>
+                <dt>Seconds since activity</dt><dd id="voice-status-idle-seconds">—</dd>
+                <dt>Countdown to next</dt><dd id="voice-status-countdown">—</dd>
                 <dt>Pending queue</dt><dd id="voice-status-queue">0</dd>
+                <dt>Autonomous total</dt><dd id="voice-status-auto-total">0</dd>
+                <dt>Engine</dt><dd id="voice-status-engine">Loading…</dd>
+                <dt>Current audio</dt><dd id="voice-status-audio">—</dd>
+                <dt>Music ducking</dt><dd id="voice-status-ducking">—</dd>
                 <dt>Unity playback</dt><dd id="voice-status-ack">Waiting for Unity…</dd>
                 <dt>Last error</dt><dd id="voice-status-error">None</dd>
             </dl>

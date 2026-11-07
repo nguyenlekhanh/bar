@@ -346,6 +346,12 @@ app.post('/api/voice/test', controlPanelOnly, voiceBodyParser, (req, res) => {
     res.json({ queued: true, item: result.item, status: voiceService.getStatus() });
 });
 
+app.post('/api/voice/autonomous/test', controlPanelOnly, (_req, res) => {
+    const result = voiceService.queueAutonomousTest();
+    if (!result.accepted) return res.status(409).json({ error: `Autonomous MC test was not queued: ${result.reason}.` });
+    res.json({ queued: true, item: result.item, status: voiceService.getStatus() });
+});
+
 app.post('/api/voice/stop', controlPanelOnly, (_req, res) => {
     voiceService.stopCurrent();
     res.json({ stopped: true, status: voiceService.getStatus() });
@@ -1032,6 +1038,19 @@ async function refreshBackgroundConfig() {
 function setStatus(state, username, message) {
     connectionStatus = { state, username, message };
     broadcast({ type: 'status', ...connectionStatus });
+
+    // The autonomous MC follows the actual LIVE connection lifecycle, not the
+    // Unity WebSocket and not a viewer count. A reconnect keeps the same LIVE
+    // session; only connecting/ended/idle/demo stop or replace it.
+    if (state === 'connected' && username) {
+        voiceService.setLiveSessionActive(true, { state, viewerCount: 0 });
+    } else if (state === 'reconnecting' && username) {
+        if (voiceService.getStatus().liveSession.active) {
+            voiceService.setLiveSessionActive(true, { state });
+        }
+    } else if (state === 'connecting' || state === 'ended' || state === 'idle' || state === 'demo') {
+        voiceService.setLiveSessionActive(false, { state });
+    }
 }
 
 function broadcastMetrics() {
@@ -1140,6 +1159,7 @@ function resetSessionState(source = metrics.source) {
     sessionPlayers.clear();
     sessionVipScores.clear();
     recentEventIds.clear();
+    voiceService.setLiveViewerCount(0);
 }
 
 function createSnapshot() {
@@ -1284,6 +1304,7 @@ function emitGameEvent(event) {
     if (event.type === 'like') metrics.likes += event.likeCount;
     broadcast(event);
     broadcastMetrics();
+    voiceService.setLiveViewerCount(sessionPlayers.size);
     voiceService.onGameEvent(event);
 }
 

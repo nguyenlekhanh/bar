@@ -71,11 +71,17 @@ assert.equal(bounded.speed, 1.35);
 assert.equal(bounded.volume, 0);
 assert.equal(bounded.maxQueue, 1);
 assert.equal(bounded.events.welcome, false);
-assert.equal(bounded.boostDb, 3);
+assert.equal(bounded.boostDb, 6);
+assert.equal(bounded.autonomous.idleSeconds, 10);
+assert.equal(bounded.autonomous.allowZeroViewers, true);
+assert.equal(sanitizeVoiceConfig({ boostDb: 99 }).boostDb, 18);
 
-function makeWav({ format, bits, sample }) {
+const totalSeedLines = Object.values(config.dialogues).reduce((sum, lines) => sum + lines.length, 0);
+assert.ok(totalSeedLines >= 100, `expected at least 100 seed lines, got ${totalSeedLines}`);
+
+function makeWav({ format, bits, sample, samples = 1 }) {
     const bytesPerSample = bits / 8;
-    const dataSize = bytesPerSample;
+    const dataSize = bytesPerSample * samples;
     const wav = Buffer.alloc(44 + dataSize);
     wav.write('RIFF', 0, 'ascii');
     wav.writeUInt32LE(36 + dataSize, 4);
@@ -90,23 +96,28 @@ function makeWav({ format, bits, sample }) {
     wav.writeUInt16LE(bits, 34);
     wav.write('data', 36, 'ascii');
     wav.writeUInt32LE(dataSize, 40);
-    if (format === 3) wav.writeFloatLE(sample, 44);
-    else wav.writeInt16LE(sample, 44);
+    if (format === 3) {
+        for (let index = 0; index < samples; index += 1) wav.writeFloatLE(sample, 44 + index * bytesPerSample);
+    } else {
+        for (let index = 0; index < samples; index += 1) wav.writeInt16LE(sample, 44 + index * bytesPerSample);
+    }
     return wav;
 }
 
-const floatWav = amplifyWav(makeWav({ format: 3, bits: 32, sample: 0.5 }), 3);
+const quietWav = makeWav({ format: 3, bits: 32, sample: 0.05, samples: 24000 });
+const floatWav = amplifyWav(quietWav, 6);
 assert.equal(floatWav.applied, true);
-const floatPeak = floatWav.buffer.readFloatLE(44);
-assert(floatPeak > 0.5 && floatPeak <= 0.98, `float gain was ${floatPeak}`);
-const pcmWav = amplifyWav(makeWav({ format: 1, bits: 16, sample: 1000 }), 3);
+assert(floatWav.peak > 0.05 && floatWav.peak <= 0.98, `float peak was ${floatWav.peak}`);
+assert(floatWav.outputRmsDb > floatWav.inputRmsDb, 'quiet float WAV should be normalized louder');
+const pcmWav = amplifyWav(makeWav({ format: 1, bits: 16, sample: 1000, samples: 24000 }), 6);
 assert.equal(pcmWav.applied, true);
-assert(pcmWav.buffer.readInt16LE(44) > 1000);
+assert(pcmWav.peak <= 0.98, `pcm peak was ${pcmWav.peak}`);
 
 console.log('Voice self-test passed:', {
     pronunciationCases: pronunciations.length,
     dialogueCategories: Object.keys(config.dialogues).length,
-    totalSeedLines: Object.values(config.dialogues).reduce((sum, lines) => sum + lines.length, 0),
+    totalSeedLines,
     queuePriority: 'VIP > gift > random',
-    providerFallbackConfig: bounded.provider
+    providerFallbackConfig: bounded.provider,
+    normalization: { inputRmsDb: floatWav.inputRmsDb, outputRmsDb: floatWav.outputRmsDb, outputPeak: floatWav.peak }
 });

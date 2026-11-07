@@ -2,7 +2,7 @@
 
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const { defaultVoiceConfig } = require('./defaults');
+const { defaultVoiceConfig, AUTONOMOUS_CATEGORIES } = require('./defaults');
 const { sanitizeDialogues } = require('./dialogue');
 const { normalizePronunciations } = require('./username-pronunciation');
 const { clampInt } = require('./queue');
@@ -33,7 +33,14 @@ function sanitizeVoiceConfig(input) {
     const events = source.events && typeof source.events === 'object' ? source.events : {};
     const cooldowns = source.cooldownsMs && typeof source.cooldownsMs === 'object' ? source.cooldownsMs : {};
     const random = source.random && typeof source.random === 'object' ? source.random : {};
+    const autonomous = source.autonomous && typeof source.autonomous === 'object' ? source.autonomous : {};
     const username = source.username && typeof source.username === 'object' ? source.username : {};
+    const requestedCategories = Array.isArray(autonomous.categories)
+        ? autonomous.categories.map(category => String(category)).filter(category => AUTONOMOUS_CATEGORIES.includes(category))
+        : [];
+    const autonomousCategories = requestedCategories.length
+        ? [...new Set(requestedCategories)]
+        : defaults.autonomous.categories.slice();
 
     return {
         version: 1,
@@ -47,15 +54,26 @@ function sanitizeVoiceConfig(input) {
         language: 'en-US',
         speed: Number(clampNumber(source.speed, 0.7, 1.35, defaults.speed).toFixed(2)),
         volume: Number(clampNumber(source.volume, 0, 1, defaults.volume).toFixed(2)),
-        boostDb: Number(clampNumber(source.boostDb, 0, 12, defaults.boostDb).toFixed(1)),
+        boostDb: Number(clampNumber(source.boostDb, 0, 18, defaults.boostDb).toFixed(1)),
         duckLevel: Number(clampNumber(source.duckLevel, 0.05, 1, defaults.duckLevel).toFixed(2)),
         duckFadeMs: clampInt(source.duckFadeMs, 80, 2000, defaults.duckFadeMs),
         maxQueue: clampInt(source.maxQueue, 1, 50, defaults.maxQueue),
         expireMs: clampInt(source.expireMs, 5000, 300000, defaults.expireMs),
         random: {
+            // Retained for older settings files and as the fallback cadence when
+            // Idle Detection is turned off. Autonomous speech uses this gate.
             enabled: events.random !== false && random.enabled !== false,
             minSeconds: clampInt(random.minSeconds, 30, 3600, defaults.random.minSeconds),
             maxSeconds: clampInt(random.maxSeconds, 60, 7200, defaults.random.maxSeconds)
+        },
+        autonomous: {
+            enabled: autonomous.enabled !== false,
+            idleDetection: autonomous.idleDetection !== false,
+            idleSeconds: clampInt(autonomous.idleSeconds, 3, 300, defaults.autonomous.idleSeconds),
+            allowZeroViewers: autonomous.allowZeroViewers !== false,
+            randomDialogue: autonomous.randomDialogue !== false,
+            maxPerHour: clampInt(autonomous.maxPerHour, 1, 360, defaults.autonomous.maxPerHour),
+            categories: autonomousCategories
         },
         events: {
             welcome: events.welcome !== false,

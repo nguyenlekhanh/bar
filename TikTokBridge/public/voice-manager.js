@@ -5,6 +5,11 @@
     const HEADERS = { 'x-control-panel': '1' };
     const CATEGORIES = [
         ['welcome', 'Welcome'],
+        ['quiet', 'Quiet Room'],
+        ['music', 'Music Commentary'],
+        ['energy', 'Party Energy'],
+        ['engage', 'Audience Engagement'],
+        ['dj', 'DJ Personality'],
         ['gift', 'Gift'],
         ['follow', 'Follow'],
         ['share', 'Share'],
@@ -12,6 +17,7 @@
         ['topdj', 'TOP DJ'],
         ['random', 'Random MC']
     ];
+    const AUTONOMOUS_CATEGORIES = ['quiet', 'music', 'energy', 'engage', 'dj', 'random'];
     const $ = id => document.getElementById(id);
 
     const state = {
@@ -100,9 +106,23 @@
         setValue('voice-persona', config.persona);
         setValue('voice-speed', config.speed);
         setValue('voice-volume', config.volume);
-        setValue('voice-boost-db', config.boostDb ?? 3);
+        setValue('voice-boost-db', config.boostDb ?? 6);
         setValue('voice-duck-level', config.duckLevel);
         setValue('voice-duck-fade', config.duckFadeMs);
+        setChecked('voice-auto-enabled', config.autonomous?.enabled !== false);
+        setChecked('voice-auto-idle', config.autonomous?.idleDetection !== false);
+        setChecked('voice-auto-zero', config.autonomous?.allowZeroViewers !== false);
+        setChecked('voice-auto-random', config.autonomous?.randomDialogue !== false);
+        setValue('voice-auto-idle-seconds', config.autonomous?.idleSeconds ?? 10);
+        setValue('voice-auto-max-hour', config.autonomous?.maxPerHour ?? 180);
+        const autoCategories = new Set(
+            Array.isArray(config.autonomous?.categories) && config.autonomous.categories.length
+                ? config.autonomous.categories
+                : AUTONOMOUS_CATEGORIES
+        );
+        document.querySelectorAll('[data-voice-auto-category]').forEach(input => {
+            input.checked = autoCategories.has(input.dataset.voiceAutoCategory);
+        });
         for (const key of ['welcome', 'gift', 'follow', 'share', 'vip', 'topdj', 'random']) {
             setChecked(`voice-event-${key}`, config.events?.[key] !== false);
         }
@@ -127,8 +147,8 @@
     function syncRangeLabels() {
         const speed = numberValue('voice-speed', 1);
         const volume = numberValue('voice-volume', 1);
-        const boost = numberValue('voice-boost-db', 3);
-        const duck = numberValue('voice-duck-level', 0.22);
+        const boost = numberValue('voice-boost-db', 6);
+        const duck = numberValue('voice-duck-level', 0.18);
         const fade = numberValue('voice-duck-fade', 350);
         setValue('voice-speed-value', `${speed.toFixed(2)}×`);
         setValue('voice-volume-value', `${Math.round(volume * 100)}%`);
@@ -304,6 +324,10 @@
         document.querySelectorAll('[data-voice-cooldown]').forEach(input => {
             cooldownsMs[input.dataset.voiceCooldown] = Math.max(0, Number(input.value) || 0);
         });
+        const autonomousCategories = [...document.querySelectorAll('[data-voice-auto-category]')]
+            .filter(input => input.checked)
+            .map(input => input.dataset.voiceAutoCategory)
+            .filter(category => AUTONOMOUS_CATEGORIES.includes(category));
 
         return {
             ...state.config,
@@ -314,9 +338,18 @@
             persona: $('voice-persona')?.value || state.config.persona,
             speed: numberValue('voice-speed', state.config.speed),
             volume: numberValue('voice-volume', state.config.volume),
-            boostDb: numberValue('voice-boost-db', state.config.boostDb ?? 3),
+            boostDb: numberValue('voice-boost-db', state.config.boostDb ?? 6),
             duckLevel: numberValue('voice-duck-level', state.config.duckLevel),
             duckFadeMs: numberValue('voice-duck-fade', state.config.duckFadeMs),
+            autonomous: {
+                enabled: $('voice-auto-enabled')?.checked !== false,
+                idleDetection: $('voice-auto-idle')?.checked !== false,
+                idleSeconds: numberValue('voice-auto-idle-seconds', state.config.autonomous?.idleSeconds ?? 10),
+                allowZeroViewers: $('voice-auto-zero')?.checked !== false,
+                randomDialogue: $('voice-auto-random')?.checked !== false,
+                maxPerHour: numberValue('voice-auto-max-hour', state.config.autonomous?.maxPerHour ?? 180),
+                categories: autonomousCategories
+            },
             maxQueue: numberValue('voice-max-queue', state.config.maxQueue),
             expireMs: numberValue('voice-expire', state.config.expireMs),
             random: {
@@ -380,9 +413,51 @@
         }
     }
 
+    function formatTime(timestamp) {
+        return timestamp ? new Date(timestamp).toLocaleTimeString() : '—';
+    }
+
+    function countdownText() {
+        const status = state.status;
+        if (!status) return '—';
+        const auto = status.autonomous || {};
+        if (!status.liveSession?.active) return 'LIVE inactive';
+        if (!auto.enabled) return 'Autonomous MC off';
+        if (!auto.idleDetection) return 'Fallback interval';
+        if (auto.limitReached) return 'Hourly limit reached';
+        if (status.current?.autonomous) return 'Speaking now';
+        if (status.current) return 'Waiting for current speech';
+        if (auto.nextAnnouncementAt) {
+            const seconds = Math.max(0, Math.ceil((auto.nextAnnouncementAt - Date.now()) / 1000));
+            return seconds > 0 ? `${seconds}s` : 'Ready';
+        }
+        if (auto.allowZeroViewers === false && status.liveSession?.viewerCount <= 0) return 'Waiting for a viewer';
+        return 'Waiting for live activity';
+    }
+
+    function updateCountdown() {
+        const node = $('voice-status-countdown');
+        if (node) node.textContent = countdownText();
+    }
+
     function statusText() {
         const status = state.status;
         if (!status) return;
+        const live = $('voice-status-live');
+        if (live) {
+            live.textContent = status.liveSession?.active
+                ? `LIVE — ${status.liveSession.state || 'connected'}`
+                : `Inactive${status.liveSession?.state && status.liveSession.state !== 'inactive' ? ` (${status.liveSession.state})` : ''}`;
+            live.classList.toggle('speaking', Boolean(status.liveSession?.active));
+        }
+        const autonomous = $('voice-status-autonomous');
+        if (autonomous) {
+            const auto = status.autonomous || {};
+            autonomous.textContent = auto.enabled
+                ? `ON — ${auto.idleDetection ? `${auto.idleSeconds}s idle` : 'fallback interval'}${auto.allowZeroViewers ? ' · zero viewers okay' : ''}`
+                : 'OFF';
+            autonomous.classList.toggle('speaking', Boolean(auto.enabled));
+        }
         const engine = $('voice-status-engine');
         if (engine) {
             const info = status.providerStatus;
@@ -394,8 +469,39 @@
             current.textContent = status.current?.text || 'Idle';
             current.classList.toggle('speaking', Boolean(status.current));
         }
+        const lastActivity = $('voice-status-last-activity');
+        if (lastActivity) {
+            lastActivity.textContent = status.autonomous?.lastActivityAt
+                ? `${formatTime(status.autonomous.lastActivityAt)} (${status.autonomous.lastActivityReason || 'activity'})`
+                : '—';
+        }
+        const idleSeconds = $('voice-status-idle-seconds');
+        if (idleSeconds) {
+            idleSeconds.textContent = status.autonomous?.secondsSinceLastActivity == null
+                ? '—'
+                : `${status.autonomous.secondsSinceLastActivity}s`;
+        }
+        updateCountdown();
         const queue = $('voice-status-queue');
         if (queue) queue.textContent = String(status.queueSize || 0);
+        const autoTotal = $('voice-status-auto-total');
+        if (autoTotal) {
+            autoTotal.textContent = `${status.autonomous?.totalCount || 0} total · ${status.autonomous?.hourlyCount || 0}/h`;
+        }
+        const audio = $('voice-status-audio');
+        if (audio) {
+            const level = status.lastAudio;
+            audio.textContent = level && Number.isFinite(level.rmsDb)
+                ? `${level.provider || '—'} / ${level.voice || '—'} · RMS ${level.rmsDb.toFixed(1)} dBFS · peak ${Number.isFinite(level.peakDb) ? level.peakDb.toFixed(1) : '—'} dBFS · gain +${Number(level.boostDb || 0).toFixed(1)} dB${level.limited ? ' · limited' : ''}`
+                : 'No audio generated yet.';
+        }
+        const ducking = $('voice-status-ducking');
+        if (ducking) {
+            ducking.textContent = status.ducking?.active
+                ? `Active — music at ${Math.round((status.ducking.level || 0) * 100)}%, fade ${status.ducking.fadeMs} ms`
+                : `Idle — music at 100% (next duck ${Math.round((status.ducking?.level || 0) * 100)}%)`;
+            ducking.classList.toggle('speaking', Boolean(status.ducking?.active));
+        }
         const ack = $('voice-status-ack');
         if (ack) {
             ack.textContent = status.lastAck
@@ -513,6 +619,17 @@
         }
     }
 
+    async function testAutonomous() {
+        try {
+            const result = await request(`${API}/autonomous/test`, { method: 'POST' });
+            state.status = result.status || state.status;
+            renderStatus();
+            setMessage('Autonomous MC test queued. It uses a random line from the selected categories.');
+        } catch (error) {
+            setMessage(error.message, true);
+        }
+    }
+
     async function stopVoice() {
         try {
             const result = await request(`${API}/stop`, { method: 'POST' });
@@ -548,6 +665,7 @@
         $('voice-preview-username')?.addEventListener('click', previewUsername);
         $('voice-preview')?.addEventListener('click', () => previewText($('voice-test-text')?.value.trim()));
         $('voice-test')?.addEventListener('click', testVoice);
+        $('voice-auto-test')?.addEventListener('click', testAutonomous);
         $('voice-stop')?.addEventListener('click', stopVoice);
         $('voice-clear')?.addEventListener('click', clearQueue);
         $('voice-speed')?.addEventListener('input', syncRangeLabels);
@@ -555,6 +673,9 @@
         $('voice-boost-db')?.addEventListener('input', syncRangeLabels);
         $('voice-duck-level')?.addEventListener('input', syncRangeLabels);
         $('voice-duck-fade')?.addEventListener('input', syncRangeLabels);
+        $('voice-auto-enabled')?.addEventListener('change', () => {
+            if (state.status) renderStatus();
+        });
         $('voice-provider')?.addEventListener('change', event => {
             populateVoices(event.target.value, '', $('voice-gender')?.value || 'male');
         });
@@ -577,6 +698,7 @@
         state.poll = setInterval(() => {
             if (document.getElementById('tab-voice')?.classList.contains('active')) refreshStatus();
         }, 3000);
+        setInterval(updateCountdown, 1000);
     }
 
     wire();

@@ -1,6 +1,6 @@
 'use strict';
 
-const { DIALOGUE_CATEGORIES, DEFAULT_DIALOGUES } = require('./defaults');
+const { DIALOGUE_CATEGORIES, AUTONOMOUS_CATEGORIES, DEFAULT_DIALOGUES } = require('./defaults');
 
 const MAX_LINES_PER_CATEGORY = 50;
 const MAX_DIALOGUE_LENGTH = 260;
@@ -32,7 +32,12 @@ function dialogueId(value, fallback) {
 function sanitizeDialogues(input) {
     const output = {};
     for (const category of DIALOGUE_CATEGORIES) {
-        const source = Array.isArray(input?.[category]) ? input[category] : [];
+        // A missing category is a legacy settings file (or a newly shipped
+        // category); use its shipped seed. An explicitly empty category stays
+        // empty so an operator can intentionally disable a whole pool.
+        const source = input && Object.prototype.hasOwnProperty.call(input, category)
+            ? (Array.isArray(input[category]) ? input[category] : [])
+            : (DEFAULT_DIALOGUES[category] || []);
         const seen = new Set();
         const lines = [];
         for (const item of source) {
@@ -92,6 +97,24 @@ function chooseDialogue(dialogues, category, options = {}) {
     return selected ? { ...selected } : null;
 }
 
+function chooseDialogueFromCategories(dialogues, categories, options = {}) {
+    const allowed = (Array.isArray(categories) ? categories : [])
+        .filter(category => AUTONOMOUS_CATEGORIES.includes(category));
+    let pool = allowed.flatMap(category => enabledLines(dialogues, category));
+    // Autonomous lines must stand on their own without inventing a viewer or
+    // gift. Placeholder-only lines belong to event announcements.
+    pool = pool.filter(line => !/\{(name|gift|diamonds)\}/i.test(line.text));
+    if (!pool.length) {
+        pool = AUTONOMOUS_CATEGORIES.flatMap(category => enabledLines(dialogues, category))
+            .filter(line => !/\{(name|gift|diamonds)\}/i.test(line.text));
+    }
+    if (!pool.length) return null;
+    const previous = options.previousId ? String(options.previousId) : '';
+    const candidates = pool.length > 1 ? pool.filter(line => line.id !== previous) : pool;
+    const selected = candidates[Math.floor(Math.random() * candidates.length)] || pool[0];
+    return selected ? { ...selected } : null;
+}
+
 function defaultDialogueConfig() {
     return sanitizeDialogues(DEFAULT_DIALOGUES);
 }
@@ -103,6 +126,7 @@ module.exports = {
     sanitizeDialogues,
     renderDialogue,
     chooseDialogue,
+    chooseDialogueFromCategories,
     enabledLines,
     defaultDialogueConfig
 };

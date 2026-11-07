@@ -1,6 +1,7 @@
 'use strict';
 
 const crypto = require('node:crypto');
+const { measureWav } = require('./wav-gain');
 
 function readWavInfo(buffer) {
     if (!Buffer.isBuffer(buffer) || buffer.length < 44 ||
@@ -29,7 +30,16 @@ function readWavInfo(buffer) {
         if (size <= 0) break;
     }
     const durationMs = byteRate > 0 ? Math.round((dataBytes / byteRate) * 1000) : 0;
-    return { durationMs, sampleRate, channels };
+    const level = measureWav(buffer);
+    return {
+        durationMs,
+        sampleRate,
+        channels,
+        peak: level.peak,
+        rms: level.rms,
+        peakDb: level.peakDb,
+        rmsDb: level.rmsDb
+    };
 }
 
 class VoiceAudioCache {
@@ -72,6 +82,8 @@ class VoiceAudioCache {
             sampleRate: Number(meta.sampleRate) || wav.sampleRate,
             provider: String(meta.provider || ''),
             voice: String(meta.voice || ''),
+            boostDb: Number(meta.boostDb) || 0,
+            normalizationGainDb: Number(meta.normalizationGainDb) || 0,
             url: `/api/voice/audio/${id}.wav`
         };
         this.records.set(id, record);

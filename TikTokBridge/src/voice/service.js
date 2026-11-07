@@ -5,7 +5,7 @@ const { defaultVoiceConfig } = require('./defaults');
 const { sanitizeVoiceConfig, loadVoiceConfig, saveVoiceConfig } = require('./config');
 const { VoiceAudioCache } = require('./audio-cache');
 const { VoiceQueue } = require('./queue');
-const { chooseDialogue, renderDialogue } = require('./dialogue');
+const { chooseDialogue, chooseDialogueFromCategories, renderDialogue } = require('./dialogue');
 const { normalizeUsername } = require('./username-pronunciation');
 const { amplifyWav } = require('./wav-gain');
 const providers = require('./providers');
@@ -23,6 +23,11 @@ const PRIORITIES = {
 
 const CATEGORY_LABELS = {
     welcome: 'Welcome',
+    quiet: 'Quiet room',
+    music: 'Music commentary',
+    energy: 'Party energy',
+    engage: 'Audience engagement',
+    dj: 'DJ personality',
     gift: 'Gift',
     follow: 'Follow',
     share: 'Share',
@@ -31,6 +36,8 @@ const CATEGORY_LABELS = {
     random: 'Random MC',
     test: 'Test'
 };
+
+const HOUR_MS = 60 * 60 * 1000;
 
 function text(value, maximum, fallback = '') {
     return String(value ?? '')
@@ -55,12 +62,28 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
     let lastError = '';
     let lastGenerationMs = 0;
     let lastAck = null;
+    let lastAudio = null;
     let finishTimer = null;
-    let randomTimer = null;
+    let idleTimer = null;
     let startedAt = Date.now();
     let playbackGeneration = 0;
-    let likeBurst = 0;
     let pumpScheduled = false;
+
+    // LIVE lifecycle and autonomous scheduler state.
+    let liveSessionActive = false;
+    let liveSessionState = 'inactive';
+    let liveStartedAt = 0;
+    let liveViewerCount = 0;
+    let lastActivityAt = 0;
+    let lastActivityReason = '';
+    let lastAnnouncementFinishedAt = 0;
+    let lastAutonomousAt = 0;
+    let lastAutonomousLineId = '';
+    let autonomousScheduled = false;
+    let autonomousCount = 0;
+    let totalAutonomous = 0;
+    let hourlyAutonomous = [];
+    let fixedIntervalMs = 0;
 
     const lastDialogueByCategory = new Map();
     const categoryForGift = event => {
@@ -75,13 +98,64 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
         return JSON.parse(JSON.stringify(config));
     }
 
+    function hourlyCount(now = Date.now()) {
+        hourlyAutonomous = hourlyAutonomous.filter(at => now - at < HOUR_MS);
+        return hourlyAutonomous.length;
+    }
+
+    function newFixedInterval() {
+        const min = Math.max(30, Number(config.random.minSeconds) || 150);
+        const max = Math.max(min, Number(config.random.maxSeconds) || 300);
+        return (min + Math.random() * (max - min)) * 1000;
+    }
+
+    function autonomousEnabled() {
+        return Boolean(
+            started &&
+            liveSessionActive &&
+            config.enabled &&
+            config.autonomous.enabled &&
+            config.autonomous.randomDialogue &&
+            config.events.random &&
+            config.random.enabled
+        );
+    }
+
+    /**
+     * Timestamp at which the next autonomous line may be generated. Returning 0
+     * means "do not arm a timer" (LIVE inactive, manually disabled, zero-viewer
+     * permission off, or the hourly cap has been reached).
+     */
+    function nextAutonomousAt(now = Date.now()) {
+        if (!autonomousEnabled()) return 0;
+        if (!config.autonomous.allowZeroViewers && liveViewerCount <= 0) return 0;
+        if (hourlyCount(now) >= config.autonomous.maxPerHour) return 0;
+
+        const anchor = Math.max(
+            liveStartedAt || 0,
+            lastActivityAt || 0,
+            lastAnnouncementFinishedAt || 0
+        );
+        if (config.autonomous.idleDetection) {
+            return anchor + Math.max(3, Number(config.autonomous.idleSeconds) || 10) * 1000;
+        }
+        // Fixed random cadence is the documented fallback when idle detection is
+        // switched off. Activity resets it just like the idle countdown.
+        return Math.max(anchor, lastAutonomousAt || 0) + (fixedIntervalMs || newFixedInterval());
+    }
+
     function statusPayload() {
+        const now = Date.now();
+        const due = nextAutonomousAt(now);
+        const count = hourlyCount(now);
         return {
             enabled: config.enabled,
             provider: config.provider,
             voice: config.voice,
             voiceGender: config.voiceGender,
             persona: config.persona,
+            volume: config.volume,
+            boostDb: config.boostDb,
             queueSize: queue.size,
             current: current ? {
                 id: current.id,
@@ -89,16 +163,53 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
                 text: current.text,
                 priority: current.priority,
                 startedAt: current.startedAt || 0,
-                durationMs: current.durationMs || 0
+                durationMs: current.durationMs || 0,
+                autonomous: Boolean(current.autonomous)
             } : null,
             busy,
             lastError,
             lastGenerationMs,
             lastAck,
+            lastAudio,
+            ducking: {
+                level: config.duckLevel,
+                fadeMs: config.duckFadeMs,
+                active: Boolean(current)
+            },
             providerStatus: config.provider ? providers.providerStatus(config.provider) : null,
             providers: providers.listProviders(),
             audioCache: audioCache.snapshot(),
-            startedAt
+            startedAt,
+            liveSession: {
+                active: liveSessionActive,
+                state: liveSessionState,
+                startedAt: liveStartedAt || null,
+                viewerCount: liveViewerCount
+            },
+            autonomous: {
+                enabled: config.autonomous.enabled,
+                idleDetection: config.autonomous.idleDetection,
+                idleSeconds: config.autonomous.idleSeconds,
+                allowZeroViewers: config.autonomous.allowZeroViewers,
+                randomDialogue: config.autonomous.randomDialogue,
+                maxPerHour: config.autonomous.maxPerHour,
+                categories: config.autonomous.categories.slice(),
+                liveActive: liveSessionActive,
+                liveState: liveSessionState,
+                lastActivityAt: lastActivityAt || null,
+                lastActivityReason,
+                secondsSinceLastActivity: lastActivityAt ? Math.max(0, Math.floor((now - lastActivityAt) / 1000)) : null,
+                nextAnnouncementAt: due || null,
+                secondsUntilNext: due ? Math.max(0, Math.ceil((due - now) / 1000)) : null,
+                sessionCount: autonomousCount,
+                totalCount: totalAutonomous,
+                hourlyCount: count,
+                limitReached: count >= config.autonomous.maxPerHour,
+                queueBlocked: Boolean(current) || queue.size > 0 || autonomousScheduled,
+                schedulerActive: Boolean(idleTimer),
+                lastAutonomousAt: lastAutonomousAt || null,
+                lastLineId: lastAutonomousLineId || ''
+            }
         };
     }
 
@@ -121,6 +232,86 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
         }, 0);
     }
 
+    function scheduleIdle(delayOverride) {
+        if (idleTimer) clearTimeout(idleTimer);
+        idleTimer = null;
+        if (!started || !liveSessionActive || !autonomousEnabled()) return;
+        const now = Date.now();
+        const due = nextAutonomousAt(now);
+        if (!due) {
+            // The hourly cap or zero-viewer permission can make the normal due
+            // timestamp unavailable. Re-check periodically so the scheduler
+            // resumes without requiring another event.
+            idleTimer = setTimeout(onIdleTick, 30000);
+            idleTimer.unref?.();
+            return;
+        }
+        let delay = delayOverride === undefined ? due - now : Number(delayOverride) || 0;
+        if (busy || current || queue.size > 0 || autonomousScheduled) {
+            delay = Math.max(delay, 500);
+        }
+        delay = Math.max(100, delay);
+        idleTimer = setTimeout(onIdleTick, delay);
+        idleTimer.unref?.();
+    }
+
+    function chooseAutonomousDialogue() {
+        return chooseDialogueFromCategories(
+            config.dialogues,
+            config.autonomous.categories,
+            { previousId: lastAutonomousLineId }
+        );
+    }
+
+    function enqueueAutonomous() {
+        if (!autonomousEnabled() || busy || current || queue.size > 0 || autonomousScheduled) {
+            return false;
+        }
+        const chosen = chooseAutonomousDialogue();
+        if (!chosen) return false;
+        const now = Date.now();
+        const result = enqueueAnnouncement('random', { eventId: `autonomous-${now}` }, {
+            text: chosen.text,
+            templateId: chosen.id,
+            force: true,
+            bypassCooldown: true,
+            priority: PRIORITIES.random,
+            dedupeKey: `voice:autonomous:${now}`,
+            autonomous: true
+        });
+        if (!result.accepted) return false;
+        autonomousScheduled = true;
+        lastAutonomousLineId = chosen.id;
+        broadcastStatus();
+        return true;
+    }
+
+    function onIdleTick() {
+        idleTimer = null;
+        if (!autonomousEnabled()) {
+            broadcastStatus();
+            return;
+        }
+        if (busy || current || queue.size > 0 || autonomousScheduled) {
+            scheduleIdle(500);
+            return;
+        }
+        const now = Date.now();
+        const due = nextAutonomousAt(now);
+        if (!due) {
+            scheduleIdle(30000);
+            return;
+        }
+        if (now < due) {
+            scheduleIdle(due - now);
+            return;
+        }
+        if (!enqueueAutonomous()) {
+            scheduleIdle(1000);
+            return;
+        }
+    }
+
     async function synthesizeWithFallback(item) {
         const attempts = [];
         const primary = providers.PROVIDERS[item.provider] ? item.provider : config.provider;
@@ -130,7 +321,7 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
         for (const providerId of attempts) {
             const status = providers.providerStatus(providerId);
             if (!status.available) continue;
-            const started = Date.now();
+            const generationStarted = Date.now();
             try {
                 const result = await providers.synthesize({
                     provider: providerId,
@@ -139,7 +330,7 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
                     speed: item.speed || config.speed,
                     gender: item.voiceGender || config.voiceGender
                 });
-                lastGenerationMs = Date.now() - started;
+                lastGenerationMs = Date.now() - generationStarted;
                 if (providerId !== primary) {
                     logger.warn?.(`[voice] ${primary} failed; used ${providerId} fallback.`);
                     lastError = `${CATEGORY_LABELS[item.category] || item.category}: primary voice failed; used ${providerId} fallback.`;
@@ -147,7 +338,11 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
                     lastError = '';
                 }
                 const boosted = amplifyWav(result.buffer, config.boostDb);
-                return boosted.applied ? { ...result, buffer: boosted.buffer } : result;
+                return {
+                    ...result,
+                    buffer: boosted.applied ? boosted.buffer : result.buffer,
+                    audioGain: boosted
+                };
             } catch (error) {
                 lastFailure = error;
                 lastError = `${providerId}: ${error.message}`;
@@ -244,7 +439,9 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
             createdAt: now,
             expiresAt: now + (options.expireMs || config.expireMs),
             bypassCooldown: Boolean(options.bypassCooldown),
-            force: Boolean(options.force)
+            force: Boolean(options.force),
+            autonomous: Boolean(options.autonomous),
+            test: Boolean(options.test)
         };
         if (!item.rawTemplate) {
             item.rawTemplate = speech.templateId
@@ -259,51 +456,33 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
         return result;
     }
 
-    function enqueueRandom() {
-        if (!voiceIsEnabled('random') || !config.random.enabled || busy || queue.size > 0) return false;
-        const event = { eventId: `random-${Date.now()}` };
-        return enqueueAnnouncement('random', event, {
-            force: false,
-            dedupeKey: `voice:random:${Math.floor(Date.now() / 10000)}`
-        }).accepted === true;
-    }
-
-    function scheduleRandom(delayOverride) {
-        if (randomTimer) clearTimeout(randomTimer);
-        randomTimer = null;
-        if (!started || !config.enabled || !config.random.enabled || !config.events.random) return;
-        const min = Math.max(30, Number(config.random.minSeconds) || 150);
-        const max = Math.max(min, Number(config.random.maxSeconds) || 300);
-        const delayMs = delayOverride === undefined
-            ? (min + Math.random() * (max - min)) * 1000
-            : Math.max(5000, Number(delayOverride) || 0);
-        randomTimer = setTimeout(() => {
-            randomTimer = null;
-            if (!busy && queue.size === 0) enqueueRandom();
-            scheduleRandom();
-        }, delayMs);
-        randomTimer.unref?.();
-    }
-
     function finishCurrent(id) {
         if (!current || current.id !== id) return;
+        const wasAutonomous = Boolean(current.autonomous);
         if (finishTimer) clearTimeout(finishTimer);
         finishTimer = null;
         current = null;
         busy = false;
+        lastAnnouncementFinishedAt = Date.now();
+        if (wasAutonomous) autonomousScheduled = false;
         broadcastStatus();
         schedulePump();
+        scheduleIdle();
     }
 
     async function pump() {
         if (!started || busy || !config.enabled) return;
         const item = queue.dequeue();
         if (!item) {
-            schedulePump();
+            // Do not re-arm schedulePump here: an empty queue would create an
+            // endless zero-delay loop that starves the idle timer.
+            scheduleIdle();
             return;
         }
         if (item.expiresAt && item.expiresAt <= Date.now()) {
-            schedulePump();
+            if (item.autonomous) autonomousScheduled = false;
+            if (queue.size > 0) schedulePump();
+            else scheduleIdle();
             return;
         }
 
@@ -320,8 +499,10 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
                 // not let an obsolete WAV start after the operator stopped it.
                 if (current === item) current = null;
                 busy = false;
+                if (item.autonomous) autonomousScheduled = false;
                 broadcastStatus();
                 schedulePump();
+                scheduleIdle();
                 return;
             }
             const cacheKey = crypto.createHash('sha256').update([
@@ -335,11 +516,24 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
                 cacheKey,
                 provider: result.provider,
                 voice: result.voice,
-                durationMs: result.durationMs
+                durationMs: result.durationMs,
+                boostDb: config.boostDb,
+                normalizationGainDb: result.audioGain?.normalizationGainDb || 0
             });
             item.durationMs = audio.durationMs;
             item.audioId = audio.id;
             item.audioUrl = audio.url;
+            lastAudio = {
+                provider: result.provider,
+                voice: result.voice,
+                durationMs: audio.durationMs,
+                peakDb: audio.peakDb,
+                rmsDb: audio.rmsDb,
+                boostDb: config.boostDb,
+                normalizationGainDb: result.audioGain?.normalizationGainDb || 0,
+                limited: Boolean(result.audioGain?.limited),
+                at: Date.now()
+            };
 
             const announcement = {
                 type: 'voice_announcement',
@@ -355,6 +549,7 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
                 duckFadeMs: config.duckFadeMs,
                 voice: result.voice,
                 provider: result.provider,
+                autonomous: Boolean(item.autonomous),
                 createdAt: Date.now()
             };
             broadcastToRole('overlay', announcement);
@@ -366,8 +561,16 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
                 durationMs: audio.durationMs,
                 audioUrl: audio.url,
                 provider: result.provider,
-                voice: result.voice
+                voice: result.voice,
+                autonomous: Boolean(item.autonomous)
             });
+
+            if (item.autonomous && !item.test) {
+                autonomousCount += 1;
+                totalAutonomous += 1;
+                lastAutonomousAt = Date.now();
+                hourlyAutonomous.push(lastAutonomousAt);
+            }
             broadcastStatus();
 
             // Unity normally confirms playback, but the queue must advance even
@@ -379,8 +582,10 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
             logger.error?.(`[voice] announcement failed: ${error.message}`);
             current = null;
             busy = false;
+            if (item.autonomous) autonomousScheduled = false;
             broadcastStatus();
             schedulePump();
+            scheduleIdle();
         }
     }
 
@@ -394,22 +599,25 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
         await saveVoiceConfig(configPath, config);
         queue.configure(config);
         audioCache = new VoiceAudioCache({ ttlMs: 20 * 60 * 1000, maxEntries: 48 });
-        likeBurst = 0;
-        scheduleRandom();
+        fixedIntervalMs = newFixedInterval();
+        scheduleIdle();
         broadcastConfig();
         return publicConfig();
     }
 
+    function markActivity(reason) {
+        if (!liveSessionActive) return;
+        lastActivityAt = Date.now();
+        lastActivityReason = text(reason, 40, 'activity');
+        // If the MC is already speaking, this records the event; the countdown
+        // starts from the later of activity and speech completion.
+        scheduleIdle();
+    }
+
     function onGameEvent(event) {
-        if (!started || !config.enabled || !event || typeof event !== 'object') return;
-        if (event.type === 'like') {
-            likeBurst += Math.max(0, Number(event.likeCount) || 0);
-            if (likeBurst >= 50) {
-                likeBurst = 0;
-                enqueueRandom();
-            }
-            return;
-        }
+        if (!started || !config.enabled || !liveSessionActive || !event || typeof event !== 'object') return;
+        markActivity(event.type || 'event');
+        if (event.type === 'like') return;
 
         let category = null;
         if (event.type === 'member' && event.joinedNow !== false) category = 'welcome';
@@ -422,6 +630,60 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
         const result = enqueueAnnouncement(category, event);
         if (!result.accepted && result.reason && result.reason !== 'duplicate' && result.reason !== 'cooldown') {
             logger.debug?.(`[voice] ${category} skipped: ${result.reason}`);
+        }
+    }
+
+    function setLiveSessionActive(active, info = {}) {
+        const next = Boolean(active);
+        if (next === liveSessionActive) {
+            if (info.state) liveSessionState = String(info.state);
+            broadcastStatus();
+            scheduleIdle();
+            return;
+        }
+        liveSessionActive = next;
+        liveSessionState = text(info.state, 40, next ? 'connected' : 'inactive');
+        if (next) {
+            const now = Date.now();
+            liveStartedAt = now;
+            liveViewerCount = Math.max(0, Number(info.viewerCount) || 0);
+            lastActivityAt = now;
+            lastActivityReason = 'live-start';
+            lastAnnouncementFinishedAt = 0;
+            lastAutonomousAt = 0;
+            lastAutonomousLineId = '';
+            autonomousScheduled = false;
+            autonomousCount = 0;
+            hourlyAutonomous = [];
+            fixedIntervalMs = newFixedInterval();
+            scheduleIdle();
+        } else {
+            if (idleTimer) clearTimeout(idleTimer);
+            idleTimer = null;
+            autonomousScheduled = false;
+            if (finishTimer) clearTimeout(finishTimer);
+            finishTimer = null;
+            if (current) {
+                broadcastToRole('overlay', { type: 'voice_control', action: 'stop', id: current.id });
+            }
+            current = null;
+            busy = false;
+            queue.clear();
+            lastActivityAt = 0;
+            lastAnnouncementFinishedAt = 0;
+            liveStartedAt = 0;
+            liveViewerCount = 0;
+        }
+        broadcastStatus();
+    }
+
+    function setLiveViewerCount(count) {
+        const next = Math.max(0, Math.floor(Number(count) || 0));
+        if (next === liveViewerCount) return;
+        liveViewerCount = next;
+        if (liveSessionActive) {
+            broadcastStatus();
+            scheduleIdle();
         }
     }
 
@@ -438,6 +700,21 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
             priority: PRIORITIES.test,
             dedupeKey: `voice:test:${Date.now()}`,
             rawTemplate: ''
+        });
+    }
+
+    function queueAutonomousTest() {
+        const chosen = chooseAutonomousDialogue();
+        if (!chosen) return { accepted: false, reason: 'no-dialogue' };
+        return enqueueAnnouncement('random', { eventId: `autonomous-test-${Date.now()}` }, {
+            text: chosen.text,
+            templateId: chosen.id,
+            force: true,
+            bypassCooldown: true,
+            priority: PRIORITIES.test,
+            dedupeKey: `voice:autonomous-test:${Date.now()}`,
+            autonomous: true,
+            test: true
         });
     }
 
@@ -463,7 +740,9 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
         const audio = audioCache.put(result.buffer, {
             provider: result.provider,
             voice: result.voice,
-            durationMs: result.durationMs
+            durationMs: result.durationMs,
+            boostDb: config.boostDb,
+            normalizationGainDb: result.audioGain?.normalizationGainDb || 0
         });
         return {
             audioUrl: audio.url,
@@ -472,7 +751,9 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
             provider: result.provider,
             voice: result.voice,
             spokenUsername: username ? username.spoken : '',
-            usernameOverridden: username ? username.overridden : false
+            usernameOverridden: username ? username.overridden : false,
+            peakDb: audio.peakDb,
+            rmsDb: audio.rmsDb
         };
     }
 
@@ -493,12 +774,19 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
         }
         current = null;
         busy = false;
+        autonomousScheduled = false;
+        // Manual stop also respects the operator: wait for a fresh idle period
+        // instead of immediately replacing the stopped line.
+        lastAnnouncementFinishedAt = Date.now();
         broadcastStatus();
+        scheduleIdle();
     }
 
     function clearQueue() {
         const count = queue.clear();
+        if (!current) autonomousScheduled = false;
         broadcastStatus();
+        scheduleIdle();
         return count;
     }
 
@@ -521,22 +809,26 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
         if (loaded.error) logger.warn?.(`[voice] ${loaded.error}`);
         queue = new VoiceQueue(config);
         audioCache = new VoiceAudioCache({ ttlMs: 20 * 60 * 1000, maxEntries: 48 });
+        fixedIntervalMs = newFixedInterval();
         started = true;
         startedAt = Date.now();
-        scheduleRandom();
+        scheduleIdle();
         return publicConfig();
     }
 
     function dispose() {
         started = false;
         playbackGeneration += 1;
-        if (randomTimer) clearTimeout(randomTimer);
+        if (idleTimer) clearTimeout(idleTimer);
         if (finishTimer) clearTimeout(finishTimer);
-        randomTimer = null;
+        idleTimer = null;
         finishTimer = null;
-        clearQueue();
+        liveSessionActive = false;
+        liveSessionState = 'inactive';
+        queue.clear();
         current = null;
         busy = false;
+        autonomousScheduled = false;
         audioCache.clear();
     }
 
@@ -546,11 +838,14 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
         onGameEvent,
         updateConfig,
         queueTest,
+        queueAutonomousTest,
         preview,
         pronounce,
         stopCurrent,
         clearQueue,
         acknowledge,
+        setLiveSessionActive,
+        setLiveViewerCount,
         publicConfig,
         getStatus: statusPayload,
         getAudio: id => audioCache.get(id),

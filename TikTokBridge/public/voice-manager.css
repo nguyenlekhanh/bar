@@ -155,6 +155,25 @@
     accent-color: var(--gold);
 }
 
+.voice-auto-options {
+    display: grid;
+    gap: 6px;
+}
+
+.voice-auto-options .check-row {
+    min-height: 26px;
+    padding: 4px 7px;
+    font-size: 11px;
+}
+
+.voice-auto-categories {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.voice-status-list dd.speaking {
+    color: var(--gold);
+}
+
 .voice-divider {
     height: 1px;
     margin: 16px 0;
