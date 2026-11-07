@@ -212,6 +212,9 @@ namespace TikTokLiveGame
                 Quaternion.Euler(handheldPitch, handheldYaw, handheldRoll);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, blend);
             Camera camera = GetComponent<Camera>();
+            // Keep the framing in the 9:16 stream frame even when the host
+            // display/window has a different aspect ratio.
+            StreamViewport.ApplyToCamera(camera);
             camera.fieldOfView = Mathf.Lerp(camera.fieldOfView, desiredFov, blend);
         }
 

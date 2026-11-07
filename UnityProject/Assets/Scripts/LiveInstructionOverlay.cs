@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -79,7 +80,6 @@ namespace TikTokLiveGame
         private GameObject panelObject;
         private SpriteRenderer panelBackground;
         private SpriteRenderer panelBorder;
-        private Font font;
         private Sprite whiteSprite;
         private static Material overlayMaterial;
         private InstructionConfigDto config;
@@ -127,8 +127,8 @@ namespace TikTokLiveGame
             public SpriteRenderer highlight;
             public SpriteRenderer accent;
             public SpriteRenderer icon;
-            public TextMesh title;
-            public TextMesh subtitle;
+            public TextMeshPro title;
+            public TextMeshPro subtitle;
         }
 
         private void Awake() => EnsureCreated();
@@ -157,14 +157,21 @@ namespace TikTokLiveGame
         {
             if (initialized) return;
             initialized = true;
-            layoutWidth = Screen.width > 0 ? Screen.width : 720;
-            layoutHeight = Screen.height > 0 ? Screen.height : 1280;
+            if (Screen.width > 0 && Screen.height > 0)
+            {
+                Vector2Int content = StreamViewport.ContentSize;
+                layoutWidth = content.x;
+                layoutHeight = content.y;
+            }
+            else
+            {
+                layoutWidth = 720;
+                layoutHeight = 1280;
+            }
 
             overlayRoot = new GameObject("Live Instruction Overlay");
             overlayRoot.transform.SetParent(transform, false);
             whiteSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0f, 0f, 1f, 1f), new Vector2(0.5f, 0.5f), 1f);
-            font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            if (font == null) font = Resources.GetBuiltinResource<Font>("Arial.ttf");
 
             GameObject cameraObject = new("Instruction Overlay Camera");
             cameraObject.transform.SetParent(overlayRoot.transform, false);
@@ -182,6 +189,7 @@ namespace TikTokLiveGame
             overlayCamera.allowMSAA = false;
             overlayCamera.useOcclusionCulling = false;
             overlayCamera.enabled = true;
+            ApplyOverlayViewport();
 
             panelObject = CreateSprite("Instruction Panel", overlayRoot.transform, Vector3.zero, new Color(0.015f, 0.02f, 0.05f, 0.58f));
             panelBackground = panelObject.GetComponent<SpriteRenderer>();
@@ -214,29 +222,16 @@ namespace TikTokLiveGame
             view.icon = iconObject.GetComponent<SpriteRenderer>();
             view.icon.sortingOrder = 3;
 
-            view.title = CreateText("Title", view.root.transform, -0.2f, 64, FontStyle.Bold);
-            view.subtitle = CreateText("Subtitle", view.root.transform, -0.2f, 48, FontStyle.Normal);
-            view.title.GetComponent<MeshRenderer>().sortingOrder = 4;
-            view.subtitle.GetComponent<MeshRenderer>().sortingOrder = 3;
+            view.title = OverlayTypography.CreateWorldText(
+                view.root.transform, "Title", OverlayLayer, true, 64f, Color.white,
+                TextAlignmentOptions.MidlineLeft, 4);
+            view.subtitle = OverlayTypography.CreateWorldText(
+                view.root.transform, "Subtitle", OverlayLayer, false, 48f, Color.white,
+                TextAlignmentOptions.MidlineLeft, 3);
+            view.title.transform.localPosition = new Vector3(0f, 0f, -0.2f);
+            view.subtitle.transform.localPosition = new Vector3(0f, 0f, -0.2f);
             view.root.SetActive(false);
             return view;
-        }
-
-        private TextMesh CreateText(string name, Transform parent, float z, int fontSize, FontStyle style)
-        {
-            GameObject textObject = new(name);
-            textObject.layer = OverlayLayer;
-            textObject.transform.SetParent(parent, false);
-            TextMesh text = textObject.AddComponent<TextMesh>();
-            text.font = font;
-            text.fontSize = fontSize;
-            text.characterSize = 1f;
-            text.anchor = TextAnchor.MiddleLeft;
-            text.alignment = TextAlignment.Left;
-            text.fontStyle = style;
-            text.richText = false;
-            text.color = Color.white;
-            return text;
         }
 
         private GameObject CreateSprite(string name, Transform parent, Vector3 position, Color color)
@@ -460,11 +455,11 @@ namespace TikTokLiveGame
                 float textHeight = line.titleHeight + (line.subtitleHeight > 0f ? textGap + line.subtitleHeight : 0f);
                 float textTop = rowHeight * 0.5f - (rowHeight - textHeight) * 0.5f;
                 row.title.text = line.titleDisplay;
-                ApplyTextScale(row.title, line.titleHeight, line.titleLineCount);
+                ApplyTextScale(row.title, line.titleHeight, line.titleLineCount, textWidth);
                 row.title.transform.localPosition = new Vector3(textLeft, textTop - line.titleHeight * 0.5f, -0.2f);
                 row.title.gameObject.SetActive(line.titleDisplay.Length > 0);
                 row.subtitle.text = line.subtitleDisplay;
-                ApplyTextScale(row.subtitle, line.subtitleHeight, line.subtitleLineCount);
+                ApplyTextScale(row.subtitle, line.subtitleHeight, line.subtitleLineCount, textWidth);
                 row.subtitle.transform.localPosition = new Vector3(
                     textLeft,
                     textTop - line.titleHeight - textGap - line.subtitleHeight * 0.5f,
@@ -533,15 +528,18 @@ namespace TikTokLiveGame
             return string.Join("\n", lines);
         }
 
-        private static void ApplyTextScale(TextMesh text, float totalHeight, int lineCount)
+        private static void ApplyTextScale(TextMeshPro text, float totalHeight, int lineCount, float width)
         {
             if (totalHeight <= 0f || text == null) return;
-            // TextMesh's effective line height is fontSize * characterSize * 0.1.
-            // The generated mesh bounds are not reliable before the first render,
-            // so size the font directly instead of scaling the transform.
+            // Inter's TMP line box is about 0.121 * fontSize in world mode.
+            // Convert the row's existing design height into a point size so the
+            // panel keeps its geometry instead of growing with every line.
             int lines = Mathf.Max(1, lineCount);
-            text.characterSize = totalHeight / (lines * text.fontSize * 0.1f);
+            float lineHeight = totalHeight / lines;
+            text.fontSize = Mathf.Clamp(lineHeight / 0.121f, 1f, 800f);
+            text.rectTransform.sizeDelta = new Vector2(Mathf.Max(1f, width), totalHeight);
             text.transform.localScale = Vector3.one;
+            text.ForceMeshUpdate(false, false);
         }
 
         private Sprite SpriteFor(InstructionLine line)
@@ -628,21 +626,34 @@ namespace TikTokLiveGame
 
         private void Update() => Step(Time.unscaledDeltaTime);
 
+        private void ApplyOverlayViewport()
+        {
+            if (overlayCamera == null) return;
+            if (forcedScreenSize)
+                overlayCamera.rect = new Rect(0f, 0f, 1f, 1f);
+            else
+                overlayCamera.rect = StreamViewport.NormalizedRect;
+            overlayCamera.orthographicSize = layoutHeight * 0.5f;
+            overlayCamera.aspect = forcedScreenSize
+                ? layoutWidth / (float)Mathf.Max(1, layoutHeight)
+                : StreamViewport.TargetAspect;
+        }
+
         /// <summary>Exposed so the headless render test can advance the animation.</summary>
         public void Step(float deltaTime)
         {
             if (!initialized) return;
-            if (!forcedScreenSize && (Screen.width != layoutWidth || Screen.height != layoutHeight))
+            if (!forcedScreenSize)
             {
-                layoutWidth = Mathf.Max(1, Screen.width);
-                layoutHeight = Mathf.Max(1, Screen.height);
-                currentScale = Mathf.Max(0.35f, layoutHeight / DesignHeight);
-                if (overlayCamera != null)
+                Vector2Int content = StreamViewport.ContentSize;
+                if (content.x != layoutWidth || content.y != layoutHeight)
                 {
-                    overlayCamera.orthographicSize = layoutHeight * 0.5f;
-                    overlayCamera.aspect = layoutWidth / (float)layoutHeight;
+                    layoutWidth = content.x;
+                    layoutHeight = content.y;
+                    currentScale = Mathf.Max(0.35f, layoutHeight / DesignHeight);
+                    Relayout();
                 }
-                Relayout();
+                ApplyOverlayViewport();
             }
 
             RefreshMainCameraMask();
@@ -680,11 +691,7 @@ namespace TikTokLiveGame
             layoutWidth = Mathf.Max(1, width);
             layoutHeight = Mathf.Max(1, height);
             currentScale = Mathf.Max(0.35f, layoutHeight / DesignHeight);
-            if (overlayCamera != null)
-            {
-                overlayCamera.orthographicSize = layoutHeight * 0.5f;
-                overlayCamera.aspect = layoutWidth / (float)layoutHeight;
-            }
+            ApplyOverlayViewport();
             Relayout();
             ApplyVisuals();
         }

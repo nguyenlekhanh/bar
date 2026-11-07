@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "revision": 30,
+  "revision": 31,
   "position": "top-right",
   "marginX": 26,
   "marginY": 240,
@@ -8,7 +8,7 @@
   "iconSize": 35,
   "lineSpacing": 10,
   "panelWidth": 350,
-  "opacity": 0.9,
+  "opacity": 0,
   "maxVisibleLines": 6,
   "scroll": true,
   "lines": [

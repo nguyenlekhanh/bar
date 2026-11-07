@@ -220,11 +220,16 @@ namespace TikTokLiveGame
         private void OnGUI()
         {
             EnsureStyles();
-            float scale = Mathf.Clamp(Mathf.Min(Screen.width / 1080f, Screen.height / 1080f), 0.72f, 1.25f);
+            Rect content = StreamViewport.PixelRect;
+            float scale = Mathf.Clamp(Mathf.Min(content.width / 1080f, content.height / 1080f), 0.72f, 1.25f);
             Matrix4x4 originalMatrix = GUI.matrix;
-            GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
-            float width = Screen.width / scale;
-            float height = Screen.height / scale;
+            float contentTop = Screen.height - content.yMax;
+            GUI.matrix = Matrix4x4.TRS(
+                new Vector3(content.x, contentTop, 0f),
+                Quaternion.identity,
+                new Vector3(scale, scale, 1f));
+            float width = content.width / scale;
+            float height = content.height / scale;
 
             if (hudVisible)
             {
@@ -371,14 +376,16 @@ namespace TikTokLiveGame
             Texture2D input = Solid(new Color(0.01f, 0.01f, 0.025f, 0.98f));
             energyBack = Solid(new Color(0.05f, 0.05f, 0.12f, 0.95f));
             energyFill = Solid(new Color(0.1f, 0.9f, 1f, 1f));
+            Font body = OverlayTypography.GuiBody;
+            Font bold = OverlayTypography.GuiBold;
             panelStyle = new GUIStyle(GUI.skin.box) { normal = { background = panel }, border = new RectOffset(8, 8, 8, 8) };
-            titleStyle = new GUIStyle(GUI.skin.label) { fontSize = 22, fontStyle = FontStyle.Bold, normal = { textColor = Color.white } };
-            labelStyle = new GUIStyle(GUI.skin.label) { fontSize = 18, normal = { textColor = new Color(0.75f, 0.93f, 1f) }, clipping = TextClipping.Clip };
-            smallStyle = new GUIStyle(GUI.skin.label) { fontSize = 16, normal = { textColor = new Color(0.82f, 0.86f, 0.94f) } };
-            rankStyle = new GUIStyle(smallStyle) { fontSize = 18, fontStyle = FontStyle.Bold };
-            buttonStyle = new GUIStyle(GUI.skin.button) { fontSize = 15, fontStyle = FontStyle.Bold, normal = { background = button, textColor = Color.white }, hover = { background = buttonHover, textColor = Color.white }, active = { background = buttonHover, textColor = Color.white } };
-            inputStyle = new GUIStyle(GUI.skin.textField) { fontSize = 18, normal = { background = input, textColor = Color.white }, padding = new RectOffset(12, 8, 8, 6) };
-            bannerStyle = new GUIStyle(panelStyle) { fontSize = 24, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter, normal = { background = Solid(new Color(0.28f, 0.025f, 0.24f, 0.95f)), textColor = Color.white } };
+            titleStyle = new GUIStyle(GUI.skin.label) { font = bold, fontSize = 22, fontStyle = FontStyle.Bold, normal = { textColor = Color.white } };
+            labelStyle = new GUIStyle(GUI.skin.label) { font = body, fontSize = 18, normal = { textColor = new Color(0.75f, 0.93f, 1f) }, clipping = TextClipping.Clip };
+            smallStyle = new GUIStyle(GUI.skin.label) { font = body, fontSize = 16, normal = { textColor = new Color(0.82f, 0.86f, 0.94f) } };
+            rankStyle = new GUIStyle(smallStyle) { font = bold, fontSize = 18, fontStyle = FontStyle.Bold };
+            buttonStyle = new GUIStyle(GUI.skin.button) { font = bold, fontSize = 15, fontStyle = FontStyle.Bold, normal = { background = button, textColor = Color.white }, hover = { background = buttonHover, textColor = Color.white }, active = { background = buttonHover, textColor = Color.white } };
+            inputStyle = new GUIStyle(GUI.skin.textField) { font = body, fontSize = 18, normal = { background = input, textColor = Color.white }, padding = new RectOffset(12, 8, 8, 6) };
+            bannerStyle = new GUIStyle(panelStyle) { font = bold, fontSize = 24, fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter, normal = { background = Solid(new Color(0.28f, 0.025f, 0.24f, 0.95f)), textColor = Color.white } };
         }
 
         private static Texture2D Solid(Color color)

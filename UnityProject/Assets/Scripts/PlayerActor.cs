@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 namespace TikTokLiveGame
@@ -11,10 +12,9 @@ namespace TikTokLiveGame
         private SpriteRenderer wingsRenderer;
         private SpriteRenderer bannerRenderer;
         private Transform wingAnchor;
-        private TextMesh nameLabel;
-        private TextMesh rankLabel;
-        private TextMesh titleLabel;
-        private TextMesh titleShadowLabel;
+        private TextMeshPro nameLabel;
+        private TextMeshPro rankLabel;
+        private TextMeshPro titleLabel;
         private Vector3 home;
         private Vector3 normalHome;
         private float phase;
@@ -102,30 +102,18 @@ namespace TikTokLiveGame
             avatarRenderer.sortingOrder = characterRenderer.sortingOrder + 12;
             avatarRenderer.enabled = false;
 
-            GameObject labelObject = new("Name");
-            labelObject.transform.SetParent(transform, false);
-            labelObject.transform.localPosition = new Vector3(0.18f, 2.1f, 0f);
-            nameLabel = labelObject.AddComponent<TextMesh>();
+            nameLabel = OverlayTypography.CreateWorldText(
+                transform, "Name", 0, true, 1.06f, Color.white,
+                TextAlignmentOptions.MidlineLeft, characterRenderer.sortingOrder + 10);
             nameLabel.text = FormatDisplayName(Nickname);
-            nameLabel.anchor = TextAnchor.MiddleLeft;
-            nameLabel.alignment = TextAlignment.Left;
-            nameLabel.fontSize = 40;
-            nameLabel.characterSize = 0.032f;
-            nameLabel.fontStyle = FontStyle.Bold;
-            nameLabel.color = Color.white;
-            labelObject.GetComponent<MeshRenderer>().sortingOrder = characterRenderer.sortingOrder + 10;
+            nameLabel.rectTransform.sizeDelta = new Vector2(3.2f, 0.2f);
+            nameLabel.transform.localPosition = new Vector3(0.18f, 2.1f, 0f);
 
-            rankLabel = CreateLabel("Rank", new Vector3(0f, 3.05f, 0f), 48, new Color(1f, 0.82f, 0.2f), characterRenderer.sortingOrder + 15);
+            rankLabel = CreateLabel("Rank", new Vector3(0f, 3.05f, 0f), 1.27f, new Color(1f, 0.82f, 0.2f), characterRenderer.sortingOrder + 15);
             rankLabel.gameObject.SetActive(false);
-            titleLabel = CreateLabel("Title", new Vector3(0f, -0.25f, 0f), 36, new Color(0.3f, 0.95f, 1f), characterRenderer.sortingOrder + 14);
-            titleLabel.characterSize = 0.04f;
-            titleLabel.fontStyle = FontStyle.Bold;
+            titleLabel = CreateLabel("Title", new Vector3(0f, -0.25f, 0f), 1.19f, new Color(0.3f, 0.95f, 1f), characterRenderer.sortingOrder + 14);
             titleLabel.color = Color.white;
             titleLabel.gameObject.SetActive(false);
-            titleShadowLabel = CreateLabel("Title Shadow", new Vector3(0f, -0.25f, 0f), 36, new Color(0f, 0f, 0f, 0.92f), characterRenderer.sortingOrder + 13);
-            titleShadowLabel.characterSize = 0.04f;
-            titleShadowLabel.fontStyle = FontStyle.Bold;
-            titleShadowLabel.gameObject.SetActive(false);
             ApplyFallbackAvatar();
             if (!UsesSyntheticAvatar) LoadAvatar(data.avatar);
             ApplyEvolution();
@@ -184,18 +172,14 @@ namespace TikTokLiveGame
             return displayName.Length <= 18 ? displayName : displayName[..17] + "…";
         }
 
-        private TextMesh CreateLabel(string objectName, Vector3 position, int fontSize, Color color, int order)
+        private TextMeshPro CreateLabel(string objectName, Vector3 position, float fontSize, Color color, int order)
         {
-            GameObject labelObject = new(objectName);
-            labelObject.transform.SetParent(transform, false);
-            labelObject.transform.localPosition = position;
-            TextMesh label = labelObject.AddComponent<TextMesh>();
-            label.anchor = TextAnchor.MiddleCenter;
-            label.alignment = TextAlignment.Center;
-            label.fontSize = fontSize;
-            label.characterSize = 0.032f;
-            label.color = color;
-            labelObject.GetComponent<MeshRenderer>().sortingOrder = order;
+            TextMeshPro label = OverlayTypography.CreateWorldText(
+                transform, objectName, 0, true, fontSize, color,
+                TextAlignmentOptions.Center, order);
+            label.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            label.rectTransform.sizeDelta = new Vector2(4f, 0.4f);
+            label.transform.localPosition = position;
             return label;
         }
 
@@ -259,13 +243,11 @@ namespace TikTokLiveGame
         private void SetTitleText(string value)
         {
             titleLabel.text = value;
-            if (titleShadowLabel != null) titleShadowLabel.text = value;
         }
 
         private void SetTitleVisible(bool visible)
         {
             titleLabel.gameObject.SetActive(visible);
-            if (titleShadowLabel != null) titleShadowLabel.gameObject.SetActive(visible);
         }
 
         public void SetTopRank(int rank)
@@ -373,7 +355,6 @@ namespace TikTokLiveGame
             nameLabel.transform.localScale = Vector3.one * identityScale;
             float titleScale = titleLabel.text.Length <= 9 ? 0.68f : titleLabel.text.Length <= 14 ? 0.59f : 0.5f;
             titleLabel.transform.localScale = Vector3.one * identityScale * titleScale;
-            if (titleShadowLabel != null) titleShadowLabel.transform.localScale = titleLabel.transform.localScale;
             UpdateDecorationPositions(0f);
             wingsRenderer.enabled = decorated;
             bannerRenderer.enabled = decorated && bannerRenderer.sprite != null && !string.IsNullOrWhiteSpace(titleLabel.text);
@@ -381,7 +362,7 @@ namespace TikTokLiveGame
 
         private void UpdateDecorationPositions(float bounce)
         {
-            if (wingsRenderer == null || bannerRenderer == null || wingAnchor == null || body == null || avatarRenderer == null || nameLabel == null || rankLabel == null || titleLabel == null || titleShadowLabel == null) return;
+            if (wingsRenderer == null || bannerRenderer == null || wingAnchor == null || body == null || avatarRenderer == null || nameLabel == null || rankLabel == null || titleLabel == null) return;
             float attachedBounce = bounce * 0.72f;
             float characterHeight = Mathf.Max(0.1f, VisibleCharacterHeight(characterBaseScale.y * giftFocusScale));
             wingAnchor.localPosition = new Vector3(0f, body.localPosition.y + characterHeight * 0.16f, 0.12f);
@@ -395,7 +376,6 @@ namespace TikTokLiveGame
             bannerRenderer.transform.localPosition = new Vector3(0f, bannerY, -0.01f);
             float titleY = bannerY + bannerTextOffsetY * identityScale;
             titleLabel.transform.localPosition = new Vector3(0f, titleY, -0.02f);
-            titleShadowLabel.transform.localPosition = new Vector3(-0.014f * identityScale, titleY - 0.018f * identityScale, -0.015f);
             rankLabel.transform.localPosition = new Vector3(0f, bannerY + 0.34f * identityScale, 0f);
         }
 
@@ -590,7 +570,6 @@ namespace TikTokLiveGame
                 nameLabel.transform.rotation = camera.transform.rotation;
                 rankLabel.transform.rotation = camera.transform.rotation;
                 titleLabel.transform.rotation = camera.transform.rotation;
-                titleShadowLabel.transform.rotation = camera.transform.rotation;
                 avatarRenderer.transform.rotation = camera.transform.rotation;
                 bannerRenderer.transform.rotation = camera.transform.rotation;
             }
@@ -628,10 +607,9 @@ namespace TikTokLiveGame
             SetTextAlpha(nameLabel, visualAlpha);
             SetTextAlpha(rankLabel, visualAlpha);
             SetTextAlpha(titleLabel, visualAlpha);
-            SetTextAlpha(titleShadowLabel, visualAlpha * 0.92f);
         }
 
-        private static void SetTextAlpha(TextMesh label, float alpha)
+        private static void SetTextAlpha(TMP_Text label, float alpha)
         {
             if (label == null) return;
             Color color = label.color;

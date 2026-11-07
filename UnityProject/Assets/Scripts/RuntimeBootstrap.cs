@@ -13,8 +13,12 @@ namespace TikTokLiveGame
             QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = 60;
             Application.runInBackground = true;
-            Screen.SetResolution(540, 960, false);
+            // Render at the native vertical stream size so the overlay and
+            // scene are not upscaled from a 540x960 backbuffer.
+            Screen.SetResolution(1080, 1920, false);
             ClubSceneBuilder.Build();
+            StreamViewport.ApplyToCamera(Camera.main);
+            CreateLetterboxBackground();
 
             GameObject root = new("TikTok Live Game");
             AvatarService avatars = root.AddComponent<AvatarService>();
@@ -28,6 +32,21 @@ namespace TikTokLiveGame
             LiveInstructionOverlay instructions = root.AddComponent<LiveInstructionOverlay>();
             instructions.Initialize(client);
             VisualCaptureHarness.InstallIfRequested(root);
+        }
+
+        private static void CreateLetterboxBackground()
+        {
+            GameObject backgroundObject = new("Letterbox Background");
+            Camera background = backgroundObject.AddComponent<Camera>();
+            background.clearFlags = CameraClearFlags.SolidColor;
+            background.backgroundColor = Color.black;
+            background.cullingMask = 0;
+            background.depth = -100f;
+            background.orthographic = true;
+            background.orthographicSize = 1f;
+            background.allowHDR = false;
+            background.allowMSAA = false;
+            background.useOcclusionCulling = false;
         }
     }
 }
