@@ -7,7 +7,7 @@ set "BRIDGE_DIR=%ROOT%TikTokBridge"
 set "BRIDGE_PORT=3000"
 
 echo =======================================
-echo     KHOI DONG ONG CHU MMO LIVE
+echo     KHOI DONG MMO LIVE
 echo =======================================
 echo.
 

@@ -64,6 +64,7 @@ const {
     saveInstructionConfig
 } = require('./src/instructions/config');
 const { saveInstructionIcon, MAX_ICON_BYTES } = require('./src/instructions/icons');
+const { createVoiceService } = require('./src/voice/service');
 
 const app = express();
 const server = http.createServer(app);
@@ -101,6 +102,9 @@ const instructionConfigPath = process.env.INSTRUCTION_CONFIG
     ? path.resolve(process.env.INSTRUCTION_CONFIG)
     : path.join(__dirname, 'config', 'instructions.json');
 const instructionIconsDir = path.join(assetsDir, 'instruction-icons');
+const voiceConfigPath = process.env.VOICE_CONFIG
+    ? path.resolve(process.env.VOICE_CONFIG)
+    : path.join(__dirname, 'config', 'voice.json');
 const LIVE_PROVIDER = String(process.env.LIVE_PROVIDER || gameConfig.liveProvider || 'tikfinity').toLowerCase();
 const TIKFINITY_WS_URL = String(process.env.TIKFINITY_WS_URL || gameConfig.tikfinityWsUrl || 'ws://127.0.0.1:21213/');
 
@@ -131,6 +135,17 @@ let animationRegistry = new Set();
 let backgroundConfig = defaultBackground();
 let backgroundAck = { file: '', generation: -1, at: 0 };
 let instructionConfig = defaultInstructionConfig();
+
+// The voice service owns English dialogue, username pronunciation, the TTS
+// providers, the bounded audio cache and the single-speaker queue. It is
+// deliberately separate from the gameplay event broadcast so reconnects cannot
+// duplicate a spoken announcement.
+const voiceService = createVoiceService({
+    configPath: voiceConfigPath,
+    broadcast,
+    broadcastToRole,
+    logger: console
+});
 
 if (!ALLOW_LAN && !isLoopbackAddress(HOST) && HOST.toLowerCase() !== 'localhost') {
     throw new Error('Từ chối mở Node ra mạng LAN. Chỉ đặt ALLOW_LAN=1 khi đã có lớp xác thực bên ngoài.');
@@ -284,6 +299,73 @@ app.post('/api/instruction-icons', controlPanelOnly, instructionIconParser, asyn
         console.error('Could not save instruction icon:', error.message);
         res.status(500).json({ error: 'Could not save the icon.' });
     }
+});
+
+/* ── LIVE AI DJ / VOICE MANAGER ─────────────────────────── */
+const voiceBodyParser = express.json({ limit: '128kb' });
+
+app.get('/api/voice', controlPanelOnly, (_req, res) => {
+    res.json({
+        config: voiceService.publicConfig(),
+        providers: voiceService.publicProviders(),
+        status: voiceService.getStatus()
+    });
+});
+
+app.post('/api/voice', controlPanelOnly, voiceBodyParser, async (req, res) => {
+    try {
+        const config = await voiceService.updateConfig(req.body?.config ?? req.body);
+        res.json({
+            config,
+            providers: voiceService.publicProviders(),
+            status: voiceService.getStatus(),
+            message: 'Voice settings saved and applied.'
+        });
+    } catch (error) {
+        res.status(400).json({ error: error.message || 'Could not save voice settings.' });
+    }
+});
+
+app.post('/api/voice/pronounce', controlPanelOnly, voiceBodyParser, (req, res) => {
+    const username = String(req.body?.username || '').slice(0, 80);
+    res.json({ pronunciation: voiceService.pronounce(username) });
+});
+
+app.post('/api/voice/preview', controlPanelOnly, voiceBodyParser, async (req, res) => {
+    try {
+        const preview = await voiceService.preview(req.body || {});
+        res.json({ ...preview, message: 'Voice preview generated.' });
+    } catch (error) {
+        res.status(503).json({ error: error.message || 'Could not generate the voice preview.' });
+    }
+});
+
+app.post('/api/voice/test', controlPanelOnly, voiceBodyParser, (req, res) => {
+    const result = voiceService.queueTest(req.body || {});
+    if (!result.accepted) return res.status(409).json({ error: `Voice test was not queued: ${result.reason}.` });
+    res.json({ queued: true, item: result.item, status: voiceService.getStatus() });
+});
+
+app.post('/api/voice/stop', controlPanelOnly, (_req, res) => {
+    voiceService.stopCurrent();
+    res.json({ stopped: true, status: voiceService.getStatus() });
+});
+
+app.post('/api/voice/clear', controlPanelOnly, (_req, res) => {
+    const cleared = voiceService.clearQueue();
+    res.json({ cleared, status: voiceService.getStatus() });
+});
+
+app.get('/api/voice/audio/:file', (req, res) => {
+    const match = String(req.params.file || '').match(/^([a-f0-9]{32})\.wav$/i);
+    if (!match) return res.status(404).type('text/plain').send('Not found');
+    const audio = voiceService.getAudio(match[1]);
+    if (!audio) return res.status(404).type('text/plain').send('Voice audio expired.');
+    res.setHeader('Content-Type', 'audio/wav');
+    res.setHeader('Content-Length', audio.buffer.length);
+    res.setHeader('Cache-Control', 'private, max-age=0, no-store');
+    res.setHeader('Accept-Ranges', 'none');
+    res.end(audio.buffer);
 });
 
 const giftAnimationsBodyParser = express.json({ limit: '64kb' });
@@ -1202,6 +1284,7 @@ function emitGameEvent(event) {
     if (event.type === 'like') metrics.likes += event.likeCount;
     broadcast(event);
     broadcastMetrics();
+    voiceService.onGameEvent(event);
 }
 
 function processGameEvent(inputEvent) {
@@ -1554,6 +1637,8 @@ async function handleClientMessage(ws, message) {
         send(ws, { type: 'metrics', ...metrics });
         send(ws, { type: 'background_config', action: 'set', background: backgroundPayload() });
         send(ws, { type: 'instruction_config', config: instructionConfig });
+        send(ws, { type: 'voice_config', config: voiceService.publicConfig() });
+        if (ws.role === 'control') send(ws, { type: 'voice_status', ...voiceService.getStatus() });
         if (ws.role === 'control') send(ws, { type: 'master_config', master: masterConfig });
         if (ws.role === 'control') send(ws, giftCatalogMessage());
         if (ws.role === 'control') send(ws, giftAnimationsMessage());
@@ -1570,7 +1655,10 @@ async function handleClientMessage(ws, message) {
         message.type === 'master_test' ||
         message.type === 'set_gift_animations' ||
         message.type === 'set_instruction_config' ||
-        message.type === 'test_gift_stop';
+        message.type === 'test_gift_stop' ||
+        message.type === 'voice_test' ||
+        message.type === 'voice_stop' ||
+        message.type === 'voice_clear';
     const operatorOnly = new Set([
         'set_username', 'disconnect_tiktok', 'demo_start', 'demo_stop', 'demo_event', 'reset_game'
     ]).has(message.type);
@@ -1579,6 +1667,13 @@ async function handleClientMessage(ws, message) {
     }
     if (operatorOnly && ws.role !== 'control' && !ws.nativeClient) {
         return send(ws, { type: 'error', message: 'Client has no control permission.' });
+    }
+
+    if (message.type === 'voice_ack') {
+        if (ws.role !== 'overlay') {
+            return send(ws, { type: 'error', message: 'Only Unity can acknowledge voice playback.' });
+        }
+        return voiceService.acknowledge(message);
     }
 
     if (message.type === 'animation_ack') {
@@ -1640,6 +1735,34 @@ async function handleClientMessage(ws, message) {
             overlayClients: result.overlayClients,
             message: 'Instructions saved and sent to Unity.'
         });
+    }
+
+    if (message.type === 'voice_test') {
+        const result = voiceService.queueTest({
+            text: message.text,
+            username: message.username
+        });
+        if (!result.accepted) return send(ws, {
+            type: 'voice_test_result',
+            queued: false,
+            message: `Voice test was not queued: ${result.reason}.`
+        });
+        return send(ws, {
+            type: 'voice_test_result',
+            queued: true,
+            item: result.item,
+            message: 'Voice test queued for Unity.'
+        });
+    }
+
+    if (message.type === 'voice_stop') {
+        voiceService.stopCurrent();
+        return send(ws, { type: 'voice_stopped', message: 'Voice stopped.' });
+    }
+
+    if (message.type === 'voice_clear') {
+        const cleared = voiceService.clearQueue();
+        return send(ws, { type: 'voice_cleared', cleared, message: `Cleared ${cleared} pending voice line(s).` });
     }
 
     if (message.type === 'background_ack') {
@@ -1756,6 +1879,8 @@ async function handleClientMessage(ws, message) {
         const startedAt = metrics.startedAt;
         resetSessionState(source);
         metrics.startedAt = startedAt;
+        voiceService.clearQueue();
+        voiceService.stopCurrent();
         broadcast({ type: 'reset' });
         broadcastMetrics();
         return;
@@ -1805,7 +1930,7 @@ wss.on('connection', (ws, request) => {
         }
         // One acknowledgement per broadcast gift is normal overlay traffic, not
         // a command flood; everything else still shares the command rate limit.
-        const skipsRateLimit = message.type === 'animation_ack';
+        const skipsRateLimit = message.type === 'animation_ack' || message.type === 'voice_ack';
         if (!skipsRateLimit && !consumeRateLimit(ws.rateLimit)) {
             return ws.close(1008, 'Rate limit exceeded');
         }
@@ -1840,10 +1965,14 @@ refreshInstructionConfig()
     .catch(error => console.error('Không thể đọc cấu hình background:', error.message))
     .then(() => refreshGiftAnimations())
     .catch(error => console.error('Could not read the gift animation mapping:', error.message))
+    .then(() => voiceService.start())
+    .catch(error => console.error('Could not read the voice configuration:', error.message))
     .finally(() => {
         server.listen(PORT, HOST, () => {
             console.log(`TikTok Live Game: http://${HOST}:${PORT}`);
             console.log(`Bảng điều khiển: http://${HOST}:${PORT}/control.html`);
+            const voice = voiceService.getStatus();
+            console.log(`[voice] provider=${voice.provider} enabled=${voice.enabled} available=${voice.providerStatus?.available === true}`);
             // Any GIF dropped into assets/gifs becomes a Unity animation on its
             // own; set GIF_AUTOCONVERT=0 to keep the bridge read-only on disk.
             if (process.env.GIF_AUTOCONVERT !== '0') {
@@ -1870,6 +1999,7 @@ server.on('error', (err) => {
 
 async function shutdown() {
     stopDemo();
+    voiceService.dispose();
     clearInterval(heartbeatTimer);
     desiredUsername = null;
     cancelReconnect();

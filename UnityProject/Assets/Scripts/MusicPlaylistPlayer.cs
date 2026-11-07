@@ -43,6 +43,9 @@ namespace TikTokLiveGame
         private bool advancePending;
         private bool wasPlaying;
         private bool playConfirmed;
+        private float voiceDuckMultiplier = 1f;
+        private float voiceDuckTarget = 1f;
+        private float voiceDuckFadeSeconds = 0.35f;
 
         private void Awake()
         {
@@ -80,6 +83,7 @@ namespace TikTokLiveGame
 
         private void Update()
         {
+            UpdateVoiceDucking();
             if (output == null)
             {
                 if (Time.unscaledTime >= nextRescanAt)
@@ -119,7 +123,7 @@ namespace TikTokLiveGame
                 float fadeOut = length > 0.05f
                     ? Mathf.Clamp01((length - output.time) / FadeSeconds)
                     : 1f;
-                output.volume = configuredVolume * Mathf.Min(fadeIn, fadeOut);
+                output.volume = configuredVolume * Mathf.Min(fadeIn, fadeOut) * voiceDuckMultiplier;
                 watchdogAt = Time.unscaledTime + 3f;
 
                 if (!playConfirmed && output.time > 0.25f)
@@ -143,6 +147,39 @@ namespace TikTokLiveGame
                                  $"(isPlaying={output.isPlaying}, time={output.time:0.00}s, clip={(currentClip == null ? "null" : currentClip.length.ToString("0.0") + "s")}); advancing.");
                 ScheduleAdvance(0.5f);
             }
+        }
+
+        /// <summary>
+        /// Smoothly lowers the DJ source while the MC speaks. The playlist and the
+        /// currently decoded clip keep running; only the source volume multiplier
+        /// changes, so a voice line never stops or restarts the music.
+        /// </summary>
+        public void DuckForVoice(float level, float fadeMs)
+        {
+            voiceDuckTarget = Mathf.Clamp(level, 0.02f, 1f);
+            voiceDuckFadeSeconds = Mathf.Clamp(fadeMs, 80f, 2000f) / 1000f;
+            if (output != null) output.mute = false;
+        }
+
+        /// <summary>Returns the DJ source to its configured level after speech.</summary>
+        public void RestoreMusicAfterVoice(float fadeMs)
+        {
+            voiceDuckTarget = 1f;
+            voiceDuckFadeSeconds = Mathf.Clamp(fadeMs, 80f, 2000f) / 1000f;
+        }
+
+        private void UpdateVoiceDucking()
+        {
+            if (Mathf.Approximately(voiceDuckMultiplier, voiceDuckTarget)) return;
+            float step = Time.unscaledDeltaTime / Mathf.Max(0.05f, voiceDuckFadeSeconds);
+            voiceDuckMultiplier = Mathf.MoveTowards(voiceDuckMultiplier, voiceDuckTarget, step);
+            if (output == null || !output.isPlaying) return;
+            float length = currentClip != null ? currentClip.length : 0f;
+            float fadeIn = Mathf.Clamp01((Time.unscaledTime - trackStartedAt) / FadeSeconds);
+            float fadeOut = length > 0.05f
+                ? Mathf.Clamp01((length - output.time) / FadeSeconds)
+                : 1f;
+            output.volume = configuredVolume * Mathf.Min(fadeIn, fadeOut) * voiceDuckMultiplier;
         }
 
         /// <summary>

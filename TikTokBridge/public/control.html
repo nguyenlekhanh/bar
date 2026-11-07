@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="control.css">
     <link rel="stylesheet" href="instructions.css">
     <link rel="stylesheet" href="gif-manager.css">
+    <link rel="stylesheet" href="voice-manager.css">
 </head>
 <body>
 
@@ -25,6 +26,7 @@
         <button class="tab-btn" data-tab="events">🎯 Events</button>
         <button class="tab-btn" data-tab="background">🖼 Background</button>
         <button class="tab-btn" data-tab="instructions">📋 Instructions</button>
+        <button class="tab-btn" data-tab="voice">🎙 Voice Manager</button>
         <button class="tab-btn" data-tab="gifs">🎞 GIF Manager</button>
         <button class="tab-btn" data-tab="session">📊 Session</button>
         <button class="tab-btn" data-tab="guide">📖 Guide</button>
@@ -470,6 +472,134 @@
     </article>
 </template>
 
+<!-- ── VOICE MANAGER ── -->
+<section class="tab-panel" id="tab-voice">
+    <div class="page-header">
+        <p class="page-eyebrow">Live AI DJ / MC</p>
+        <h1 class="page-title">🎙 Voice Manager</h1>
+        <p class="page-desc">American English TTS announcements, username pronunciation, dialogue variations, queue priority and DJ music ducking.</p>
+    </div>
+
+    <div id="voice-message" class="master-msg" aria-live="polite"></div>
+
+    <div class="voice-grid">
+        <div class="card">
+            <div class="card-header">
+                <div><p class="card-label">Voice settings</p><h2 class="card-title">American MC</h2></div>
+                <label class="toggle-wrap"><input id="voice-enabled" type="checkbox" checked><span class="toggle-track"></span> Master enable</label>
+            </div>
+            <div class="voice-fields">
+                <label class="voice-field">TTS provider<select id="voice-provider"></select></label>
+                <label class="voice-field">Voice<select id="voice-voice"></select></label>
+                <label class="voice-field">Gender<select id="voice-gender"><option value="male">American male</option><option value="female">American female</option></select></label>
+                <label class="voice-field">Personality<select id="voice-persona"><option value="club">Club DJ — energetic hype</option><option value="friendly">Friendly host — conversational</option><option value="vip">VIP host — major gifts + leaderboard</option></select></label>
+                <label class="voice-field">Language<input value="English (US)" disabled></label>
+                <label class="voice-field">Speech speed <span class="voice-range"><input id="voice-speed" type="range" min="0.7" max="1.35" step="0.01" value="1"><output id="voice-speed-value">1.00×</output></span></label>
+                <label class="voice-field">Voice volume <span class="voice-range"><input id="voice-volume" type="range" min="0" max="1" step="0.01" value="1"><output id="voice-volume-value">100%</output></span></label>
+                <label class="voice-field">Music duck level <span class="voice-range"><input id="voice-duck-level" type="range" min="0.05" max="1" step="0.01" value="0.22"><output id="voice-duck-level-value">22%</output></span></label>
+                <label class="voice-field">Ducking fade <span class="voice-range"><input id="voice-duck-fade" type="range" min="80" max="2000" step="10" value="350"><output id="voice-duck-fade-value">350 ms</output></span></label>
+            </div>
+            <p class="help">Kokoro runs locally after its one-time model download. Windows SAPI is the offline fallback; OpenAI is optional and reads its key only from the bridge environment.</p>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><div><p class="card-label">Automation</p><h2 class="card-title">Event Settings</h2></div></div>
+            <div class="voice-checks">
+                <label class="check-row"><input id="voice-event-welcome" type="checkbox" checked> Welcome announcements</label>
+                <label class="check-row"><input id="voice-event-gift" type="checkbox" checked> Gift announcements</label>
+                <label class="check-row"><input id="voice-event-follow" type="checkbox" checked> Follow announcements</label>
+                <label class="check-row"><input id="voice-event-share" type="checkbox" checked> Share announcements</label>
+                <label class="check-row"><input id="voice-event-vip" type="checkbox" checked> VIP announcements</label>
+                <label class="check-row"><input id="voice-event-topdj" type="checkbox" checked> Top DJ announcements</label>
+                <label class="check-row"><input id="voice-event-random" type="checkbox" checked> Random MC interactions</label>
+            </div>
+            <div class="voice-divider"></div>
+            <div class="voice-fields voice-fields-compact">
+                <label class="voice-field">Max queue<input id="voice-max-queue" type="number" min="1" max="50" value="12"></label>
+                <label class="voice-field">Expire after (ms)<input id="voice-expire" type="number" min="5000" max="300000" step="1000" value="45000"></label>
+                <label class="voice-field">Random MC min (s)<input id="voice-random-min" type="number" min="30" max="3600" value="150"></label>
+                <label class="voice-field">Random MC max (s)<input id="voice-random-max" type="number" min="60" max="7200" value="300"></label>
+            </div>
+            <p class="section-label" style="margin-top:16px;">Per-event cooldowns (ms)</p>
+            <div class="voice-fields voice-fields-compact">
+                <label class="voice-field">Welcome<input data-voice-cooldown="welcome" type="number" min="0" max="600000" step="1000" value="15000"></label>
+                <label class="voice-field">Gift<input data-voice-cooldown="gift" type="number" min="0" max="600000" step="1000" value="6000"></label>
+                <label class="voice-field">Follow<input data-voice-cooldown="follow" type="number" min="0" max="600000" step="1000" value="30000"></label>
+                <label class="voice-field">Share<input data-voice-cooldown="share" type="number" min="0" max="600000" step="1000" value="30000"></label>
+                <label class="voice-field">VIP<input data-voice-cooldown="vip" type="number" min="0" max="600000" step="1000" value="15000"></label>
+                <label class="voice-field">Top DJ<input data-voice-cooldown="topdj" type="number" min="0" max="600000" step="1000" value="30000"></label>
+                <label class="voice-field">Random<input data-voice-cooldown="random" type="number" min="0" max="600000" step="1000" value="45000"></label>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div><p class="card-label">Pronunciation</p><h2 class="card-title">TikTok Usernames</h2></div>
+            <button id="voice-save-name" class="btn btn-secondary btn-sm">Save overrides</button>
+        </div>
+        <div class="voice-fields voice-fields-compact">
+            <label class="voice-field">Number reading<select id="voice-username-mode"><option value="smart">Smart — 2025 → twenty twenty-five</option><option value="cardinal">Cardinal — 2025 → two thousand twenty-five</option><option value="digits">Digits — 2 0 2 5</option></select></label>
+            <label class="voice-field">Max spoken characters<input id="voice-username-max-chars" type="number" min="8" max="160" value="40"></label>
+            <label class="voice-field">Max spoken words<input id="voice-username-max-words" type="number" min="1" max="24" value="8"></label>
+        </div>
+        <div class="voice-test-row">
+            <input id="voice-username-test" maxlength="80" placeholder="@cool_dj2025  or  @john.smith_88  or  @xX_darkwolf_Xx">
+            <button id="voice-pronounce" class="btn btn-secondary btn-sm">Test pronunciation</button>
+            <button id="voice-preview-username" class="btn btn-primary btn-sm">Preview spoken name</button>
+        </div>
+        <p id="voice-pronounced" class="voice-result">Automatic pronunciation preview appears here.</p>
+        <div class="voice-override-add">
+            <input id="voice-override-username" maxlength="64" placeholder="Original @username">
+            <input id="voice-override-spoken" maxlength="120" placeholder="Manual spoken override">
+            <button id="voice-override-add" class="btn btn-secondary btn-sm">+ Add override</button>
+        </div>
+        <div id="voice-pronunciations" class="voice-overrides"><span class="muted">No manual overrides yet.</span></div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div><p class="card-label">Dialogue manager</p><h2 class="card-title">English US Templates</h2></div>
+            <div class="card-actions">
+                <button id="voice-dialogue-add" class="btn btn-secondary btn-sm">+ Add line</button>
+                <button id="voice-save" class="btn btn-green btn-sm">✓ Save &amp; apply</button>
+            </div>
+        </div>
+        <div class="voice-test-row">
+            <select id="voice-dialogue-category"></select>
+            <span id="voice-dialogue-count" class="muted"></span>
+        </div>
+        <div id="voice-dialogues" class="voice-dialogue-list"></div>
+        <p class="help">Use <code>{name}</code>, <code>{gift}</code> and <code>{diamonds}</code> placeholders. Lines marked off stay saved but are skipped. Preview plays through the browser; Test Voice below goes through Unity and the stream audio path.</p>
+    </div>
+
+    <div class="voice-grid">
+        <div class="card">
+            <div class="card-header"><div><p class="card-label">Testing</p><h2 class="card-title">Stream Voice Test</h2></div></div>
+            <textarea id="voice-test-text" rows="3" placeholder="Yo! This is your Cloud Disco MC. Let's get this party started!"></textarea>
+            <div class="card-actions voice-actions">
+                <button id="voice-test" class="btn btn-primary btn-sm">▶ Test Voice on Unity</button>
+                <button id="voice-preview" class="btn btn-secondary btn-sm">🔊 Preview in browser</button>
+                <button id="voice-stop" class="btn btn-danger btn-sm">■ Stop Voice</button>
+                <button id="voice-clear" class="btn btn-secondary btn-sm">Clear Queue</button>
+            </div>
+            <p class="help">Test Voice is sent to Unity; browser Preview is only a TTS sample and does not prove the final TikTok/OBS stream mix.</p>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><div><p class="card-label">Live status</p><h2 class="card-title">TTS + Audio</h2></div></div>
+            <dl class="voice-status-list">
+                <dt>Engine</dt><dd id="voice-status-engine">Loading…</dd>
+                <dt>Current speaking</dt><dd id="voice-status-current">Idle</dd>
+                <dt>Pending queue</dt><dd id="voice-status-queue">0</dd>
+                <dt>Unity playback</dt><dd id="voice-status-ack">Waiting for Unity…</dd>
+                <dt>Last error</dt><dd id="voice-status-error">None</dd>
+            </dl>
+            <audio id="voice-preview-audio" preload="none" controls></audio>
+        </div>
+    </div>
+</section>
+
 <!-- ── GIF MANAGER ── -->
 <section class="tab-panel" id="tab-gifs">
     <div class="page-header">
@@ -778,5 +908,6 @@
 <script src="control.js"></script>
 <script src="instructions.js"></script>
 <script src="gif-manager.js"></script>
+<script src="voice-manager.js"></script>
 </body>
 </html>

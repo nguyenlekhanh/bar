@@ -34,6 +34,18 @@ namespace TikTokLiveGame
         public string animationEffect;
         public string animationCharacter;
         public string eventId;
+        // Voice announcements are JSON metadata only; the WAV is downloaded from
+        // the loopback bridge into a dedicated 2D AudioSource.
+        public string id;
+        public string url;
+        public string text;
+        public string category;
+        public string categoryLabel;
+        public string voice;
+        public string provider;
+        public float volume = 1f;
+        public float duckLevel = 0.22f;
+        public float duckFadeMs = 350f;
         public string[] userIds;
         public int animationDurationMs;
         public bool spectatorOnly;
@@ -90,6 +102,7 @@ namespace TikTokLiveGame
         public string eventId;
         public string animationId;
         public string file;
+        public string id;
         public int count;
         public int userIndex;
         public int value;

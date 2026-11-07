@@ -1,0 +1,403 @@
+/* ─── VOICE MANAGER ─────────────────────────────────────── */
+.tab-nav {
+    /* Ten tabs can exceed the width of a narrow desktop panel. Keep every tab
+       reachable instead of letting the last ones disappear off-screen. */
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+}
+
+.tab-nav::-webkit-scrollbar {
+    height: 4px;
+}
+
+.tab-nav::-webkit-scrollbar-thumb {
+    background: var(--border-2);
+    border-radius: 4px;
+}
+
+.tab-btn {
+    flex: 0 0 auto;
+}
+
+@media (max-width: 900px) {
+    .navbar {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .navbar-brand {
+        margin-right: 12px;
+    }
+}
+
+#tab-voice .page-header {
+    margin-bottom: 18px;
+}
+
+#tab-voice .page-title {
+    margin-bottom: 5px;
+}
+
+#tab-voice .page-desc {
+    max-width: 880px;
+}
+
+.voice-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+#tab-voice .card {
+    margin-bottom: 16px;
+}
+
+.voice-fields {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.voice-fields-compact {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-top: 12px;
+}
+
+.voice-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--text-3);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.voice-field input,
+.voice-field select,
+#tab-voice textarea,
+#tab-voice input[type="text"],
+.voice-test-row input,
+.voice-override-add input {
+    width: 100%;
+    min-height: 36px;
+    padding: 8px 10px;
+    color: var(--text);
+    background: var(--bg-3);
+    border: 1px solid var(--border-2);
+    border-radius: var(--radius-sm);
+    font: inherit;
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.voice-field input:focus,
+.voice-field select:focus,
+#tab-voice textarea:focus,
+#tab-voice input:focus {
+    border-color: var(--gold-border);
+}
+
+.voice-field input:disabled {
+    opacity: 0.65;
+}
+
+.voice-range {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 36px;
+}
+
+.voice-range input[type="range"] {
+    flex: 1;
+    min-height: 20px;
+    padding: 0;
+    accent-color: var(--gold);
+    background: transparent;
+    border: 0;
+}
+
+.voice-range output {
+    min-width: 56px;
+    color: var(--gold);
+    font-size: 12px;
+    text-align: right;
+    text-transform: none;
+}
+
+.voice-checks {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.check-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 9px;
+    color: var(--text-2);
+    background: var(--bg-3);
+    border: 1px solid var(--border-2);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.check-row input {
+    accent-color: var(--gold);
+}
+
+.voice-divider {
+    height: 1px;
+    margin: 16px 0;
+    background: var(--border-2);
+}
+
+.voice-featured-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--text-2);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.voice-featured-toggle input {
+    accent-color: var(--gold);
+}
+
+.section-label {
+    color: var(--text-3);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.voice-test-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.voice-test-row input {
+    flex: 1;
+}
+
+.voice-test-row select {
+    min-width: 240px;
+}
+
+.voice-test-row .muted {
+    white-space: nowrap;
+}
+
+.voice-result {
+    min-height: 22px;
+    margin: 10px 0 4px;
+    padding: 10px 12px;
+    color: var(--gold);
+    background: rgba(212, 175, 55, 0.07);
+    border: 1px solid var(--gold-border);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+}
+
+.voice-result.empty {
+    color: var(--text-3);
+    background: var(--bg-3);
+    border-color: var(--border-2);
+}
+
+.voice-override-add {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr auto;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.voice-overrides {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    min-height: 28px;
+}
+
+.voice-override-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 8px 6px 10px;
+    background: var(--bg-3);
+    border: 1px solid var(--border-2);
+    border-radius: 20px;
+    color: var(--text-2);
+    font-size: 12px;
+}
+
+.voice-override-chip strong {
+    color: var(--text);
+    font-weight: 500;
+}
+
+.voice-override-chip button {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    color: var(--text-3);
+    background: transparent;
+    border: 0;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.voice-override-chip button:hover {
+    color: var(--danger);
+    background: rgba(255, 80, 80, 0.12);
+}
+
+.voice-dialogue-list {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    max-height: 430px;
+    overflow: auto;
+    padding-right: 3px;
+    margin-top: 12px;
+}
+
+.voice-dialogue-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 9px;
+    padding: 8px;
+    background: var(--bg-3);
+    border: 1px solid var(--border-2);
+    border-radius: var(--radius-sm);
+}
+
+.voice-dialogue-row input[type="checkbox"] {
+    accent-color: var(--gold);
+}
+
+.voice-dialogue-row input[type="text"] {
+    width: 100%;
+    min-height: 32px;
+    padding: 6px 8px;
+    color: var(--text);
+    background: var(--bg-2);
+    border: 1px solid var(--border-2);
+    border-radius: 4px;
+    font: inherit;
+    font-size: 13px;
+}
+
+.voice-dialogue-row.off {
+    opacity: 0.55;
+}
+
+.voice-dialogue-actions {
+    display: flex;
+    gap: 3px;
+}
+
+.voice-icon-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    color: var(--text-2);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.voice-icon-btn:hover {
+    color: var(--gold);
+    background: var(--gold-dim);
+    border-color: var(--gold-border);
+}
+
+.voice-icon-btn.danger:hover {
+    color: var(--danger);
+    background: rgba(255, 80, 80, 0.1);
+    border-color: rgba(255, 80, 80, 0.25);
+}
+
+#voice-test-text {
+    min-height: 84px;
+    margin-top: 4px;
+    resize: vertical;
+}
+
+.voice-actions {
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.voice-status-list {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 10px 12px;
+    margin: 14px 0 0;
+    font-size: 13px;
+}
+
+.voice-status-list dt {
+    color: var(--text-3);
+}
+
+.voice-status-list dd {
+    margin: 0;
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+#voice-status-error {
+    color: var(--text-3);
+}
+
+#voice-status-error.has-error {
+    color: var(--danger);
+}
+
+#voice-status-current.speaking {
+    color: var(--gold);
+}
+
+#voice-preview-audio {
+    width: 100%;
+    height: 32px;
+    margin-top: 18px;
+    opacity: 0.85;
+}
+
+@media (max-width: 1100px) {
+    .voice-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .voice-fields-compact {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    .voice-fields,
+    .voice-checks {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .voice-override-add {
+        grid-template-columns: 1fr;
+    }
+}

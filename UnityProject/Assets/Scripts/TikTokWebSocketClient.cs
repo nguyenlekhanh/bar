@@ -198,6 +198,15 @@ namespace TikTokLiveGame
             ok = ok
         });
 
+        /// <summary>Tells the bridge whether Unity actually started the WAV.</summary>
+        public void VoiceAck(string announcementId, bool ok, string error = null) => Send(new ClientMessage
+        {
+            type = "voice_ack",
+            id = announcementId ?? string.Empty,
+            ok = ok,
+            error = string.IsNullOrWhiteSpace(error) ? string.Empty : error.Trim()
+        });
+
         public void DemoGift(int diamonds, int userIndex = 1) => Send(new ClientMessage
         {
             type = "demo_event",

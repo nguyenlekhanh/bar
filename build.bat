@@ -16,7 +16,7 @@ if not defined PROJECT_VERSION (
 )
 
 echo =======================================
-echo     BUILD GAME ONG CHU MMO LIVE
+echo     BUILD GAME MMO LIVE
 echo =======================================
 echo Unity can dung: %PROJECT_VERSION%
 echo Output: %OUTPUT_EXE%

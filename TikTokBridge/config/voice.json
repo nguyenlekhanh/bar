@@ -1,0 +1,420 @@
+{
+  "version": 1,
+  "enabled": true,
+  "provider": "kokoro",
+  "persona": "club",
+  "voice": "am_michael",
+  "voiceGender": "male",
+  "language": "en-US",
+  "speed": 1,
+  "volume": 1,
+  "duckLevel": 0.22,
+  "duckFadeMs": 350,
+  "maxQueue": 12,
+  "expireMs": 45000,
+  "random": {
+    "enabled": true,
+    "minSeconds": 150,
+    "maxSeconds": 300
+  },
+  "events": {
+    "welcome": true,
+    "gift": true,
+    "follow": true,
+    "share": true,
+    "vip": true,
+    "topdj": true,
+    "random": true
+  },
+  "cooldownsMs": {
+    "welcome": 15000,
+    "gift": 6000,
+    "follow": 30000,
+    "share": 30000,
+    "vip": 15000,
+    "topdj": 30000,
+    "random": 45000
+  },
+  "username": {
+    "mode": "smart",
+    "maxChars": 40,
+    "maxWords": 8
+  },
+  "dialogues": {
+    "welcome": [
+      {
+        "id": "welcome-01",
+        "text": "Yo! Welcome to Cloud Disco, {name}! Let's get this party started!",
+        "enabled": true
+      },
+      {
+        "id": "welcome-02",
+        "text": "Everybody make some noise for {name}!",
+        "enabled": true
+      },
+      {
+        "id": "welcome-03",
+        "text": "We got a new party member! Welcome aboard, {name}!",
+        "enabled": true
+      },
+      {
+        "id": "welcome-04",
+        "text": "Hey {name}, grab your spot on the dance floor!",
+        "enabled": true
+      },
+      {
+        "id": "welcome-05",
+        "text": "Look who just walked in! Give it up for {name}!",
+        "enabled": true
+      },
+      {
+        "id": "welcome-06",
+        "text": "Welcome to the hottest party online, {name}!",
+        "enabled": true
+      },
+      {
+        "id": "welcome-07",
+        "text": "The crew keeps growing! Welcome to Cloud Disco, {name}!",
+        "enabled": true
+      },
+      {
+        "id": "welcome-08",
+        "text": "Fresh face on the floor! Let's hear it for {name}!",
+        "enabled": true
+      },
+      {
+        "id": "welcome-09",
+        "text": "Cloud Disco just got a little brighter. Welcome, {name}!",
+        "enabled": true
+      },
+      {
+        "id": "welcome-10",
+        "text": "{name} is in the building! Let's turn this party up!",
+        "enabled": true
+      }
+    ],
+    "gift": [
+      {
+        "id": "gift-01",
+        "text": "Whoa! Big shoutout to {name} for that amazing {gift}!",
+        "enabled": true
+      },
+      {
+        "id": "gift-02",
+        "text": "You're making this party even bigger, {name}!",
+        "enabled": true
+      },
+      {
+        "id": "gift-03",
+        "text": "Much love to {name}! Let's go!",
+        "enabled": true
+      },
+      {
+        "id": "gift-04",
+        "text": "That deserves a huge round of applause! Thank you, {name}!",
+        "enabled": true
+      },
+      {
+        "id": "gift-05",
+        "text": "{name} just dropped {gift} on the dance floor! Amazing!",
+        "enabled": true
+      },
+      {
+        "id": "gift-06",
+        "text": "We see you, {name}! Thank you for the {gift}!",
+        "enabled": true
+      },
+      {
+        "id": "gift-07",
+        "text": "Give it up for {name}! That gift was pure fire!",
+        "enabled": true
+      },
+      {
+        "id": "gift-08",
+        "text": "{name}, you are a legend! Thank you for the {gift}!",
+        "enabled": true
+      },
+      {
+        "id": "gift-09",
+        "text": "The energy just went through the roof! Big love to {name}!",
+        "enabled": true
+      },
+      {
+        "id": "gift-10",
+        "text": "Cloud Disco loves you, {name}! What a gift!",
+        "enabled": true
+      }
+    ],
+    "follow": [
+      {
+        "id": "follow-01",
+        "text": "We got a new supporter! Welcome to Cloud Disco!",
+        "enabled": true
+      },
+      {
+        "id": "follow-02",
+        "text": "Thanks for joining the party, {name}!",
+        "enabled": true
+      },
+      {
+        "id": "follow-03",
+        "text": "Another legend just joined the crew! Welcome, {name}!",
+        "enabled": true
+      },
+      {
+        "id": "follow-04",
+        "text": "{name} is officially part of the Cloud Disco family!",
+        "enabled": true
+      },
+      {
+        "id": "follow-05",
+        "text": "A big Cloud Disco welcome to our newest follower, {name}!",
+        "enabled": true
+      },
+      {
+        "id": "follow-06",
+        "text": "The party just got better! Thanks for the follow, {name}!",
+        "enabled": true
+      },
+      {
+        "id": "follow-07",
+        "text": "Give a warm welcome to {name}! They are with us now!",
+        "enabled": true
+      },
+      {
+        "id": "follow-08",
+        "text": "New follower alert! Much love to {name}!",
+        "enabled": true
+      },
+      {
+        "id": "follow-09",
+        "text": "{name}, welcome to the movement! Let's dance!",
+        "enabled": true
+      },
+      {
+        "id": "follow-10",
+        "text": "We appreciate you, {name}! Welcome to Cloud Disco!",
+        "enabled": true
+      }
+    ],
+    "share": [
+      {
+        "id": "share-01",
+        "text": "Thank you for sharing the party, {name}!",
+        "enabled": true
+      },
+      {
+        "id": "share-02",
+        "text": "{name} just spread the word! Let's make some noise!",
+        "enabled": true
+      },
+      {
+        "id": "share-03",
+        "text": "Big love to {name} for sharing Cloud Disco!",
+        "enabled": true
+      },
+      {
+        "id": "share-04",
+        "text": "The party is going viral! Thanks, {name}!",
+        "enabled": true
+      },
+      {
+        "id": "share-05",
+        "text": "You are bringing the whole crew, {name}! Thank you!",
+        "enabled": true
+      },
+      {
+        "id": "share-06",
+        "text": "Shoutout to {name} for sharing the vibe!",
+        "enabled": true
+      },
+      {
+        "id": "share-07",
+        "text": "More people, more energy! Thanks for the share, {name}!",
+        "enabled": true
+      },
+      {
+        "id": "share-08",
+        "text": "{name} knows where the party is! Thank you for sharing!",
+        "enabled": true
+      },
+      {
+        "id": "share-09",
+        "text": "Cloud Disco is spreading! Much love, {name}!",
+        "enabled": true
+      },
+      {
+        "id": "share-10",
+        "text": "That share was a power move, {name}! Let's go!",
+        "enabled": true
+      }
+    ],
+    "vip": [
+      {
+        "id": "vip-01",
+        "text": "{name} just hit VIP status! Light up the dance floor!",
+        "enabled": true
+      },
+      {
+        "id": "vip-02",
+        "text": "Make some noise for our top supporter, {name}!",
+        "enabled": true
+      },
+      {
+        "id": "vip-03",
+        "text": "The spotlight belongs to {name} tonight!",
+        "enabled": true
+      },
+      {
+        "id": "vip-04",
+        "text": "VIP in the building! Show some love for {name}!",
+        "enabled": true
+      },
+      {
+        "id": "vip-05",
+        "text": "That is how you do it, {name}! VIP energy all night!",
+        "enabled": true
+      },
+      {
+        "id": "vip-06",
+        "text": "Cloud Disco royalty! Give it up for {name}!",
+        "enabled": true
+      },
+      {
+        "id": "vip-07",
+        "text": "{name} is running the party now! VIP status confirmed!",
+        "enabled": true
+      },
+      {
+        "id": "vip-08",
+        "text": "All eyes on {name}! The VIP section is on fire!",
+        "enabled": true
+      },
+      {
+        "id": "vip-09",
+        "text": "A massive Cloud Disco salute to our VIP, {name}!",
+        "enabled": true
+      },
+      {
+        "id": "vip-10",
+        "text": "Turn the lights up for {name}! VIP excellence!",
+        "enabled": true
+      }
+    ],
+    "topdj": [
+      {
+        "id": "topdj-01",
+        "text": "Our number one DJ is taking over the stage, {name}!",
+        "enabled": true
+      },
+      {
+        "id": "topdj-02",
+        "text": "The Top DJ crown belongs to {name}! Make some noise!",
+        "enabled": true
+      },
+      {
+        "id": "topdj-03",
+        "text": "{name} is controlling the decks tonight! Let's go!",
+        "enabled": true
+      },
+      {
+        "id": "topdj-04",
+        "text": "Top DJ alert! The whole floor belongs to {name}!",
+        "enabled": true
+      },
+      {
+        "id": "topdj-05",
+        "text": "Give it up for the one and only Top DJ, {name}!",
+        "enabled": true
+      },
+      {
+        "id": "topdj-06",
+        "text": "{name} just took the party to another level!",
+        "enabled": true
+      },
+      {
+        "id": "topdj-07",
+        "text": "The stage is yours, {name}! Top DJ in the house!",
+        "enabled": true
+      },
+      {
+        "id": "topdj-08",
+        "text": "Cloud Disco presents our Top DJ, {name}!",
+        "enabled": true
+      },
+      {
+        "id": "topdj-09",
+        "text": "That is the Top DJ sound! Respect to {name}!",
+        "enabled": true
+      },
+      {
+        "id": "topdj-10",
+        "text": "Top DJ status unlocked! Cloud Disco goes wild for {name}!",
+        "enabled": true
+      }
+    ],
+    "random": [
+      {
+        "id": "random-01",
+        "text": "Come on everybody! Don't stop dancing!",
+        "enabled": true
+      },
+      {
+        "id": "random-02",
+        "text": "Let's turn up the energy!",
+        "enabled": true
+      },
+      {
+        "id": "random-03",
+        "text": "Where's the party crew tonight?",
+        "enabled": true
+      },
+      {
+        "id": "random-04",
+        "text": "I wanna see those hearts flying!",
+        "enabled": true
+      },
+      {
+        "id": "random-05",
+        "text": "The dance floor is heating up!",
+        "enabled": true
+      },
+      {
+        "id": "random-06",
+        "text": "Are you ready for another drop?",
+        "enabled": true
+      },
+      {
+        "id": "random-07",
+        "text": "Cloud Disco, make some noise!",
+        "enabled": true
+      },
+      {
+        "id": "random-08",
+        "text": "Hands up if you are having a good time!",
+        "enabled": true
+      },
+      {
+        "id": "random-09",
+        "text": "The night is young and the beat is loud!",
+        "enabled": true
+      },
+      {
+        "id": "random-10",
+        "text": "Keep the energy high, Cloud Disco!",
+        "enabled": true
+      },
+      {
+        "id": "random-11",
+        "text": "Let me see you move! Let's go!",
+        "enabled": true
+      },
+      {
+        "id": "random-12",
+        "text": "This party does not stop! Keep dancing!",
+        "enabled": true
+      }
+    ]
+  },
+  "pronunciations": []
+}
