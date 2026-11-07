@@ -6,6 +6,7 @@ const { normalizeUsername } = require('../src/voice/username-pronunciation');
 const { sanitizeDialogues } = require('../src/voice/dialogue');
 const { VoiceQueue } = require('../src/voice/queue');
 const { sanitizeVoiceConfig } = require('../src/voice/config');
+const { amplifyWav } = require('../src/voice/wav-gain');
 
 const config = defaultVoiceConfig();
 assert.equal(config.language, 'en-US');
@@ -70,6 +71,37 @@ assert.equal(bounded.speed, 1.35);
 assert.equal(bounded.volume, 0);
 assert.equal(bounded.maxQueue, 1);
 assert.equal(bounded.events.welcome, false);
+assert.equal(bounded.boostDb, 3);
+
+function makeWav({ format, bits, sample }) {
+    const bytesPerSample = bits / 8;
+    const dataSize = bytesPerSample;
+    const wav = Buffer.alloc(44 + dataSize);
+    wav.write('RIFF', 0, 'ascii');
+    wav.writeUInt32LE(36 + dataSize, 4);
+    wav.write('WAVE', 8, 'ascii');
+    wav.write('fmt ', 12, 'ascii');
+    wav.writeUInt32LE(16, 16);
+    wav.writeUInt16LE(format, 20);
+    wav.writeUInt16LE(1, 22);
+    wav.writeUInt32LE(24000, 24);
+    wav.writeUInt32LE(24000 * bytesPerSample, 28);
+    wav.writeUInt16LE(bytesPerSample, 32);
+    wav.writeUInt16LE(bits, 34);
+    wav.write('data', 36, 'ascii');
+    wav.writeUInt32LE(dataSize, 40);
+    if (format === 3) wav.writeFloatLE(sample, 44);
+    else wav.writeInt16LE(sample, 44);
+    return wav;
+}
+
+const floatWav = amplifyWav(makeWav({ format: 3, bits: 32, sample: 0.5 }), 3);
+assert.equal(floatWav.applied, true);
+const floatPeak = floatWav.buffer.readFloatLE(44);
+assert(floatPeak > 0.5 && floatPeak <= 0.98, `float gain was ${floatPeak}`);
+const pcmWav = amplifyWav(makeWav({ format: 1, bits: 16, sample: 1000 }), 3);
+assert.equal(pcmWav.applied, true);
+assert(pcmWav.buffer.readInt16LE(44) > 1000);
 
 console.log('Voice self-test passed:', {
     pronunciationCases: pronunciations.length,

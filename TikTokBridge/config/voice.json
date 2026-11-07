@@ -8,6 +8,7 @@
   "language": "en-US",
   "speed": 1,
   "volume": 1,
+  "boostDb": 3,
   "duckLevel": 0.22,
   "duckFadeMs": 350,
   "maxQueue": 12,

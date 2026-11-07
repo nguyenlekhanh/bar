@@ -115,6 +115,8 @@ function defaultVoiceConfig() {
         language: 'en-US',
         speed: 1.0,
         volume: 1.0,
+        // +3 dB makes the MC sit above the DJ bed without clipping the WAV.
+        boostDb: 3,
         duckLevel: 0.22,
         duckFadeMs: 350,
         maxQueue: 12,

@@ -7,6 +7,7 @@ const { VoiceAudioCache } = require('./audio-cache');
 const { VoiceQueue } = require('./queue');
 const { chooseDialogue, renderDialogue } = require('./dialogue');
 const { normalizeUsername } = require('./username-pronunciation');
+const { amplifyWav } = require('./wav-gain');
 const providers = require('./providers');
 
 const PRIORITIES = {
@@ -145,7 +146,8 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
                 } else {
                     lastError = '';
                 }
-                return result;
+                const boosted = amplifyWav(result.buffer, config.boostDb);
+                return boosted.applied ? { ...result, buffer: boosted.buffer } : result;
             } catch (error) {
                 lastFailure = error;
                 lastError = `${providerId}: ${error.message}`;
@@ -326,6 +328,7 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
                 result.provider,
                 result.voice,
                 config.speed,
+                config.boostDb,
                 item.text
             ].join('|')).digest('hex');
             const audio = audioCache.put(result.buffer, {

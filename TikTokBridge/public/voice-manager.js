@@ -100,6 +100,7 @@
         setValue('voice-persona', config.persona);
         setValue('voice-speed', config.speed);
         setValue('voice-volume', config.volume);
+        setValue('voice-boost-db', config.boostDb ?? 3);
         setValue('voice-duck-level', config.duckLevel);
         setValue('voice-duck-fade', config.duckFadeMs);
         for (const key of ['welcome', 'gift', 'follow', 'share', 'vip', 'topdj', 'random']) {
@@ -126,10 +127,12 @@
     function syncRangeLabels() {
         const speed = numberValue('voice-speed', 1);
         const volume = numberValue('voice-volume', 1);
+        const boost = numberValue('voice-boost-db', 3);
         const duck = numberValue('voice-duck-level', 0.22);
         const fade = numberValue('voice-duck-fade', 350);
         setValue('voice-speed-value', `${speed.toFixed(2)}×`);
         setValue('voice-volume-value', `${Math.round(volume * 100)}%`);
+        setValue('voice-boost-db-value', `+${Math.round(boost)} dB`);
         setValue('voice-duck-level-value', `${Math.round(duck * 100)}%`);
         setValue('voice-duck-fade-value', `${Math.round(fade)} ms`);
     }
@@ -311,6 +314,7 @@
             persona: $('voice-persona')?.value || state.config.persona,
             speed: numberValue('voice-speed', state.config.speed),
             volume: numberValue('voice-volume', state.config.volume),
+            boostDb: numberValue('voice-boost-db', state.config.boostDb ?? 3),
             duckLevel: numberValue('voice-duck-level', state.config.duckLevel),
             duckFadeMs: numberValue('voice-duck-fade', state.config.duckFadeMs),
             maxQueue: numberValue('voice-max-queue', state.config.maxQueue),
@@ -548,6 +552,7 @@
         $('voice-clear')?.addEventListener('click', clearQueue);
         $('voice-speed')?.addEventListener('input', syncRangeLabels);
         $('voice-volume')?.addEventListener('input', syncRangeLabels);
+        $('voice-boost-db')?.addEventListener('input', syncRangeLabels);
         $('voice-duck-level')?.addEventListener('input', syncRangeLabels);
         $('voice-duck-fade')?.addEventListener('input', syncRangeLabels);
         $('voice-provider')?.addEventListener('change', event => {

@@ -47,6 +47,7 @@ function sanitizeVoiceConfig(input) {
         language: 'en-US',
         speed: Number(clampNumber(source.speed, 0.7, 1.35, defaults.speed).toFixed(2)),
         volume: Number(clampNumber(source.volume, 0, 1, defaults.volume).toFixed(2)),
+        boostDb: Number(clampNumber(source.boostDb, 0, 12, defaults.boostDb).toFixed(1)),
         duckLevel: Number(clampNumber(source.duckLevel, 0.05, 1, defaults.duckLevel).toFixed(2)),
         duckFadeMs: clampInt(source.duckFadeMs, 80, 2000, defaults.duckFadeMs),
         maxQueue: clampInt(source.maxQueue, 1, 50, defaults.maxQueue),
