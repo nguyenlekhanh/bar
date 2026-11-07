@@ -615,7 +615,12 @@ namespace TikTokLiveGame
             }
             texture.wrapMode = TextureWrapMode.Clamp;
             texture.filterMode = FilterMode.Bilinear;
-            Sprite sprite = Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), 64f);
+            // Built-in glyphs are 64x64 at 64 PPU, so one unit equals iconSize.
+            // Imported PNGs can be any square size (the rose is 195x195); use
+            // their largest dimension as PPU so iconSize remains the on-screen
+            // size instead of scaling by texture.width / 64.
+            float pixelsPerUnit = Mathf.Max(1f, Mathf.Max(texture.width, texture.height));
+            Sprite sprite = Sprite.Create(texture, new Rect(0f, 0f, texture.width, texture.height), new Vector2(0.5f, 0.5f), pixelsPerUnit);
             iconCache[file] = sprite;
             Relayout();
             ApplyVisuals();
