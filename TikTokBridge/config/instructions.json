@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "revision": 22,
+  "position": "top-right",
+  "marginX": 26,
+  "marginY": 240,
+  "fontSize": 22,
+  "iconSize": 30,
+  "lineSpacing": 5,
+  "panelWidth": 350,
+  "opacity": 0.9,
+  "maxVisibleLines": 6,
+  "scroll": true,
+  "lines": [
+    {
+      "id": "zoom-guide",
+      "title": "ZOOM CAMERA",
+      "subtitle": "",
+      "icon": "gift",
+      "iconFile": "",
+      "textColor": "#FFFFFF",
+      "iconColor": "#FFD54A",
+      "enabled": true,
+      "highlight": false
+    },
+    {
+      "id": "change-guide",
+      "title": "CHANGE CHARACTER",
+      "subtitle": "",
+      "icon": "change",
+      "iconFile": "",
+      "textColor": "#FFFFFF",
+      "iconColor": "#67E8F9",
+      "enabled": true,
+      "highlight": false
+    },
+    {
+      "id": "walk-guide",
+      "title": "WALK AROUND",
+      "subtitle": "",
+      "icon": "walk",
+      "iconFile": "",
+      "textColor": "#FFFFFF",
+      "iconColor": "#4ADE80",
+      "enabled": true,
+      "highlight": false
+    },
+    {
+      "id": "ruler-guide",
+      "title": "BIG CHARACTER",
+      "subtitle": "",
+      "icon": "ruler",
+      "iconFile": "",
+      "textColor": "#FFFFFF",
+      "iconColor": "#F9A8D4",
+      "enabled": true,
+      "highlight": false
+    },
+    {
+      "id": "topdj-guide",
+      "title": "TOP DJ",
+      "subtitle": "",
+      "icon": "crown",
+      "iconFile": "",
+      "textColor": "#FFFFFF",
+      "iconColor": "#FDE047",
+      "enabled": true,
+      "highlight": false
+    },
+    {
+      "id": "vip-guide",
+      "title": "VIP LIGHT SHOW",
+      "subtitle": "",
+      "icon": "fire",
+      "iconFile": "",
+      "textColor": "#FFFFFF",
+      "iconColor": "#FB7185",
+      "enabled": true,
+      "highlight": false
+    }
+  ]
+}

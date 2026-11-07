@@ -7,6 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="apple-touch-icon" href="/favicon.svg">
     <link rel="stylesheet" href="control.css">
+    <link rel="stylesheet" href="instructions.css">
     <link rel="stylesheet" href="gif-manager.css">
 </head>
 <body>
@@ -23,6 +24,7 @@
         <button class="tab-btn" data-tab="testlab">🧪 Test Lab</button>
         <button class="tab-btn" data-tab="events">🎯 Events</button>
         <button class="tab-btn" data-tab="background">🖼 Background</button>
+        <button class="tab-btn" data-tab="instructions">📋 Instructions</button>
         <button class="tab-btn" data-tab="gifs">🎞 GIF Manager</button>
         <button class="tab-btn" data-tab="session">📊 Session</button>
         <button class="tab-btn" data-tab="guide">📖 Guide</button>
@@ -361,6 +363,113 @@
     </div>
 </section>
 
+<!-- ── LIVE INSTRUCTION OVERLAY ── -->
+<section class="tab-panel" id="tab-instructions">
+    <div class="page-header">
+        <p class="page-eyebrow">On-stream guide</p>
+        <h1 class="page-title">📋 Live Instruction Overlay</h1>
+        <p class="page-desc">Tell viewers how to trigger each effect. Changes are saved through the bridge and appear in Unity immediately, without a restart.</p>
+    </div>
+
+    <div class="instruction-layout">
+        <div class="card instruction-editor-card">
+            <div class="card-header">
+                <div>
+                    <p class="card-label">Panel content</p>
+                    <h2 class="card-title">Instruction lines <span id="instruction-count" class="instruction-count">0 / 30</span></h2>
+                </div>
+                <div class="card-actions">
+                    <button id="instruction-add" class="btn btn-secondary btn-sm">+ Add line</button>
+                    <button id="instruction-save" class="btn btn-green btn-sm">✓ Save &amp; apply</button>
+                </div>
+            </div>
+
+            <div class="instruction-settings">
+                <label class="instruction-field">Screen position
+                    <select id="instruction-position">
+                        <option value="top-right">Top right</option>
+                        <option value="top-left">Top left</option>
+                        <option value="bottom-right">Bottom right</option>
+                        <option value="bottom-left">Bottom left</option>
+                        <option value="top-center">Top centre</option>
+                        <option value="bottom-center">Bottom centre</option>
+                    </select>
+                </label>
+                <label class="instruction-field">Panel width <span class="instruction-unit">px @1080</span>
+                    <input id="instruction-width" type="number" min="200" max="720" step="10" value="500">
+                </label>
+                <label class="instruction-field">Font size <span class="instruction-unit">px</span>
+                    <input id="instruction-font" type="number" min="20" max="60" step="1" value="34">
+                </label>
+                <label class="instruction-field">Icon size <span class="instruction-unit">px</span>
+                    <input id="instruction-icon-size" type="number" min="24" max="80" step="1" value="44">
+                </label>
+                <label class="instruction-field">Line spacing <span class="instruction-unit">px</span>
+                    <input id="instruction-spacing" type="number" min="0" max="30" step="1" value="10">
+                </label>
+                <label class="instruction-field">Margin X / Y <span class="instruction-unit">px</span>
+                    <span class="instruction-pair">
+                        <input id="instruction-margin-x" type="number" min="0" max="200" step="1" value="26">
+                        <input id="instruction-margin-y" type="number" min="0" max="240" step="1" value="92">
+                    </span>
+                </label>
+                <label class="instruction-field">Max visible lines
+                    <input id="instruction-max-lines" type="number" min="1" max="20" step="1" value="6">
+                </label>
+                <label class="instruction-field">Background opacity
+                    <span class="instruction-range"><input id="instruction-opacity" type="range" min="0" max="0.9" step="0.02" value="0.58"><output id="instruction-opacity-value">58%</output></span>
+                </label>
+                <label class="instruction-check instruction-scroll-toggle">
+                    <input id="instruction-scroll" type="checkbox" checked>
+                    Auto-rotate pages when lines exceed the limit
+                </label>
+            </div>
+
+            <div id="instruction-message" class="master-msg" aria-live="polite"></div>
+            <div id="instruction-lines" class="instruction-list"></div>
+            <p class="help instruction-empty" id="instruction-empty">No lines yet. Add the first instruction, or use the seeded examples as a starting point.</p>
+        </div>
+
+        <aside class="card instruction-preview-card">
+            <div class="card-header">
+                <div>
+                    <p class="card-label">Preview</p>
+                    <h2 class="card-title">Mobile 9:16</h2>
+                </div>
+                <button id="instruction-preview-btn" class="btn btn-secondary btn-sm">Preview</button>
+            </div>
+            <div class="instruction-preview-frame">
+                <div id="instruction-preview" class="instruction-preview-canvas"></div>
+            </div>
+            <p class="help">Approximate in-game preview. The panel stays at the selected corner; Unity scales it for the 9:16 stream and never draws over itself.</p>
+        </aside>
+    </div>
+</section>
+
+<!-- ── Instruction line template ── -->
+<template id="instruction-line-template">
+    <article class="instruction-line" draggable="true">
+        <button type="button" class="instruction-drag" title="Drag to reorder" aria-label="Drag to reorder">⋮⋮</button>
+        <div class="instruction-line-body">
+            <div class="instruction-line-main">
+                <input data-field="title" maxlength="60" placeholder="Instruction title">
+                <input data-field="subtitle" maxlength="90" placeholder="Optional subtitle">
+            </div>
+            <div class="instruction-line-tools">
+                <img data-field="custom-preview" class="instruction-icon-preview" alt="" hidden>
+                <select data-field="icon" aria-label="Icon"></select>
+                <label class="instruction-color" title="Text colour">A<input type="color" data-field="textColor" value="#ffffff"></label>
+                <label class="instruction-color" title="Icon colour">◈<input type="color" data-field="iconColor" value="#ffd54a"></label>
+                <label class="instruction-check"><input type="checkbox" data-field="enabled" checked> On</label>
+                <label class="instruction-check"><input type="checkbox" data-field="highlight"> Highlight</label>
+                <button type="button" data-command="upload" class="btn btn-secondary btn-sm">PNG</button>
+                <input data-command="file" type="file" accept="image/png" hidden>
+                <button type="button" data-command="delete" class="btn btn-danger btn-sm">✕</button>
+            </div>
+        </div>
+    </article>
+</template>
+
 <!-- ── GIF MANAGER ── -->
 <section class="tab-panel" id="tab-gifs">
     <div class="page-header">
@@ -667,6 +776,7 @@
 </template>
 
 <script src="control.js"></script>
+<script src="instructions.js"></script>
 <script src="gif-manager.js"></script>
 </body>
 </html>

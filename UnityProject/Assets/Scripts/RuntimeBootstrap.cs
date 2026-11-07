@@ -25,6 +25,8 @@ namespace TikTokLiveGame
             root.AddComponent<MusicPlaylistPlayer>();
             TikTokGameController game = root.AddComponent<TikTokGameController>();
             game.Initialize(client, players, giftEffects);
+            LiveInstructionOverlay instructions = root.AddComponent<LiveInstructionOverlay>();
+            instructions.Initialize(client);
             VisualCaptureHarness.InstallIfRequested(root);
         }
     }

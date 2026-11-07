@@ -21,8 +21,10 @@ namespace TikTokLiveGame
         private static TikTokWebSocketClient instance;
 
         public event Action<TikTokEvent> EventReceived;
+        public event Action<string> InstructionConfigReceived;
         public bool IsConnected => socket != null && socket.State == WebSocketState.Open;
         public string ServerUrl => serverUrl;
+        public string LastInstructionConfigJson { get; private set; }
 
         private void OnEnable()
         {
@@ -44,7 +46,14 @@ namespace TikTokLiveGame
                 {
                     TikTokEvent liveEvent = JsonUtility.FromJson<TikTokEvent>(json);
                     if (liveEvent != null && !string.IsNullOrWhiteSpace(liveEvent.type))
+                    {
+                        if (liveEvent.type == "instruction_config")
+                        {
+                            LastInstructionConfigJson = json;
+                            InstructionConfigReceived?.Invoke(json);
+                        }
                         EventReceived?.Invoke(liveEvent);
+                    }
                 }
                 catch (Exception exception)
                 {

@@ -57,6 +57,13 @@ const {
 } = require('./src/background/registry');
 const { startAutoConversion } = require('./src/gifs/pipeline');
 const gifManager = require('./src/gifs/manager');
+const {
+    defaultInstructionConfig,
+    sanitizeInstructionConfig,
+    loadInstructionConfig,
+    saveInstructionConfig
+} = require('./src/instructions/config');
+const { saveInstructionIcon, MAX_ICON_BYTES } = require('./src/instructions/icons');
 
 const app = express();
 const server = http.createServer(app);
@@ -90,6 +97,10 @@ const backgroundScanOptions = { extraVideoDirs: [djVideoDir] };
 const backgroundConfigPath = process.env.BACKGROUND_CONFIG
     ? path.resolve(process.env.BACKGROUND_CONFIG)
     : path.join(__dirname, 'config', 'background.json');
+const instructionConfigPath = process.env.INSTRUCTION_CONFIG
+    ? path.resolve(process.env.INSTRUCTION_CONFIG)
+    : path.join(__dirname, 'config', 'instructions.json');
+const instructionIconsDir = path.join(assetsDir, 'instruction-icons');
 const LIVE_PROVIDER = String(process.env.LIVE_PROVIDER || gameConfig.liveProvider || 'tikfinity').toLowerCase();
 const TIKFINITY_WS_URL = String(process.env.TIKFINITY_WS_URL || gameConfig.tikfinityWsUrl || 'ws://127.0.0.1:21213/');
 
@@ -119,6 +130,7 @@ let giftAnimationMappings = [];
 let animationRegistry = new Set();
 let backgroundConfig = defaultBackground();
 let backgroundAck = { file: '', generation: -1, at: 0 };
+let instructionConfig = defaultInstructionConfig();
 
 if (!ALLOW_LAN && !isLoopbackAddress(HOST) && HOST.toLowerCase() !== 'localhost') {
     throw new Error('Từ chối mở Node ra mạng LAN. Chỉ đặt ALLOW_LAN=1 khi đã có lớp xác thực bên ngoài.');
@@ -232,6 +244,46 @@ app.post('/api/background', backgroundBodyParser, async (req, res) => {
     const result = await applyBackgroundRequest(req.body?.background ?? req.body);
     if (!result.ok) return res.status(400).json({ error: result.error });
     res.json({ background: result.background, message: 'Background sent to Unity.' });
+});
+
+/* ── Live Instruction Overlay ─────────────────────────── */
+app.get('/api/instructions', (_req, res) => {
+    res.json({ config: instructionConfig });
+});
+
+const instructionBodyParser = express.json({ limit: '64kb' });
+app.post('/api/instructions', controlPanelOnly, instructionBodyParser, async (req, res) => {
+    const result = await applyInstructionRequest(req.body);
+    if (!result.ok) return res.status(400).json({ error: result.error });
+    res.json({
+        config: result.config,
+        overlayClients: result.overlayClients,
+        message: 'Instructions saved and sent to Unity.'
+    });
+});
+
+const instructionIconParser = (req, res, next) => {
+    express.raw({ type: 'image/png', limit: MAX_ICON_BYTES })(req, res, error => {
+        if (!error) return next();
+        if (error.type === 'entity.too.large') {
+            return res.status(413).json({ error: 'The icon is larger than 256 KB.' });
+        }
+        return res.status(400).json({ error: 'The PNG upload could not be read.' });
+    });
+};
+
+app.post('/api/instruction-icons', controlPanelOnly, instructionIconParser, async (req, res) => {
+    try {
+        if (!Buffer.isBuffer(req.body) || req.body.length === 0) {
+            return res.status(400).json({ error: 'No PNG file received.' });
+        }
+        const saved = await saveInstructionIcon(req.body, instructionIconsDir);
+        if (saved.error) return res.status(400).json({ error: saved.error });
+        res.json({ ...saved, message: 'Icon uploaded.' });
+    } catch (error) {
+        console.error('Could not save instruction icon:', error.message);
+        res.status(500).json({ error: 'Could not save the icon.' });
+    }
 });
 
 const giftAnimationsBodyParser = express.json({ limit: '64kb' });
@@ -869,6 +921,25 @@ async function applyBackgroundRequest(input) {
     return { ok: true, background: backgroundPayload() };
 }
 
+async function refreshInstructionConfig() {
+    const loaded = await loadInstructionConfig(instructionConfigPath);
+    instructionConfig = loaded.config;
+    if (loaded.error) console.error('Could not read instruction config:', loaded.error);
+}
+
+async function applyInstructionRequest(input) {
+    const result = sanitizeInstructionConfig(input);
+    if (result.error) return { ok: false, error: result.error };
+
+    instructionConfig = {
+        ...result.value,
+        revision: (Number(instructionConfig.revision) || 0) + 1
+    };
+    await saveInstructionConfig(instructionConfigPath, instructionConfig);
+    broadcast({ type: 'instruction_config', config: instructionConfig });
+    return { ok: true, config: instructionConfig, overlayClients: overlayClientCount() };
+}
+
 async function refreshBackgroundConfig() {
     const catalog = await backgroundCatalog();
     backgroundConfig = await loadBackgroundConfig(backgroundConfigPath, {
@@ -1482,6 +1553,7 @@ async function handleClientMessage(ws, message) {
         send(ws, { type: 'status', ...connectionStatus });
         send(ws, { type: 'metrics', ...metrics });
         send(ws, { type: 'background_config', action: 'set', background: backgroundPayload() });
+        send(ws, { type: 'instruction_config', config: instructionConfig });
         if (ws.role === 'control') send(ws, { type: 'master_config', master: masterConfig });
         if (ws.role === 'control') send(ws, giftCatalogMessage());
         if (ws.role === 'control') send(ws, giftAnimationsMessage());
@@ -1497,12 +1569,13 @@ async function handleClientMessage(ws, message) {
     const controlOnly = message.type === 'master_save' ||
         message.type === 'master_test' ||
         message.type === 'set_gift_animations' ||
+        message.type === 'set_instruction_config' ||
         message.type === 'test_gift_stop';
     const operatorOnly = new Set([
         'set_username', 'disconnect_tiktok', 'demo_start', 'demo_stop', 'demo_event', 'reset_game'
     ]).has(message.type);
     if (controlOnly && ws.role !== 'control') {
-        return send(ws, { type: 'error', message: 'This command is only for the Master panel.' });
+        return send(ws, { type: 'error', message: 'This command is only for the Control panel.' });
     }
     if (operatorOnly && ws.role !== 'control' && !ws.nativeClient) {
         return send(ws, { type: 'error', message: 'Client has no control permission.' });
@@ -1552,6 +1625,20 @@ async function handleClientMessage(ws, message) {
             type: 'background_saved',
             background: result.background,
             message: 'Background applied.'
+        });
+    }
+
+    if (message.type === 'set_instruction_config') {
+        if (ws.role !== 'control') {
+            return send(ws, { type: 'error', message: 'Only the Control panel may change instructions.' });
+        }
+        const result = await applyInstructionRequest(message.config);
+        if (!result.ok) return send(ws, { type: 'error', message: result.error });
+        return send(ws, {
+            type: 'instruction_saved',
+            config: result.config,
+            overlayClients: result.overlayClients,
+            message: 'Instructions saved and sent to Unity.'
         });
     }
 
@@ -1747,7 +1834,9 @@ server.headersTimeout = 5000;
 server.keepAliveTimeout = 5000;
 server.maxHeadersCount = 64;
 
-refreshBackgroundConfig()
+refreshInstructionConfig()
+    .catch(error => console.error('Could not read instruction config:', error.message))
+    .then(() => refreshBackgroundConfig())
     .catch(error => console.error('Không thể đọc cấu hình background:', error.message))
     .then(() => refreshGiftAnimations())
     .catch(error => console.error('Could not read the gift animation mapping:', error.message))
