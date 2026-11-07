@@ -404,11 +404,11 @@ namespace TikTokLiveGame
         /// gift is mapped to an animation folder. A folder that no longer exists
         /// leaves the current look untouched instead of throwing.
         /// </summary>
-        public void PlayAnimation(string animationId)
+        public bool PlayAnimation(string animationId)
         {
-            if (string.IsNullOrWhiteSpace(animationId)) return;
+            if (string.IsNullOrWhiteSpace(animationId)) return false;
             Sprite[] frames = CharacterLibrary.Frames(animationId);
-            if (frames == null || frames.Length == 0) return;
+            if (frames == null || frames.Length == 0) return false;
 
             characterName = animationId;
             flipbook.SetFrames(frames, CharacterLibrary.FpsFor(animationId, 12f));
@@ -418,6 +418,7 @@ namespace TikTokLiveGame
             body.localScale = characterBaseScale;
             action = ActionState.Dance;
             actionUntil = Time.time + 3f;
+            return true;
         }
 
         public void ChangeCharacter()

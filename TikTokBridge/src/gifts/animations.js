@@ -46,22 +46,30 @@ function resolveGiftAnimation(mappings, giftId) {
 }
 
 /**
- * Resolves a gift to its mapping target. Catalog animations carry an effect the
- * overlay implements; converted GIF folders carry a character animation id.
+ * Resolves one animation id to what the overlay must do with it. Catalog
+ * animations carry an effect the overlay implements; converted GIF folders
+ * carry a character animation id the avatar plays itself.
  */
+function resolveAnimationTarget(animationId, characterIds) {
+    const id = String(animationId || '').trim();
+    if (!id) return null;
+    const effect = ANIMATIONS_BY_ID.get(id);
+    if (effect) {
+        return { animationId: effect.id, effect: effect.effect, durationMs: effect.durationMs };
+    }
+    if (characterIds && characterIds.has(id)) {
+        return { animationId: id, character: id };
+    }
+    return null;
+}
+
+/** Resolves a gift to its mapping target, or null when unmapped/unknown. */
 function resolveGiftTarget(mappings, giftId, characterIds) {
     const key = String(giftId || '').trim();
     if (!key) return null;
     const mapping = (mappings || []).find(item => item.giftId === key);
     if (!mapping) return null;
-    const effect = ANIMATIONS_BY_ID.get(mapping.animationId);
-    if (effect) {
-        return { animationId: effect.id, effect: effect.effect, durationMs: effect.durationMs };
-    }
-    if (characterIds && characterIds.has(mapping.animationId)) {
-        return { animationId: mapping.animationId, character: mapping.animationId };
-    }
-    return null;
+    return resolveAnimationTarget(mapping.animationId, characterIds);
 }
 
 function sanitizeGiftAnimations(input, options = {}) {
@@ -140,6 +148,7 @@ module.exports = {
     ANIMATIONS,
     catalogMessage,
     resolveGiftTarget,
+    resolveAnimationTarget,
     resolveGiftAnimation,
     sanitizeGiftAnimations,
     loadGiftAnimations,

@@ -283,6 +283,12 @@ namespace TikTokLiveGame
             if (Time.unscaledTime >= nextNpcRefillAt) EnsureNpcCrowd();
         }
 
+        /// <summary>Removes the named avatars only (used by test-viewer cleanup).</summary>
+        public void RemovePlayers(string[] userIds)
+        {
+            foreach (string id in userIds ?? System.Array.Empty<string>()) Remove(id);
+        }
+
         public void Clear()
         {
             foreach (PlayerActor actor in players.Values) Destroy(actor.gameObject);

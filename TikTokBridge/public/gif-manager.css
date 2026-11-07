@@ -220,7 +220,94 @@
 
 .gm-mapping-row input { width: 100%; }
 
+/* ── Test Live dialog ─────────────────────────────────── */
+.gm-dialog {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(2, 6, 23, 0.74);
+    backdrop-filter: blur(2px);
+}
+
+.gm-dialog[hidden] { display: none; }
+
+.gm-dialog-body {
+    width: min(92vw, 620px);
+    max-height: 88vh;
+    overflow-y: auto;
+    background: #0f172a;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    border-radius: 16px;
+    padding: 18px 20px 16px;
+    box-shadow: 0 24px 60px rgba(2, 6, 23, 0.55);
+}
+
+.gm-test-anim {
+    margin: 6px 0 14px;
+    font-size: 13px;
+}
+
+.gm-test-anim strong { color: #fda4af; }
+
+.gm-test-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 14px;
+}
+
+.gm-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--text-muted, #93a0b8);
+}
+
+.gm-field input,
+.gm-field select {
+    font-size: 13px;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.gm-test-stages {
+    list-style: none;
+    margin: 16px 0 12px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.gm-test-stages:empty { display: none; }
+
+.gm-stage {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 12px;
+    padding: 7px 10px;
+    border-radius: 9px;
+    border-left: 3px solid rgba(148, 163, 184, 0.5);
+    background: rgba(148, 163, 184, 0.08);
+}
+
+.gm-stage strong { font-weight: 600; }
+.gm-stage span { color: var(--text-muted, #93a0b8); font-size: 11px; }
+
+.gm-stage.ok      { border-left-color: #34d399; background: rgba(52, 211, 153, 0.1); }
+.gm-stage.fail    { border-left-color: #f87171; background: rgba(248, 113, 113, 0.1); }
+.gm-stage.pending { border-left-color: #fbbf24; }
+.gm-stage.unknown { border-left-color: rgba(148, 163, 184, 0.5); opacity: 0.85; }
+
 @media (max-width: 720px) {
     .gm-preview-body { grid-template-columns: 1fr; }
     .gm-mapping-row { grid-template-columns: 1fr; }
+    .gm-test-fields { grid-template-columns: 1fr; }
 }

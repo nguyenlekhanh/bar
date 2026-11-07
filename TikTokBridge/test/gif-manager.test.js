@@ -7,7 +7,7 @@ const os = require('node:os');
 const path = require('node:path');
 
 const manager = require('../src/gifs/manager');
-const { sanitizeGiftAnimations, resolveGiftTarget } = require('../src/gifts/animations');
+const { sanitizeGiftAnimations, resolveGiftTarget, resolveAnimationTarget } = require('../src/gifts/animations');
 
 const GIF_PATH = path.join(__dirname, '..', 'assets', 'gifs', 'a.gif');
 const OTHER_GIF_PATH = path.join(__dirname, '..', 'assets', 'gifs', 'b.gif');
@@ -304,6 +304,24 @@ test('gift mappings may target converted animations only', () => {
     assert.ok(sanitizeGiftAnimations([{ giftId: '5655', animationId: 'mushroom_dance_42' }]).error);
     assert.ok(sanitizeGiftAnimations([{ giftId: '5655', animationId: '../evil' }], { allowedIds: allowed }).error);
     assert.equal(resolveGiftTarget([{ giftId: '1', animationId: 'gone' }], '1', allowed), null);
+});
+
+test('live-test animation targets resolve without touching mappings', () => {
+    const characterIds = new Set(['mushroom_dance_42']);
+    assert.deepEqual(resolveAnimationTarget('mushroom_dance_42', characterIds), {
+        animationId: 'mushroom_dance_42',
+        character: 'mushroom_dance_42'
+    });
+    assert.equal(resolveAnimationTarget('fireworks', characterIds).effect, 'fireworks');
+    assert.equal(resolveAnimationTarget('ghost', characterIds), null);
+    assert.equal(resolveAnimationTarget('', characterIds), null);
+    assert.equal(resolveAnimationTarget('../evil', characterIds), null);
+    assert.equal(resolveAnimationTarget('mushroom_dance_42', new Set()), null);
+
+    // Resolving a test target never rewrites any mapping.
+    const mappings = [{ giftId: '5655', animationId: 'dance' }];
+    resolveAnimationTarget('mushroom_dance_42', characterIds);
+    assert.deepEqual(mappings, [{ giftId: '5655', animationId: 'dance' }]);
 });
 
 test('librarySnapshot reports counts, statuses and frames', async () => {

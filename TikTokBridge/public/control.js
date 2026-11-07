@@ -83,6 +83,8 @@ const recentGifts = new Map();
 let animationCatalog = [];
 // Converted GIF folders, so gift rules can target them as well.
 let characterAnimations = [];
+// Other panel scripts (GIF Manager) subscribe to this socket's messages.
+const controlMessageHooks = new Set();
 
 /* ═══ WEBSOCKET ══════════════════════════════════════════ */
 function send(message) {
@@ -90,6 +92,16 @@ function send(message) {
         socket.send(JSON.stringify(message));
     }
 }
+
+/* Other tabs reuse this socket and the existing protocol. */
+window.controlBridge = {
+    send: message => send(message),
+    isOpen: () => socket?.readyState === WebSocket.OPEN,
+    onMessage: handler => {
+        controlMessageHooks.add(handler);
+        return () => controlMessageHooks.delete(handler);
+    }
+};
 
 function setStatus(data) {
     const state = data.state || '';
@@ -803,6 +815,9 @@ function connectSocket() {
         if (data.type === 'gift_animations')        renderGiftAnimations(data);
         if (data.type === 'gift_animations_saved')  setGiftAnimationsMessage(data.message || 'Gift animations saved and applied.');
         if (data.type === 'error') setMasterMessage(data.message || 'Something went wrong.', true);
+        for (const hook of controlMessageHooks) {
+            try { hook(data); } catch { /* a panel tab must never break the socket */ }
+        }
     });
 
     socket.addEventListener('close', () => {

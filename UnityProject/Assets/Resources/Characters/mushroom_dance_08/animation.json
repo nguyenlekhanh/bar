@@ -3,10 +3,14 @@
   "frameCount": 9,
   "fps": 6.7,
   "loop": true,
+  "playbackSpeed": 1,
+  "defaultDurationMs": 1350,
   "transparent": true,
   "width": 240,
   "height": 240,
   "durationMs": 1350,
+  "sourceFps": 6.7,
+  "sourceLoop": true,
   "frameDelaysMs": [
     150,
     150,
@@ -18,8 +22,10 @@
     150,
     150
   ],
+  "timing": "average-fps",
   "sourceGif": "mushroom_dance_08.gif",
   "sourceSha256": "37284cb3313c92a06b7b370fad078442fc38929a6098aaf338b7c0b8d93ae943",
   "framePattern": "%03d.png",
-  "convertedAt": "2026-11-06T22:07:38.838Z"
+  "convertedAt": "2026-11-06T23:37:16.878Z",
+  "overrides": null
 }

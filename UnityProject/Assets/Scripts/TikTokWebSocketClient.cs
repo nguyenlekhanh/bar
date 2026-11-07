@@ -180,6 +180,15 @@ namespace TikTokLiveGame
             height = height,
             duration = duration
         });
+        /// <summary>Tells the bridge a mapped animation actually started playing.</summary>
+        public void AnimationAck(string eventId, string animationId, bool ok) => Send(new ClientMessage
+        {
+            type = "animation_ack",
+            eventId = eventId ?? string.Empty,
+            animationId = animationId ?? string.Empty,
+            ok = ok
+        });
+
         public void DemoGift(int diamonds, int userIndex = 1) => Send(new ClientMessage
         {
             type = "demo_event",

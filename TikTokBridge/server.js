@@ -33,6 +33,7 @@ const {
     catalogMessage: animationCatalogMessage,
     resolveGiftAnimation,
     resolveGiftTarget,
+    resolveAnimationTarget,
     sanitizeGiftAnimations,
     loadGiftAnimations,
     saveGiftAnimations
@@ -283,6 +284,300 @@ function giftIdsForAnimation(animationId) {
     return giftAnimationMappings
         .filter(mapping => mapping.animationId === animationId)
         .map(mapping => mapping.giftId);
+}
+
+function overlayClientCount() {
+    let total = 0;
+    for (const client of wss.clients) {
+        if (client.role === 'overlay' && client.readyState === WebSocket.OPEN) total += 1;
+    }
+    return total;
+}
+
+// Ten test gifts per ten seconds: a stuck button must not flood Unity.
+const testGiftWindow = { startedAt: 0, count: 0 };
+function allowTestGift(now = Date.now()) {
+    if (!testGiftWindow.startedAt || now - testGiftWindow.startedAt >= 10000) {
+        testGiftWindow.startedAt = now;
+        testGiftWindow.count = 0;
+    }
+    testGiftWindow.count += 1;
+    return testGiftWindow.count <= 10;
+}
+
+const TEST_GIFT_ID_PATTERN = /^[A-Za-z0-9_.-]{1,40}$/;
+const TEST_VIEWER_COUNTS = new Set([1, 10, 30, 60, 400]);
+
+let activeTestSession = null;
+
+function clearTestTimers(session) {
+    for (const timer of session.timers) clearTimeout(timer);
+    session.timers.clear();
+    if (session.watchdog) clearTimeout(session.watchdog);
+    session.watchdog = null;
+}
+
+function scheduleTestStep(session, delay, work) {
+    const timer = setTimeout(() => {
+        session.timers.delete(timer);
+        if (activeTestSession !== session) return;
+        work();
+    }, delay);
+    session.timers.add(timer);
+}
+
+function testViewer(session, index) {
+    const suffix = session.viewers === 1 ? '' : ` ${index}`;
+    return {
+        userId: `gif-test-${session.id}-${index}`,
+        uniqueId: `gif_test_${session.id}_${index}`,
+        nickname: `${session.nickname}${suffix}`,
+        avatar: ''
+    };
+}
+
+function emitTestMember(viewer) {
+    processGameEvent({
+        type: 'member',
+        action: 'join',
+        joinedNow: true,
+        eventId: `test-join-${viewer.userId}-${Date.now()}`,
+        testEvent: true,
+        ...viewer
+    });
+}
+
+function sendTestProgress(session) {
+    broadcastToRole('control', {
+        type: 'test_gift_progress',
+        sessionId: session.id,
+        animationId: session.animationId,
+        sent: session.sent,
+        total: session.total,
+        acked: session.acked.size,
+        viewers: session.viewers
+    });
+}
+
+function emitTestGiftEvent(session, index) {
+    const viewer = testViewer(session, index);
+    const eventId = `test-gift-${session.id}-${session.sent + 1}`;
+    session.eventIds.add(eventId);
+    session.userIds.add(viewer.userId);
+
+    processGameEvent({
+        type: 'gift',
+        eventId,
+        ...viewer,
+        giftId: session.giftId,
+        giftName: session.giftName,
+        repeatCount: session.repeatCount,
+        unitDiamondCount: session.unitDiamonds,
+        diamondCount: session.unitDiamonds * session.repeatCount,
+        testEvent: true,
+        testAnimationId: session.animationId
+    });
+
+    session.sent += 1;
+    const stride = Math.max(1, Math.floor(session.total / 8));
+    if (session.sent === 1 || session.sent === session.total || session.sent % stride === 0) {
+        sendTestProgress(session);
+    }
+    if (session.sent >= session.total) {
+        session.completed = true;
+        broadcastToRole('control', {
+            type: 'test_gift_complete',
+            sessionId: session.id,
+            animationId: session.animationId,
+            sent: session.sent,
+            total: session.total,
+            acked: session.acked.size,
+            viewers: session.viewers
+        });
+    }
+    return eventId;
+}
+
+/** Removes only the avatars/users a test created; real viewers are untouched. */
+function stopTestSession(reason = 'stopped', session = activeTestSession) {
+    if (!session) return null;
+    clearTestTimers(session);
+    if (activeTestSession === session) activeTestSession = null;
+
+    const userIds = [...session.userIds];
+    for (const userId of userIds) {
+        sessionPlayers.delete(userId);
+        sessionVipScores.delete(userId);
+    }
+    if (userIds.length) {
+        const message = { type: 'remove_players', userIds };
+        broadcastToRole('overlay', message);
+        broadcastToRole('control', message);
+    }
+
+    const summary = {
+        type: 'test_gift_stopped',
+        sessionId: session.id,
+        animationId: session.animationId,
+        viewers: session.viewers,
+        sent: session.sent,
+        total: session.total,
+        acked: session.acked.size,
+        completion: session.completed ? 'completed' : 'stopped',
+        reason,
+        userIds
+    };
+    broadcastToRole('control', summary);
+    return summary;
+}
+
+/**
+ * Runs a live animation test through the normal event pipeline (the same
+ * processGameEvent path Test Lab uses). Join and gift events are spaced out so
+ * hundreds of viewers never arrive as one burst, and the explicit animation
+ * override applies to these events only — saved mappings are never touched.
+ */
+function handleTestGift(ws, message) {
+    const requestId = typeof message.requestId === 'string' ? message.requestId.slice(0, 64) : '';
+    const animationId = String(message.animationId || '').trim().slice(0, 64);
+    const reply = payload => send(ws, { type: 'test_gift_result', requestId, animationId, ...payload });
+
+    const target = resolveAnimationTarget(animationId, animationRegistry);
+    if (!target) {
+        return reply({ ok: false, stage: 'rejected', message: `Unknown animation ID: ${animationId || '(empty)'}.` });
+    }
+
+    const giftId = String(message.giftId || '').trim() || 'test-gift';
+    if (!TEST_GIFT_ID_PATTERN.test(giftId)) {
+        return reply({
+            ok: false,
+            stage: 'rejected',
+            message: 'Gift ID must be 1-40 characters: letters, numbers, dot, dash or underscore.'
+        });
+    }
+
+    if (activeTestSession) {
+        if (!activeTestSession.completed) {
+            return reply({
+                ok: false,
+                stage: 'busy',
+                message: 'A live test is already running. Stop it before starting another.'
+            });
+        }
+        // A finished test is replaced so its fake viewers never accumulate.
+        stopTestSession('replaced');
+    }
+
+    if (!allowTestGift()) {
+        return reply({
+            ok: false,
+            stage: 'rate_limited',
+            message: 'Too many test events. Wait a few seconds and try again.'
+        });
+    }
+
+    const overlayClients = overlayClientCount();
+    if (overlayClients === 0) {
+        return reply({
+            ok: false,
+            stage: 'no_overlay',
+            overlayClients: 0,
+            message: 'No Unity overlay is connected, so nothing would play.'
+        });
+    }
+
+    const requestedViewers = Math.floor(Number(message.viewers) || 1);
+    const viewers = TEST_VIEWER_COUNTS.has(requestedViewers) ? requestedViewers : 1;
+    const giftsPerViewer = Math.min(5, Math.max(1, Math.floor(Number(message.gifts) || 1)));
+    const repeatCount = Math.min(99, Math.max(1, Math.floor(Number(message.repeatCount) || 1)));
+    const unitDiamonds = Math.min(100000, Math.max(1, Math.floor(Number(message.diamonds) || 1)));
+    const nickname = String(message.nickname || 'GIF_Test_Viewer')
+        .replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 80) || 'GIF_Test_Viewer';
+    const giftName = String(message.giftName || animationId)
+        .replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 100) || animationId;
+    const total = viewers * giftsPerViewer;
+
+    const joinGap = Math.max(5, Math.min(40, Math.floor(4000 / viewers)));
+    const interval = Math.min(500, Math.max(5,
+        Number(message.intervalMs) || Math.max(15, Math.min(150, Math.floor(20000 / total)))));
+
+    const session = {
+        id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+        animationId,
+        target,
+        viewers,
+        giftsPerViewer,
+        repeatCount,
+        unitDiamonds,
+        nickname,
+        giftName,
+        giftId,
+        sent: 0,
+        total,
+        acked: new Set(),
+        eventIds: new Set(),
+        userIds: new Set(),
+        timers: new Set(),
+        watchdog: null,
+        startedAt: Date.now(),
+        completed: false
+    };
+    activeTestSession = session;
+
+    const details = {
+        sessionId: session.id,
+        animationId: target.animationId,
+        kind: target.character ? 'character' : 'effect',
+        giftId,
+        repeatCount,
+        unitDiamonds,
+        diamondCount: unitDiamonds * repeatCount,
+        viewers,
+        total,
+        overlayClients
+    };
+
+    // A single gift is fired synchronously so the reply can name its event.
+    if (total === 1) {
+        const viewer = testViewer(session, 1);
+        session.userIds.add(viewer.userId);
+        emitTestMember(viewer);
+        const eventId = emitTestGiftEvent(session, 1);
+        session.watchdog = setTimeout(() => stopTestSession('timeout'), 120000);
+        return reply({
+            ok: true,
+            stage: 'broadcast',
+            eventId,
+            ...details,
+            message: `Event sent to ${overlayClients} Unity overlay(s).`
+        });
+    }
+
+    for (let index = 1; index <= viewers; index += 1) {
+        scheduleTestStep(session, index * joinGap, () => {
+            const viewer = testViewer(session, index);
+            session.userIds.add(viewer.userId);
+            emitTestMember(viewer);
+        });
+    }
+
+    const giftStart = viewers * joinGap + 120;
+    for (let gift = 0; gift < giftsPerViewer; gift += 1) {
+        for (let index = 1; index <= viewers; index += 1) {
+            scheduleTestStep(session, giftStart + (gift * viewers + index) * interval, () => {
+                emitTestGiftEvent(session, index);
+            });
+        }
+    }
+
+    session.watchdog = setTimeout(() => stopTestSession('timeout'), giftStart + total * interval + 120000);
+
+    return reply({
+        ok: true,
+        stage: 'scheduled',
+        ...details,
+        message: `Testing ${target.animationId} with ${viewers} viewer(s) · ${total} gift event(s).`
+    });
 }
 
 async function managerSnapshot() {
@@ -842,16 +1137,21 @@ function processGameEvent(inputEvent) {
     const safeEvent = sanitizeGameEvent(inputEvent);
     if (!safeEvent) return;
     const event = applyBuiltInChatCommand(applyRule(safeEvent, resolveMasterRule(masterConfig, safeEvent)));
+    const isTestEvent = Boolean(inputEvent && inputEvent.testEvent === true);
+    const testAnimationId = isTestEvent ? String(inputEvent.testAnimationId || '').trim().slice(0, 64) : '';
     const isKnownPlayer = event.userId && sessionPlayers.has(event.userId);
     const joinsByKeyword = event.type === 'chat' && event.action === 'join';
     const joinsBySocial = event.type === 'follow' || event.type === 'share';
     event.joinedNow = Boolean((joinsByKeyword || joinsBySocial) && !isKnownPlayer);
-    if (metrics.source !== 'demo' && masterConfig.joinMode === 'keyword_only' && !isKnownPlayer) {
+    if (!isTestEvent && metrics.source !== 'demo' && masterConfig.joinMode === 'keyword_only' && !isKnownPlayer) {
         const joinsByGift = event.type === 'gift' && masterConfig.giftAlwaysJoins;
         event.spectatorOnly = !(joinsByKeyword || joinsByGift || joinsBySocial);
     }
+    // A live test always shows the animation on a real avatar.
+    if (isTestEvent) event.spectatorOnly = false;
     if (event.type === 'gift') {
-        if (isRealObservedGift(event)) {
+        // A simulated test must never teach the gift catalog a fake gift.
+        if (isRealObservedGift(event) && !isTestEvent) {
             learnObservedGift(event);
             broadcast({
                 type: 'gift_observed',
@@ -875,6 +1175,23 @@ function processGameEvent(inputEvent) {
             }
             if (target.character) {
                 event.animationCharacter = target.character;
+            }
+        }
+        // An explicitly chosen test animation wins for this event only; the saved
+        // mapping is never modified.
+        if (testAnimationId) {
+            const override = resolveAnimationTarget(testAnimationId, animationRegistry);
+            if (override) {
+                event.animationId = override.animationId;
+                if (override.effect) {
+                    event.animationEffect = override.effect;
+                    event.animationDurationMs = override.durationMs;
+                    delete event.animationCharacter;
+                } else {
+                    event.animationCharacter = override.character;
+                    delete event.animationEffect;
+                    delete event.animationDurationMs;
+                }
             }
         }
     }
@@ -1179,7 +1496,8 @@ async function handleClientMessage(ws, message) {
 
     const controlOnly = message.type === 'master_save' ||
         message.type === 'master_test' ||
-        message.type === 'set_gift_animations';
+        message.type === 'set_gift_animations' ||
+        message.type === 'test_gift_stop';
     const operatorOnly = new Set([
         'set_username', 'disconnect_tiktok', 'demo_start', 'demo_stop', 'demo_event', 'reset_game'
     ]).has(message.type);
@@ -1188,6 +1506,40 @@ async function handleClientMessage(ws, message) {
     }
     if (operatorOnly && ws.role !== 'control' && !ws.nativeClient) {
         return send(ws, { type: 'error', message: 'Client has no control permission.' });
+    }
+
+    if (message.type === 'animation_ack') {
+        if (ws.role !== 'overlay') {
+            return send(ws, { type: 'error', message: 'Only Unity can acknowledge animation playback.' });
+        }
+        const session = activeTestSession;
+        const eventId = String(message.eventId || '').slice(0, 120);
+        // Acks are only trusted for events this test session actually sent.
+        if (!session || !eventId || !session.eventIds.has(eventId)) return;
+        const ok = message.ok !== false;
+        if (ok) session.acked.add(eventId);
+        broadcastToRole('control', {
+            type: 'animation_ack',
+            confirmed: true,
+            sessionId: session.id,
+            eventId,
+            animationId: String(message.animationId || '').slice(0, 64),
+            ok,
+            sent: session.sent,
+            total: session.total,
+            acked: session.acked.size,
+            at: Date.now()
+        });
+        return;
+    }
+
+    if (message.type === 'test_gift_stop') {
+        if (ws.role !== 'control') {
+            return send(ws, { type: 'error', message: 'Only the Control panel may stop a live test.' });
+        }
+        const summary = stopTestSession('stopped');
+        if (!summary) return send(ws, { type: 'test_gift_stopped', message: 'No live test was running.' });
+        return;
     }
 
     if (message.type === 'set_background') {
@@ -1296,6 +1648,14 @@ async function handleClientMessage(ws, message) {
         return;
     }
     if (message.type === 'demo_event') {
+        // The GIF Manager's "Test Live" button reuses this message; the extra
+        // fields only add a one-event animation override.
+        if (message.animationId) {
+            if (ws.role !== 'control') {
+                return send(ws, { type: 'error', message: 'Only the Control panel may run a live animation test.' });
+            }
+            return handleTestGift(ws, message);
+        }
         return emitDemoAction(
             String(message.action || 'dance'),
             Math.max(1, Number(message.userIndex) || 1),
@@ -1344,7 +1704,6 @@ wss.on('connection', (ws, request) => {
     send(ws, { type: 'status', ...connectionStatus });
     ws.on('message', (rawMessage, isBinary) => {
         if (isBinary) return ws.close(1003, 'Text messages only');
-        if (!consumeRateLimit(ws.rateLimit)) return ws.close(1008, 'Rate limit exceeded');
         let message;
         try {
             message = JSON.parse(rawMessage.toString());
@@ -1356,6 +1715,12 @@ wss.on('connection', (ws, request) => {
         if (!message || typeof message !== 'object' || Array.isArray(message) ||
             typeof message.type !== 'string' || message.type.length > 40) {
             return send(ws, { type: 'error', message: 'Invalid command structure.' });
+        }
+        // One acknowledgement per broadcast gift is normal overlay traffic, not
+        // a command flood; everything else still shares the command rate limit.
+        const skipsRateLimit = message.type === 'animation_ack';
+        if (!skipsRateLimit && !consumeRateLimit(ws.rateLimit)) {
+            return ws.close(1008, 'Rate limit exceeded');
         }
         void handleClientMessage(ws, message).catch(error => {
             console.error('Không thể xử lý lệnh WebSocket:', error?.message || error);

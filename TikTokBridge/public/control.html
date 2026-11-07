@@ -449,6 +449,59 @@
         </div>
         <p class="help">Only registered animations can be mapped. Deleting an animation that gifts use asks for confirmation first.</p>
     </div>
+
+    <div class="gm-dialog" id="gm-test-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="gm-test-title">
+        <div class="gm-dialog-body">
+            <div class="card-header">
+                <div>
+                    <p class="card-label">Live test</p>
+                    <h2 class="card-title" id="gm-test-title">▶ Test Live on Unity</h2>
+                </div>
+                <button type="button" id="gm-test-cancel-x" class="btn btn-secondary btn-sm">Close</button>
+            </div>
+
+            <p class="gm-test-anim">Animation: <strong id="gm-test-animation">—</strong></p>
+
+            <div class="gm-test-fields">
+                <label class="gm-field">Mapped gift ID
+                    <select id="gm-test-gift-select"></select>
+                </label>
+                <label class="gm-field">Custom gift ID
+                    <input id="gm-test-gift-custom" placeholder="e.g. 5655">
+                </label>
+                <label class="gm-field">Gift name
+                    <input id="gm-test-gift-name" value="Test Gift">
+                </label>
+                <label class="gm-field">Coin value
+                    <input id="gm-test-diamonds" type="number" min="1" max="100000" value="100">
+                </label>
+                <label class="gm-field">Viewer name
+                    <input id="gm-test-viewer" value="GIF_Test_Viewer" maxlength="80">
+                </label>
+                <label class="gm-field">Gifts per viewer
+                    <input id="gm-test-quantity" type="number" min="1" max="5" value="1">
+                </label>
+                <label class="gm-field">Test viewers
+                    <select id="gm-test-viewers">
+                        <option value="1" selected>1</option>
+                        <option value="10">10</option>
+                        <option value="30">30</option>
+                        <option value="60">60</option>
+                        <option value="400">400</option>
+                    </select>
+                </label>
+            </div>
+
+            <ol class="gm-test-stages" id="gm-test-stages"></ol>
+
+            <div class="card-actions">
+                <button type="button" id="gm-test-send" class="btn btn-primary btn-sm">▶ TEST ON UNITY</button>
+                <button type="button" id="gm-test-stop" class="btn btn-secondary btn-sm" disabled>■ STOP TEST</button>
+                <button type="button" id="gm-test-cancel" class="btn btn-secondary btn-sm">Cancel</button>
+            </div>
+            <p class="help">Runs the same demo gift event as Test Lab: fake viewers only, nothing saved, no real TikTok action. Unity confirms playback with its own acknowledgement; STOP closes the dialog and removes only the test viewers.</p>
+        </div>
+    </div>
 </section>
 
 <!-- ── SESSION ── -->

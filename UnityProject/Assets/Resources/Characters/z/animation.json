@@ -3,10 +3,14 @@
   "frameCount": 20,
   "fps": 10,
   "loop": true,
+  "playbackSpeed": 1,
+  "defaultDurationMs": 2000,
   "transparent": true,
   "width": 240,
   "height": 240,
   "durationMs": 2000,
+  "sourceFps": 10,
+  "sourceLoop": true,
   "frameDelaysMs": [
     100,
     100,
@@ -29,8 +33,10 @@
     100,
     100
   ],
+  "timing": "average-fps",
   "sourceGif": "z.gif",
   "sourceSha256": "7bdb81d6720c62d9e4a8ecc696cb3164ea59b0162dbd7606dfc34cb6a2f84da5",
   "framePattern": "%03d.png",
-  "convertedAt": "2026-11-06T22:07:44.462Z"
+  "convertedAt": "2026-11-06T23:37:37.736Z",
+  "overrides": null
 }

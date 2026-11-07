@@ -47,7 +47,21 @@
         mappings: el('gm-mappings'),
         mappingsSearch: el('gm-mapping-search'),
         mappingsSave: el('gm-mappings-save'),
-        mappingsRefresh: el('gm-mappings-refresh')
+        mappingsRefresh: el('gm-mappings-refresh'),
+        testDialog: el('gm-test-dialog'),
+        testAnimation: el('gm-test-animation'),
+        testGiftSelect: el('gm-test-gift-select'),
+        testGiftCustom: el('gm-test-gift-custom'),
+        testGiftName: el('gm-test-gift-name'),
+        testDiamonds: el('gm-test-diamonds'),
+        testViewer: el('gm-test-viewer'),
+        testQuantity: el('gm-test-quantity'),
+        testViewers: el('gm-test-viewers'),
+        testStages: el('gm-test-stages'),
+        testSend: el('gm-test-send'),
+        testStop: el('gm-test-stop'),
+        testCancel: el('gm-test-cancel'),
+        testClose: el('gm-test-cancel-x')
     };
 
     if (!ui.library) return;
@@ -312,6 +326,7 @@
                 action('Settings', 'edit').addEventListener('click', () => {
                     editForm.hidden = !editForm.hidden;
                 });
+                action('▶ TEST LIVE', 'test').addEventListener('click', () => openTestDialog(entry));
                 action('Delete', 'delete').addEventListener('click', () => remove(entry));
             }
         }
@@ -596,7 +611,288 @@
         });
     }
 
+    /* ── live test (reuses Control Panel socket + demo_event) ── */
+    let pendingTest = null;
+    let lastTestAt = 0;
+    let earlyAck = null;
+    const TEST_VIEWER_CHOICES = new Set(['1', '10', '30', '60', '400']);
+
+    function renderTestStages(stages) {
+        if (!ui.testStages) return;
+        ui.testStages.replaceChildren(...stages.map(stage => {
+            const item = document.createElement('li');
+            item.className = `gm-stage ${stage.state || 'pending'}`;
+            const label = document.createElement('strong');
+            label.textContent = stage.label;
+            item.append(label);
+            if (stage.detail) {
+                const detail = document.createElement('span');
+                detail.textContent = stage.detail;
+                item.append(detail);
+            }
+            return item;
+        }));
+    }
+
+    function populateTestGiftChoices() {
+        if (!ui.testGiftSelect) return;
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = '— choose a mapped gift —';
+        const options = [placeholder];
+        const giftIds = [...new Set(state.mappings.map(mapping => mapping.giftId))].sort();
+        for (const giftId of giftIds) {
+            const mapping = state.mappings.find(item => item.giftId === giftId);
+            const option = document.createElement('option');
+            option.value = giftId;
+            option.textContent = `${giftId} · ${mapping ? mapping.animationId : ''}`;
+            options.push(option);
+        }
+        ui.testGiftSelect.replaceChildren(...options);
+    }
+
+    function openTestDialog(entry) {
+        if (!ui.testDialog) return;
+        populateTestGiftChoices();
+        ui.testDialog.dataset.animationId = entry.animationId;
+        ui.testAnimation.textContent = entry.animationId;
+
+        const usedBy = (state.snapshot?.usedBy || {})[entry.animationId] || [];
+        ui.testGiftSelect.value = usedBy[0] || '';
+        ui.testGiftCustom.value = usedBy.length ? '' : '900001';
+        ui.testGiftName.value = 'Test Gift';
+        ui.testDiamonds.value = '1';
+        ui.testDiamonds.value = '100';
+        ui.testViewer.value = 'GIF_Test_Viewer';
+        ui.testQuantity.value = '1';
+        ui.testViewers.value = '1';
+        state.testSession = null;
+        earlyAck = null;
+        if (ui.testStop) ui.testStop.disabled = true;
+        renderTestStages([]);
+        ui.testSend.disabled = false;
+        ui.testDialog.hidden = false;
+        ui.testSend.focus();
+    }
+
+    function closeTestDialog() {
+        if (!ui.testDialog) return;
+        // Closing mid-test must never leave fake viewers behind.
+        const session = state.testSession;
+        if (session && session.id && !session.completed && !session.stopped && !session.error) {
+            stopTest();
+        }
+        ui.testDialog.hidden = true;
+        pendingTest = null;
+    }
+
+    /**
+     * The dialog only upgrades a stage when the bridge or Unity said so: Unity
+     * acknowledgement is the only proof of playback, never the HTTP/WS reply.
+     */
+    function testStageList() {
+        const session = state.testSession;
+        if (!session) return [];
+        const acked = session.acked > 0;
+        const done = session.completed || session.stopped || Boolean(session.error);
+        return [
+            {
+                label: 'Preparing test',
+                state: session.animationId ? 'ok' : 'pending',
+                detail: `${session.animationId || '—'} · ${session.viewers} viewer(s) · ${session.total} gift event(s)`
+            },
+            {
+                label: 'Bridge accepted the event',
+                state: session.error ? 'fail' : (session.id ? 'ok' : 'pending'),
+                detail: session.error || (session.id ? `session ${session.id}` : 'sending…')
+            },
+            {
+                label: 'Event broadcast to Unity overlays',
+                state: session.error ? 'fail' : (session.id ? 'ok' : 'pending'),
+                detail: session.error
+                    ? 'nothing was sent'
+                    : session.id ? `${session.overlays} overlay(s) · ${session.animationId} as ${session.kind}` : ''
+            },
+            {
+                label: 'Unity received event / animation playback started',
+                state: acked ? 'ok' : (done ? 'unknown' : 'pending'),
+                detail: acked
+                    ? `confirmed by Unity · ${session.acked}/${session.sent} event(s)`
+                    : done ? 'no acknowledgement came back — check the Unity window' : 'waiting for Unity acknowledgement'
+            },
+            {
+                label: 'Test progress',
+                state: session.error ? 'fail' : (session.completed ? 'ok' : 'pending'),
+                detail: `${session.sent}/${session.total} gift event(s) sent`
+            },
+            {
+                label: session.error ? 'Test failed' : session.stopped ? 'Test stopped' : session.completed ? 'Test completed' : 'Running…',
+                state: session.error ? 'fail' : session.stopped ? 'unknown' : (session.completed ? 'ok' : 'pending'),
+                detail: session.stopped
+                    ? `${session.removed} test viewer(s) removed`
+                    : session.completed ? 'press ■ STOP TEST to remove the test viewers' : ''
+            }
+        ];
+    }
+
+    async function sendTest() {
+        const bridge = window.controlBridge;
+        const animationId = ui.testDialog?.dataset.animationId || '';
+        if (!bridge || !bridge.isOpen()) {
+            return renderTestStages([{ label: 'The Control Panel socket is not connected.', state: 'fail' }]);
+        }
+
+        const now = Date.now();
+        if (now - lastTestAt < 1000) {
+            return renderTestStages([{ label: 'Wait a moment before starting another test.', state: 'fail' }]);
+        }
+        lastTestAt = now;
+
+        const giftId = (ui.testGiftCustom.value.trim() || ui.testGiftSelect.value || '').trim();
+        const viewers = TEST_VIEWER_CHOICES.has(ui.testViewers.value) ? Number(ui.testViewers.value) : 1;
+        const gifts = Math.min(5, Math.max(1, Math.floor(Number(ui.testQuantity.value) || 1)));
+        const requestId = `gif-test-${now}-${Math.random().toString(36).slice(2, 6)}`;
+
+        state.testSession = {
+            id: '',
+            animationId: '',
+            kind: '',
+            overlays: 0,
+            viewers,
+            total: viewers * gifts,
+            sent: 0,
+            acked: 0,
+            removed: 0,
+            completed: false,
+            stopped: false,
+            error: ''
+        };
+        earlyAck = null;
+        if (ui.testStop) ui.testStop.disabled = true;
+        renderTestStages(testStageList());
+        ui.testSend.disabled = true;
+
+        const replyPromise = new Promise(resolve => {
+            const timer = setTimeout(() => {
+                pendingTest = null;
+                resolve(null);
+            }, 4000);
+            pendingTest = data => {
+                if (data.requestId !== requestId) return;
+                clearTimeout(timer);
+                pendingTest = null;
+                resolve(data);
+            };
+        });
+
+        // Sent through the Control Panel socket, so the bridge runs the exact
+        // demo_event path Test Lab uses.
+        bridge.send({
+            type: 'demo_event',
+            action: 'gift',
+            animationId,
+            requestId,
+            giftId,
+            giftName: ui.testGiftName.value.trim() || 'Test Gift',
+            diamonds: Number(ui.testDiamonds.value) || 100,
+            repeatCount: 1,
+            gifts,
+            viewers,
+            nickname: ui.testViewer.value.trim() || 'GIF_Test_Viewer'
+        });
+
+        const reply = await replyPromise;
+        ui.testSend.disabled = false;
+        const session = state.testSession;
+        if (!session) return;
+
+        if (!reply) {
+            session.error = 'No reply from the bridge — the event may still have been processed.';
+            return renderTestStages(testStageList());
+        }
+        if (!reply.ok) {
+            session.error = reply.message || reply.stage || 'The bridge rejected the test.';
+            return renderTestStages(testStageList());
+        }
+
+        session.id = reply.sessionId;
+        session.animationId = reply.animationId;
+        session.kind = reply.kind;
+        session.overlays = reply.overlayClients;
+        session.viewers = reply.viewers;
+        session.total = reply.total;
+        if (reply.stage === 'broadcast') {
+            session.sent = 1;
+            session.completed = true;
+        }
+        if (earlyAck && earlyAck.sessionId === session.id) session.acked = earlyAck.acked;
+        if (ui.testStop) ui.testStop.disabled = false;
+        renderTestStages(testStageList());
+    }
+
+    function stopTest() {
+        const bridge = window.controlBridge;
+        if (!bridge || !bridge.isOpen()) return;
+        bridge.send({ type: 'test_gift_stop' });
+        if (ui.testStop) ui.testStop.disabled = true;
+    }
+
+    if (window.controlBridge) {
+        window.controlBridge.onMessage(data => {
+            if (data.type === 'test_gift_result') {
+                if (pendingTest) pendingTest(data);
+                return;
+            }
+            const session = state.testSession;
+            if (!session) return;
+
+            if (data.type === 'animation_ack') {
+                if (!session.id) earlyAck = data;
+                else if (data.sessionId === session.id) {
+                    session.acked = data.acked;
+                    renderTestStages(testStageList());
+                }
+                return;
+            }
+            if (!session.id || data.sessionId !== session.id) return;
+
+            if (data.type === 'test_gift_progress') {
+                session.sent = data.sent;
+                session.total = data.total;
+                session.acked = data.acked;
+                renderTestStages(testStageList());
+            } else if (data.type === 'test_gift_complete') {
+                session.sent = data.sent;
+                session.total = data.total;
+                session.acked = data.acked;
+                session.completed = true;
+                renderTestStages(testStageList());
+            } else if (data.type === 'test_gift_stopped') {
+                session.sent = data.sent;
+                session.total = data.total;
+                session.acked = data.acked;
+                session.stopped = true;
+                session.removed = Array.isArray(data.userIds) ? data.userIds.length : 0;
+                if (ui.testStop) ui.testStop.disabled = true;
+                renderTestStages(testStageList());
+            }
+        });
+    }
+
     /* ── wiring ──────────────────────────────────────────── */
+    if (ui.testSend) ui.testSend.addEventListener('click', sendTest);
+    if (ui.testStop) ui.testStop.addEventListener('click', stopTest);
+    [ui.testCancel, ui.testClose].forEach(button => {
+        if (button) button.addEventListener('click', closeTestDialog);
+    });
+    if (ui.testDialog) {
+        ui.testDialog.addEventListener('click', event => {
+            if (event.target === ui.testDialog) closeTestDialog();
+        });
+        ui.testDialog.addEventListener('keydown', event => {
+            if (event.key === 'Escape') closeTestDialog();
+        });
+    }
     if (ui.upload) ui.upload.addEventListener('click', uploadGif);
     if (ui.download) ui.download.addEventListener('click', downloadGif);
     if (ui.refresh) ui.refresh.addEventListener('click', load);

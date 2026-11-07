@@ -68,6 +68,14 @@ namespace TikTokLiveGame
                 return;
             }
 
+            // Test Live asks for its own fake viewers to be removed by ID; the
+            // snapshot and real viewers are left alone.
+            if (liveEvent.type == "remove_players")
+            {
+                playerManager.RemovePlayers(liveEvent.userIds);
+                return;
+            }
+
             if (liveEvent.type == "status") connectionStatus = liveEvent.message;
             if (liveEvent.type is "member" or "chat" or "gift" or "like" or "follow" or "share") events++;
 
@@ -121,7 +129,14 @@ namespace TikTokLiveGame
             if (liveEvent.type == "gift")
             {
                 PlayerActor actor = playerManager.Find(liveEvent.userId);
-                giftEffects.Play(liveEvent, actor);
+                bool animationStarted = giftEffects.Play(liveEvent, actor);
+                // The only truthful playback proof: Unity itself reports it.
+                if (!string.IsNullOrWhiteSpace(liveEvent.eventId) &&
+                    (!string.IsNullOrWhiteSpace(liveEvent.animationCharacter) ||
+                     !string.IsNullOrWhiteSpace(liveEvent.animationEffect)))
+                {
+                    client.AnimationAck(liveEvent.eventId, liveEvent.animationId, animationStarted);
+                }
             }
 
             bool joinFocus = liveEvent.action == "join" && liveEvent.joinedNow;

@@ -3,10 +3,14 @@
   "frameCount": 27,
   "fps": 33.3,
   "loop": true,
+  "playbackSpeed": 1,
+  "defaultDurationMs": 810,
   "transparent": true,
   "width": 240,
   "height": 240,
   "durationMs": 810,
+  "sourceFps": 33.3,
+  "sourceLoop": true,
   "frameDelaysMs": [
     30,
     30,
@@ -36,8 +40,10 @@
     30,
     30
   ],
+  "timing": "average-fps",
   "sourceGif": "mushroom_magic_07.gif",
   "sourceSha256": "a2d22c7a6bb50c9a8db25e5bceaf0fc8b1684f2bad75556516d2952f59a33582",
   "framePattern": "%03d.png",
-  "convertedAt": "2026-11-06T22:07:43.198Z"
+  "convertedAt": "2026-11-06T23:37:37.281Z",
+  "overrides": null
 }

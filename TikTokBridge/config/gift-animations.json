@@ -1,3 +1,8 @@
 {
-  "giftAnimations": []
+  "giftAnimations": [
+    {
+      "giftId": "5487",
+      "animationId": "tenor"
+    }
+  ]
 }

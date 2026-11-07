@@ -23,9 +23,10 @@ namespace TikTokLiveGame
             fireworkAudio.clip = fireworkClip;
         }
 
-        public void Play(TikTokEvent data, PlayerActor actor)
+        /// <summary>Returns true only when a mapped animation was actually started.</summary>
+        public bool Play(TikTokEvent data, PlayerActor actor)
         {
-            if (data.type != "gift") return;
+            if (data.type != "gift") return false;
             string gift = string.IsNullOrWhiteSpace(data.giftName) ? "Gift" : data.giftName;
             combos.TryGetValue(data.userId ?? string.Empty, out ComboState combo);
             int count = Time.unscaledTime - combo.LastTime <= 5f ? combo.Count + 1 : 1;
@@ -41,7 +42,7 @@ namespace TikTokLiveGame
 
             // The gift → animation mapping is layered on top of the rule action,
             // so an existing gift rule keeps behaving exactly as before.
-            PlayMappedAnimation(data, actor);
+            return PlayMappedAnimation(data, actor);
         }
 
         /// <summary>
@@ -49,44 +50,43 @@ namespace TikTokLiveGame
         /// allow-listed on the bridge, so anything unrecognised here simply keeps
         /// the rule-driven behaviour that already ran above.
         /// </summary>
-        private void PlayMappedAnimation(TikTokEvent data, PlayerActor actor)
+        private bool PlayMappedAnimation(TikTokEvent data, PlayerActor actor)
         {
             // A converted GIF animation is played on the gifting actor itself.
             if (!string.IsNullOrWhiteSpace(data.animationCharacter))
             {
-                if (actor != null) actor.PlayAnimation(data.animationCharacter);
-                return;
+                return actor != null && actor.PlayAnimation(data.animationCharacter);
             }
-            if (string.IsNullOrWhiteSpace(data.animationEffect)) return;
+            if (string.IsNullOrWhiteSpace(data.animationEffect)) return false;
             float seconds = data.animationDurationMs > 0 ? data.animationDurationMs / 1000f : 4f;
             switch (data.animationEffect)
             {
                 case "dance":
                     if (actor != null) actor.Dance(seconds);
-                    break;
+                    return actor != null;
                 case "jump":
                     if (actor != null) actor.Jump(seconds);
-                    break;
+                    return actor != null;
                 case "walk":
                     if (actor != null) actor.Walk(seconds);
-                    break;
+                    return actor != null;
                 case "change":
                     if (actor != null) actor.ChangeCharacter();
-                    break;
+                    return actor != null;
                 case "grow":
                     if (actor != null) actor.Grow(seconds);
-                    break;
+                    return actor != null;
                 case "spotlight":
                     if (actor != null) StartCoroutine(Spotlight(actor, data));
-                    break;
+                    return actor != null;
                 case "fireworks":
                     LaunchFireworks(Mathf.Clamp(Mathf.Max(2, data.fireworkBursts), 3, 7));
-                    break;
+                    return true;
                 case "party":
                     PartyBurst();
-                    break;
+                    return true;
                 default:
-                    break;
+                    return false;
             }
         }
 

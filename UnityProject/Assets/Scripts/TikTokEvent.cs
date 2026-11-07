@@ -33,6 +33,8 @@ namespace TikTokLiveGame
         public string animationId;
         public string animationEffect;
         public string animationCharacter;
+        public string eventId;
+        public string[] userIds;
         public int animationDurationMs;
         public bool spectatorOnly;
         public bool joinedNow;
@@ -85,6 +87,8 @@ namespace TikTokLiveGame
         public string username;
         public string action;
         public string giftName;
+        public string eventId;
+        public string animationId;
         public string file;
         public int count;
         public int userIndex;
