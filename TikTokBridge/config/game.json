@@ -7,7 +7,7 @@
   "commands": {
     "dance": ["dance"],
     "walk": ["đi vòng", "di vong", "walk"],
-    "changeCharacter": ["đổi nv", "doi nv", "đổi nhân vật"]
+    "changeCharacter": ["change", "đổi nv", "doi nv", "đổi nhân vật"]
   },
   "spotlight": {
     "minimumMs": 4000,

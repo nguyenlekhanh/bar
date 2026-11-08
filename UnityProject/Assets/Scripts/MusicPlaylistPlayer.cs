@@ -24,6 +24,8 @@ namespace TikTokLiveGame
         private const float DefaultVolume = 0.35f;
         private const float FadeSeconds = 1.2f;
         private const float RescanSeconds = 4f;
+        private const float StateReportSeconds = 2f;
+        private const int RecentCommandLimit = 64;
         private const string LegacyMusicFolder = @"D:\TIKTOK_LIVE_BAR\DJ_MUSIC";
 
         private static readonly string[] SupportedExtensions = { ".mp3", ".wav", ".ogg" };
@@ -45,7 +47,46 @@ namespace TikTokLiveGame
         private bool playConfirmed;
         private float voiceDuckMultiplier = 1f;
         private float voiceDuckTarget = 1f;
-        private float voiceDuckFadeSeconds = 0.35f;
+        private float voiceDuckAttackSeconds = 0.18f;
+        private float voiceDuckReleaseSeconds = 0.45f;
+        private TikTokWebSocketClient client;
+        private bool paused;
+        private bool pauseRequested;
+        private bool shuffleEnabled;
+        private bool repeatEnabled = true;
+        private int loadGeneration;
+        private float nextStateReportAt;
+        private float currentTrackVolume = 1f;
+        private string lastPlayerError = string.Empty;
+        private readonly Dictionary<string, float> trackVolumes = new(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> recentCommandIds = new(StringComparer.Ordinal);
+        private readonly Queue<string> recentCommandOrder = new();
+
+        public float CurrentVolume => output != null ? output.volume : 0f;
+        public float ConfiguredVolume => configuredVolume;
+        public float DuckMultiplier => voiceDuckMultiplier;
+        public bool DuckingActive => voiceDuckTarget < 0.999f;
+        public bool IsPlaying => output != null && output.isPlaying;
+        public string CurrentTrack => tracks.Length > 0 && trackIndex < tracks.Length
+            ? Path.GetFileName(tracks[trackIndex])
+            : string.Empty;
+        public bool IsPaused => paused;
+        public bool ShuffleEnabled => shuffleEnabled;
+        public bool RepeatEnabled => repeatEnabled;
+        private float EffectiveVolume => configuredVolume * currentTrackVolume;
+
+        /// <summary>
+        /// Connects this existing player to the bridge. No additional AudioSource
+        /// or music controller is created; commands are applied to this instance.
+        /// </summary>
+        public void Initialize(TikTokWebSocketClient socketClient)
+        {
+            if (client == socketClient) return;
+            if (client != null) client.EventReceived -= HandleEvent;
+            client = socketClient;
+            if (client != null) client.EventReceived += HandleEvent;
+            ReportState("initialized");
+        }
 
         private void Awake()
         {
@@ -66,16 +107,13 @@ namespace TikTokLiveGame
 
         private void StartPlaylist()
         {
+            // Remember the file timestamp that supplied the startup volume. Without
+            // this, the first rescan would treat VOLUME.txt as newly changed and
+            // overwrite a volume restored from the bridge's saved state.
+            string volumePath = Path.Combine(musicFolder, "VOLUME.txt");
             configuredVolume = ReadVolume(musicFolder);
-            if (output == null)
-            {
-                output = gameObject.AddComponent<AudioSource>();
-                output.playOnAwake = false;
-                output.loop = false;
-                output.spatialBlend = 0f; // 2D: identical on both speakers, no distance falloff.
-                output.volume = 0f;
-                output.priority = 128;
-            }
+            volumeWriteTime = File.Exists(volumePath) ? File.GetLastWriteTimeUtc(volumePath) : DateTime.MinValue;
+            EnsureOutput();
             output.mute = false;
             Debug.Log($"[Music] Playlist ready: {tracks.Length} track(s) from '{musicFolder}', volume {configuredVolume:0.00}.");
             PlayTrack(0);
@@ -84,6 +122,11 @@ namespace TikTokLiveGame
         private void Update()
         {
             UpdateVoiceDucking();
+            if (Time.unscaledTime >= nextStateReportAt)
+            {
+                nextStateReportAt = Time.unscaledTime + StateReportSeconds;
+                ReportState("periodic");
+            }
             if (output == null)
             {
                 if (Time.unscaledTime >= nextRescanAt)
@@ -105,10 +148,28 @@ namespace TikTokLiveGame
                 RefreshPlaylist();
             }
 
+            // Pause is explicit: never let the watchdog or the "not playing"
+            // branch auto-advance while the operator has paused the player.
+            if (paused)
+            {
+                if (output.isPlaying) output.Pause();
+                return;
+            }
+
             if (advancePending && Time.unscaledTime >= advanceAt)
             {
                 advancePending = false;
-                PlayTrack((trackIndex + 1) % tracks.Length);
+                int next = NextIndex(1);
+                if (next < 0)
+                {
+                    paused = true;
+                    wasPlaying = false;
+                    output.Stop();
+                    output.volume = 0f;
+                    ReportState("end-of-playlist");
+                    return;
+                }
+                PlayTrack(next);
                 return;
             }
 
@@ -123,7 +184,7 @@ namespace TikTokLiveGame
                 float fadeOut = length > 0.05f
                     ? Mathf.Clamp01((length - output.time) / FadeSeconds)
                     : 1f;
-                output.volume = configuredVolume * Mathf.Min(fadeIn, fadeOut) * voiceDuckMultiplier;
+                output.volume = EffectiveVolume * Mathf.Min(fadeIn, fadeOut) * voiceDuckMultiplier;
                 watchdogAt = Time.unscaledTime + 3f;
 
                 if (!playConfirmed && output.time > 0.25f)
@@ -154,24 +215,34 @@ namespace TikTokLiveGame
         /// currently decoded clip keep running; only the source volume multiplier
         /// changes, so a voice line never stops or restarts the music.
         /// </summary>
+        /// <summary>Legacy overload: use the same duration for attack and release.</summary>
         public void DuckForVoice(float level, float fadeMs)
+            => DuckForVoice(level, fadeMs, fadeMs);
+
+        /// <summary>Ducks music with a fast attack and a slower, smooth release.</summary>
+        public void DuckForVoice(float level, float attackMs, float releaseMs)
         {
             voiceDuckTarget = Mathf.Clamp(level, 0.02f, 1f);
-            voiceDuckFadeSeconds = Mathf.Clamp(fadeMs, 80f, 2000f) / 1000f;
+            voiceDuckAttackSeconds = Mathf.Clamp(attackMs, 40f, 2000f) / 1000f;
+            voiceDuckReleaseSeconds = Mathf.Clamp(releaseMs, 40f, 2000f) / 1000f;
             if (output != null) output.mute = false;
         }
 
         /// <summary>Returns the DJ source to its configured level after speech.</summary>
-        public void RestoreMusicAfterVoice(float fadeMs)
+        public void RestoreMusicAfterVoice(float releaseMs)
         {
             voiceDuckTarget = 1f;
-            voiceDuckFadeSeconds = Mathf.Clamp(fadeMs, 80f, 2000f) / 1000f;
+            voiceDuckReleaseSeconds = Mathf.Clamp(releaseMs, 40f, 2000f) / 1000f;
         }
 
         private void UpdateVoiceDucking()
         {
             if (Mathf.Approximately(voiceDuckMultiplier, voiceDuckTarget)) return;
-            float step = Time.unscaledDeltaTime / Mathf.Max(0.05f, voiceDuckFadeSeconds);
+            // Attack when lowering the music, release when restoring it.
+            float duration = voiceDuckTarget < voiceDuckMultiplier
+                ? voiceDuckAttackSeconds
+                : voiceDuckReleaseSeconds;
+            float step = Time.unscaledDeltaTime / Mathf.Max(0.04f, duration);
             voiceDuckMultiplier = Mathf.MoveTowards(voiceDuckMultiplier, voiceDuckTarget, step);
             if (output == null || !output.isPlaying) return;
             float length = currentClip != null ? currentClip.length : 0f;
@@ -179,7 +250,7 @@ namespace TikTokLiveGame
             float fadeOut = length > 0.05f
                 ? Mathf.Clamp01((length - output.time) / FadeSeconds)
                 : 1f;
-            output.volume = configuredVolume * Mathf.Min(fadeIn, fadeOut) * voiceDuckMultiplier;
+            output.volume = EffectiveVolume * Mathf.Min(fadeIn, fadeOut) * voiceDuckMultiplier;
         }
 
         /// <summary>
@@ -215,13 +286,14 @@ namespace TikTokLiveGame
             if (newIndex >= 0)
             {
                 trackIndex = newIndex;
-                if (volumeChanged && output != null) output.volume = Mathf.Min(output.volume, configuredVolume);
+                if (volumeChanged && output != null) output.volume = Mathf.Min(output.volume, EffectiveVolume);
                 return; // Keep the audible song running.
             }
 
             Debug.Log("[Music] The playing file is gone; switching to the first track of the new list.");
             advancePending = false;
-            PlayTrack(0);
+            // A deleted file must not override an explicit operator pause.
+            if (!paused) PlayTrack(0);
         }
 
         private bool ReapplyVolumeIfChanged()
@@ -237,19 +309,285 @@ namespace TikTokLiveGame
             return true;
         }
 
+        /* ── Bridge music commands ────────────────────────────── */
+
+        private void HandleEvent(TikTokEvent liveEvent)
+        {
+            if (liveEvent == null) return;
+            if (liveEvent.type == "music_config")
+            {
+                ApplyMusicConfig(liveEvent);
+                return;
+            }
+            if (liveEvent.type != "music_command") return;
+
+            if (!string.IsNullOrEmpty(liveEvent.commandId))
+            {
+                if (recentCommandIds.Contains(liveEvent.commandId))
+                {
+                    client?.MusicAck(liveEvent.commandId, true, string.Empty, CurrentTrack, IsPlaying);
+                    ReportState("duplicate-command");
+                    return;
+                }
+                recentCommandIds.Add(liveEvent.commandId);
+                recentCommandOrder.Enqueue(liveEvent.commandId);
+                while (recentCommandOrder.Count > RecentCommandLimit)
+                    recentCommandIds.Remove(recentCommandOrder.Dequeue());
+            }
+
+            ApplyPlaybackSettings(liveEvent);
+            string action = (liveEvent.action ?? string.Empty).ToLowerInvariant();
+            string error = string.Empty;
+            switch (action)
+            {
+                case "play":
+                {
+                    int index = ResolveTrackIndex(liveEvent.track);
+                    if (index >= 0)
+                    {
+                        // Ignore a repeated Play while the same track is still
+                        // decoding; the in-flight load will report its result.
+                        if (loading && index == trackIndex) { }
+                        else if (index != trackIndex || currentClip == null) PlayTrack(index);
+                        else if (paused) ResumePlayback();
+                        else if (output != null && !output.isPlaying) output.Play();
+                    }
+                    else if (!string.IsNullOrEmpty(liveEvent.track))
+                    {
+                        error = $"Track not found in DJ_MUSIC: {Path.GetFileName(liveEvent.track)}";
+                    }
+                    else if (tracks.Length > 0)
+                    {
+                        PlayTrack(Mathf.Clamp(trackIndex, 0, tracks.Length - 1));
+                    }
+                    else error = "No playable music files were found.";
+                    break;
+                }
+                case "pause":
+                    PausePlayback();
+                    break;
+                case "stop":
+                    StopPlayback();
+                    break;
+                case "next":
+                {
+                    int next = NextIndex(1);
+                    if (next < 0) error = "End of playlist.";
+                    else PlayTrack(next);
+                    break;
+                }
+                case "previous":
+                {
+                    int previous = NextIndex(-1);
+                    if (previous < 0) error = "Start of playlist.";
+                    else PlayTrack(previous);
+                    break;
+                }
+                case "load":
+                {
+                    int index = ResolveTrackIndex(liveEvent.track);
+                    if (index < 0) error = "Track not found in DJ_MUSIC.";
+                    else PlayTrack(index);
+                    break;
+                }
+                case "settings":
+                case "volume":
+                case "set_volume":
+                    break;
+                default:
+                    error = $"Unknown music command: {action}";
+                    break;
+            }
+
+            if (error.Length > 0)
+            {
+                lastPlayerError = error;
+                Debug.LogWarning($"[Music] {error}");
+            }
+            else lastPlayerError = string.Empty;
+            client?.MusicAck(liveEvent.commandId, error.Length == 0, error, CurrentTrack, IsPlaying);
+            ReportState($"command:{action}");
+        }
+
+        private void ApplyMusicConfig(TikTokEvent liveEvent)
+        {
+            ApplyPlaybackSettings(liveEvent);
+            // A config is a settings sync, not a play command. The currently
+            // audible track (or the local startup track) must not be interrupted.
+            ReportState("config");
+        }
+
+        private void ApplyPlaybackSettings(TikTokEvent liveEvent)
+        {
+            if (liveEvent.playlist != null && liveEvent.playlist.Length > 0)
+                ApplyNodePlaylist(liveEvent.playlist);
+
+            shuffleEnabled = liveEvent.shuffle;
+            repeatEnabled = liveEvent.repeat;
+            configuredVolume = Mathf.Clamp01(liveEvent.masterVolume);
+
+            trackVolumes.Clear();
+            int count = Mathf.Min(
+                liveEvent.trackVolumeNames?.Length ?? 0,
+                liveEvent.trackVolumeValues?.Length ?? 0);
+            for (int index = 0; index < count; index++)
+            {
+                string name = liveEvent.trackVolumeNames[index];
+                if (string.IsNullOrWhiteSpace(name) || Path.GetFileName(name) != name) continue;
+                trackVolumes[name] = Mathf.Clamp01(liveEvent.trackVolumeValues[index]);
+            }
+            currentTrackVolume = trackVolumes.TryGetValue(CurrentTrack, out float gain) ? gain : 1f;
+            if (output != null && currentClip != null)
+            {
+                float length = currentClip.length;
+                float fadeIn = Mathf.Clamp01((Time.unscaledTime - trackStartedAt) / FadeSeconds);
+                float fadeOut = length > 0.05f
+                    ? Mathf.Clamp01((length - output.time) / FadeSeconds)
+                    : 1f;
+                output.volume = EffectiveVolume * Mathf.Min(fadeIn, fadeOut) * voiceDuckMultiplier;
+            }
+        }
+
+        private void ApplyNodePlaylist(string[] names)
+        {
+            if (string.IsNullOrEmpty(musicFolder))
+                tracks = FindTracks(out musicFolder, verbose: false);
+            if (string.IsNullOrEmpty(musicFolder)) return;
+
+            string playing = CurrentTrack;
+            var ordered = new List<string>();
+            var known = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string rawName in names)
+            {
+                string name = Path.GetFileName(rawName);
+                if (string.IsNullOrEmpty(name) || name != rawName || !known.Add(name)) continue;
+                string candidate = Path.Combine(musicFolder, name);
+                if (SupportedExtensions.Contains(Path.GetExtension(candidate), StringComparer.OrdinalIgnoreCase) && File.Exists(candidate))
+                    ordered.Add(candidate);
+            }
+            // A file copied just after the bridge's scan may not be in its list
+            // yet. Keep it until the next bridge scan includes it.
+            foreach (string local in tracks)
+            {
+                if (ordered.Any(item => string.Equals(item, local, StringComparison.OrdinalIgnoreCase))) continue;
+                if (known.Add(Path.GetFileName(local)) && File.Exists(local)) ordered.Add(local);
+            }
+            if (ordered.Count == 0) return;
+
+            tracks = ordered.ToArray();
+            int newIndex = Array.FindIndex(tracks, file => string.Equals(Path.GetFileName(file), playing, StringComparison.OrdinalIgnoreCase));
+            trackIndex = newIndex >= 0 ? newIndex : Mathf.Clamp(trackIndex, 0, tracks.Length - 1);
+        }
+
+        private int ResolveTrackIndex(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name) || Path.GetFileName(name) != name) return -1;
+            return Array.FindIndex(tracks, file =>
+                string.Equals(Path.GetFileName(file), name, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private void PausePlayback()
+        {
+            paused = true;
+            pauseRequested = true;
+            advancePending = false;
+            wasPlaying = false;
+            if (output != null && output.isPlaying) output.Pause();
+            ReportState("paused");
+        }
+
+        private void ResumePlayback()
+        {
+            if (output == null || currentClip == null)
+            {
+                if (tracks.Length > 0) PlayTrack(Mathf.Clamp(trackIndex, 0, tracks.Length - 1));
+                return;
+            }
+            paused = false;
+            pauseRequested = false;
+            wasPlaying = true;
+            output.UnPause();
+            if (!output.isPlaying) output.Play();
+            trackStartedAt = Time.unscaledTime - FadeSeconds;
+            ReportState("resumed");
+        }
+
+        private void StopPlayback()
+        {
+            paused = true;
+            pauseRequested = false;
+            advancePending = false;
+            StopCurrentClip();
+            ReportState("stopped");
+        }
+
+        private int NextIndex(int direction)
+        {
+            if (tracks.Length == 0) return -1;
+            if (shuffleEnabled && tracks.Length > 1)
+            {
+                int candidate;
+                do { candidate = UnityEngine.Random.Range(0, tracks.Length); }
+                while (candidate == trackIndex);
+                return candidate;
+            }
+            int next = trackIndex + direction;
+            if (next >= 0 && next < tracks.Length) return next;
+            if (!repeatEnabled) return -1;
+            return (next + tracks.Length) % tracks.Length;
+        }
+
+        private void ReportState(string reason)
+        {
+            if (client == null) return;
+            client.MusicState(
+                CurrentTrack,
+                IsPlaying,
+                paused,
+                loading,
+                output != null ? output.time : 0f,
+                currentClip != null ? currentClip.length : 0f,
+                output != null ? output.volume : 0f,
+                configuredVolume,
+                currentTrackVolume,
+                shuffleEnabled,
+                repeatEnabled,
+                lastPlayerError,
+                reason);
+        }
+
+        private void EnsureOutput()
+        {
+            if (output != null) return;
+            output = gameObject.AddComponent<AudioSource>();
+            output.playOnAwake = false;
+            output.loop = false;
+            output.spatialBlend = 0f; // 2D: identical on both speakers, no distance falloff.
+            output.pitch = 1f;
+            output.mute = false;
+            output.outputAudioMixerGroup = null; // Master mix; no hidden mixer attenuation.
+            output.volume = 0f;
+            output.priority = 128;
+        }
+
         private void PlayTrack(int index)
         {
             if (tracks.Length == 0) return;
+            EnsureOutput();
             trackIndex = Mathf.Clamp(index, 0, tracks.Length - 1);
             StopCurrentClip();
             loading = true;
+            paused = false;
+            pauseRequested = false;
             advancePending = false;
             playConfirmed = false;
             watchdogAt = Time.unscaledTime + 20f;
-            StartCoroutine(LoadAndPlay(tracks[trackIndex]));
+            currentTrackVolume = trackVolumes.TryGetValue(CurrentTrack, out float gain) ? gain : 1f;
+            int generation = ++loadGeneration;
+            StartCoroutine(LoadAndPlay(tracks[trackIndex], generation));
         }
 
-        private IEnumerator LoadAndPlay(string path)
+        private IEnumerator LoadAndPlay(string path, int generation)
         {
             AudioType type = AudioTypeFor(path);
             string extension = Path.GetExtension(path).ToLowerInvariant();
@@ -267,21 +605,35 @@ namespace TikTokLiveGame
                 audioDownload.streamAudio = false;
             yield return request.SendWebRequest();
 
+            // A newer Next/Previous/Play command cancels this load. The disposed
+            // request is still safe, but its decoded clip must never replace the
+            // newer track.
+            if (generation != loadGeneration) yield break;
             loading = false;
             if (request.result != UnityWebRequest.Result.Success)
             {
+                lastPlayerError = $"Could not decode {Path.GetFileName(path)}: {request.error}";
                 Debug.LogWarning($"[Music] DECODE FAILED '{path}': result={request.result}, " +
                                  $"http={request.responseCode}, error='{request.error}'. " +
                                  (extension == ".mp3" ? "Re-export the file as MP3/CBR or convert it to WAV/OGG." : "File may be corrupted or unsupported."));
-                ScheduleAdvance(tracks.Length == 1 ? 2f : 0.75f);
+                ReportState("decode-error");
+                if (!paused) ScheduleAdvance(tracks.Length == 1 ? 2f : 0.75f);
                 yield break;
             }
 
-            currentClip = DownloadHandlerAudioClip.GetContent(request);
+            AudioClip decoded = DownloadHandlerAudioClip.GetContent(request);
+            if (generation != loadGeneration)
+            {
+                if (decoded != null) Destroy(decoded);
+                yield break;
+            }
+            currentClip = decoded;
             if (currentClip == null)
             {
+                lastPlayerError = $"Could not decode {Path.GetFileName(path)}.";
                 Debug.LogWarning($"[Music] DECODE RETURNED NULL for '{path}'.");
-                ScheduleAdvance(tracks.Length == 1 ? 2f : 0.75f);
+                ReportState("decode-error");
+                if (!paused) ScheduleAdvance(tracks.Length == 1 ? 2f : 0.75f);
                 yield break;
             }
 
@@ -294,13 +646,25 @@ namespace TikTokLiveGame
             output.mute = false;
             trackStartedAt = Time.unscaledTime;
             watchdogAt = Time.unscaledTime + 5f;
+            if (pauseRequested)
+            {
+                paused = true;
+                loading = false;
+                output.time = 0f;
+                ReportState("loaded-paused");
+                yield break;
+            }
             output.Play();
+            lastPlayerError = string.Empty;
             Debug.Log($"[Music] Music playing {trackIndex + 1}/{tracks.Length}: {path} " +
-                      $"(source.isPlaying={output.isPlaying}, targetVolume={configuredVolume:0.00})");
+                      $"(source.isPlaying={output.isPlaying}, targetVolume={EffectiveVolume:0.00})");
+            ReportState("playing");
         }
 
         private void StopCurrentClip()
         {
+            loadGeneration += 1;
+            loading = false;
             if (output != null)
             {
                 output.Stop();
@@ -458,6 +822,7 @@ namespace TikTokLiveGame
 
         private void OnDestroy()
         {
+            if (client != null) client.EventReceived -= HandleEvent;
             StopAllCoroutines();
             StopCurrentClip();
         }

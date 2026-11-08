@@ -108,7 +108,8 @@
         setValue('voice-volume', config.volume);
         setValue('voice-boost-db', config.boostDb ?? 6);
         setValue('voice-duck-level', config.duckLevel);
-        setValue('voice-duck-fade', config.duckFadeMs);
+        setValue('voice-duck-attack', config.duckAttackMs ?? config.duckFadeMs ?? 180);
+        setValue('voice-duck-release', config.duckReleaseMs ?? config.duckFadeMs ?? 450);
         setChecked('voice-auto-enabled', config.autonomous?.enabled !== false);
         setChecked('voice-auto-idle', config.autonomous?.idleDetection !== false);
         setChecked('voice-auto-zero', config.autonomous?.allowZeroViewers !== false);
@@ -149,12 +150,14 @@
         const volume = numberValue('voice-volume', 1);
         const boost = numberValue('voice-boost-db', 6);
         const duck = numberValue('voice-duck-level', 0.18);
-        const fade = numberValue('voice-duck-fade', 350);
+        const attack = numberValue('voice-duck-attack', 180);
+        const release = numberValue('voice-duck-release', 450);
         setValue('voice-speed-value', `${speed.toFixed(2)}×`);
         setValue('voice-volume-value', `${Math.round(volume * 100)}%`);
         setValue('voice-boost-db-value', `+${Math.round(boost)} dB`);
         setValue('voice-duck-level-value', `${Math.round(duck * 100)}%`);
-        setValue('voice-duck-fade-value', `${Math.round(fade)} ms`);
+        setValue('voice-duck-attack-value', `${Math.round(attack)} ms`);
+        setValue('voice-duck-release-value', `${Math.round(release)} ms`);
     }
 
     function renderDialogueCategoryOptions() {
@@ -340,7 +343,10 @@
             volume: numberValue('voice-volume', state.config.volume),
             boostDb: numberValue('voice-boost-db', state.config.boostDb ?? 6),
             duckLevel: numberValue('voice-duck-level', state.config.duckLevel),
-            duckFadeMs: numberValue('voice-duck-fade', state.config.duckFadeMs),
+            duckAttackMs: numberValue('voice-duck-attack', state.config.duckAttackMs ?? 180),
+            duckReleaseMs: numberValue('voice-duck-release', state.config.duckReleaseMs ?? 450),
+            // Legacy alias retained for older server versions.
+            duckFadeMs: numberValue('voice-duck-release', state.config.duckReleaseMs ?? 450),
             autonomous: {
                 enabled: $('voice-auto-enabled')?.checked !== false,
                 idleDetection: $('voice-auto-idle')?.checked !== false,
@@ -492,14 +498,14 @@
         if (audio) {
             const level = status.lastAudio;
             audio.textContent = level && Number.isFinite(level.rmsDb)
-                ? `${level.provider || '—'} / ${level.voice || '—'} · RMS ${level.rmsDb.toFixed(1)} dBFS · peak ${Number.isFinite(level.peakDb) ? level.peakDb.toFixed(1) : '—'} dBFS · gain +${Number(level.boostDb || 0).toFixed(1)} dB${level.limited ? ' · limited' : ''}`
+                ? `${level.provider || '—'} / ${level.voice || '—'} · ${Number.isFinite(level.lufs) ? level.lufs.toFixed(1) + ' LUFS' : 'LUFS n/a'} · RMS ${level.rmsDb.toFixed(1)} dBFS · peak ${Number.isFinite(level.peakDb) ? level.peakDb.toFixed(1) : '—'} dBFS · true peak ${Number.isFinite(level.truePeakDb) ? level.truePeakDb.toFixed(1) : '—'} dBTP · ${level.sampleRate || '—'} Hz/${level.bits || '—'}-bit/${level.channels || '—'}ch · gain +${Number(level.boostDb || 0).toFixed(1)} dB${level.limited ? ' · limited' : ''}`
                 : 'No audio generated yet.';
         }
         const ducking = $('voice-status-ducking');
         if (ducking) {
             ducking.textContent = status.ducking?.active
-                ? `Active — music at ${Math.round((status.ducking.level || 0) * 100)}%, fade ${status.ducking.fadeMs} ms`
-                : `Idle — music at 100% (next duck ${Math.round((status.ducking?.level || 0) * 100)}%)`;
+                ? `Active — music target ${Math.round((status.ducking.level || 0) * 100)}%, attack ${status.ducking.attackMs ?? status.ducking.fadeMs} ms, release ${status.ducking.releaseMs ?? status.ducking.fadeMs} ms`
+                : `Idle — music at 100% (next duck ${Math.round((status.ducking?.level || 0) * 100)}%, attack ${status.ducking?.attackMs ?? status.ducking?.fadeMs} ms, release ${status.ducking?.releaseMs ?? status.ducking?.fadeMs} ms)`;
             ducking.classList.toggle('speaking', Boolean(status.ducking?.active));
         }
         const ack = $('voice-status-ack');
@@ -513,6 +519,50 @@
             error.textContent = status.lastError || 'None';
             error.classList.toggle('has-error', Boolean(status.lastError));
         }
+
+        const diagnostics = status.unityDiagnostics;
+        const diagLive = $('voice-diag-live');
+        if (diagLive) {
+            diagLive.textContent = diagnostics
+                ? `Unity telemetry · ${new Date(diagnostics.at).toLocaleTimeString()}`
+                : 'Waiting for Unity telemetry…';
+        }
+        const setDiag = (id, value) => {
+            const node = $(id);
+            if (node) node.textContent = value;
+        };
+        const finite = (value, digits = 2) => Number.isFinite(Number(value)) ? Number(value).toFixed(digits) : '—';
+        setDiag('voice-diag-state', diagnostics?.state || '—');
+        setDiag('voice-diag-provider', diagnostics
+            ? `${diagnostics.provider || '—'} / ${diagnostics.voice || '—'}`
+            : '—');
+        setDiag('voice-diag-source', diagnostics
+            ? `${finite(diagnostics.audioSourceVolume, 2)} (${Math.round(Number(diagnostics.audioSourceVolume) * 100)}%)`
+            : '—');
+        setDiag('voice-diag-mix', diagnostics
+            ? `spatialBlend ${finite(diagnostics.spatialBlend, 2)} · pitch ${finite(diagnostics.pitch, 2)} · mute ${diagnostics.mute ? 'YES' : 'no'}`
+            : '—');
+        setDiag('voice-diag-music', diagnostics
+            ? `${finite(diagnostics.musicVolume, 3)} · duck ×${finite(diagnostics.musicDuckMultiplier, 2)}`
+            : '—');
+        setDiag('voice-diag-duck', diagnostics
+            ? `${diagnostics.ducking ? 'ACTIVE' : 'idle'} · target ${Math.round(Number(diagnostics.duckLevel || 0) * 100)}% · attack ${finite(diagnostics.duckAttackMs, 0)} ms · release ${finite(diagnostics.duckReleaseMs, 0)} ms`
+            : '—');
+        setDiag('voice-diag-listener', diagnostics
+            ? `${finite(diagnostics.listenerVolume, 2)} · ${Number(diagnostics.listenerCount || 0)} listener(s)`
+            : '—');
+        setDiag('voice-diag-mixer', diagnostics?.mixerGroup || '—');
+        setDiag('voice-diag-level', diagnostics
+            ? `peak ${finite(diagnostics.peakDb, 1)} dBFS · RMS ${finite(diagnostics.rmsDb, 1)} dBFS`
+            : '—');
+        setDiag('voice-diag-loudness', diagnostics
+            ? `${finite(diagnostics.lufs, 1)} LUFS · true peak ${finite(diagnostics.truePeakDb, 1)} dBTP`
+            : '—');
+        setDiag('voice-diag-format', diagnostics
+            ? `${diagnostics.sampleRate || '—'} Hz · ${diagnostics.bits || '—'}-bit · ${diagnostics.channels || '—'} ch`
+            : '—');
+        setDiag('voice-diag-download', diagnostics?.downloadError || 'None');
+        setDiag('voice-diag-playback', diagnostics?.playbackError || 'None');
     }
 
     function renderStatus() {
@@ -619,6 +669,17 @@
         }
     }
 
+    async function testAudio() {
+        try {
+            const result = await request(`${API}/test-audio`, { method: 'POST' });
+            state.status = result.status || state.status;
+            renderStatus();
+            setMessage('Representative English (US) audio queued through the real Unity playback and ducking path.');
+        } catch (error) {
+            setMessage(error.message, true);
+        }
+    }
+
     async function testAutonomous() {
         try {
             const result = await request(`${API}/autonomous/test`, { method: 'POST' });
@@ -665,6 +726,7 @@
         $('voice-preview-username')?.addEventListener('click', previewUsername);
         $('voice-preview')?.addEventListener('click', () => previewText($('voice-test-text')?.value.trim()));
         $('voice-test')?.addEventListener('click', testVoice);
+        $('voice-test-audio')?.addEventListener('click', testAudio);
         $('voice-auto-test')?.addEventListener('click', testAutonomous);
         $('voice-stop')?.addEventListener('click', stopVoice);
         $('voice-clear')?.addEventListener('click', clearQueue);
@@ -672,7 +734,8 @@
         $('voice-volume')?.addEventListener('input', syncRangeLabels);
         $('voice-boost-db')?.addEventListener('input', syncRangeLabels);
         $('voice-duck-level')?.addEventListener('input', syncRangeLabels);
-        $('voice-duck-fade')?.addEventListener('input', syncRangeLabels);
+        $('voice-duck-attack')?.addEventListener('input', syncRangeLabels);
+        $('voice-duck-release')?.addEventListener('input', syncRangeLabels);
         $('voice-auto-enabled')?.addEventListener('change', () => {
             if (state.status) renderStatus();
         });

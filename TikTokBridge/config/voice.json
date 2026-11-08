@@ -943,5 +943,7 @@
       "dj",
       "random"
     ]
-  }
+  },
+  "duckAttackMs": 180,
+  "duckReleaseMs": 450
 }

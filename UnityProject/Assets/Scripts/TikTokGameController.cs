@@ -37,7 +37,7 @@ namespace TikTokLiveGame
         private Texture2D buttonHover;
 
         private int controlTab = 0;
-        private string manualUsername = "Khách VIP";
+        private string manualUsername = "VIP GUEST";
 
         public void Initialize(TikTokWebSocketClient socketClient, PlayerManager manager, GiftEffectManager effects)
         {
@@ -94,7 +94,7 @@ namespace TikTokLiveGame
                 donors.TryGetValue(liveEvent.userId, out Donor current);
                 donors[liveEvent.userId] = new Donor(liveEvent.userId, liveEvent.nickname, current.Score + liveEvent.diamondCount);
                 AddEnergy(liveEvent.diamondCount * 2f);
-                AddFeed($"{liveEvent.nickname} tặng {liveEvent.giftName} (+{liveEvent.diamondCount})", new Color(1f, 0.55f, 0.84f));
+                AddFeed($"{liveEvent.nickname} gifted {liveEvent.giftName} (+{liveEvent.diamondCount})", new Color(1f, 0.55f, 0.84f));
             }
             else if (liveEvent.type == "chat")
             {
@@ -108,11 +108,11 @@ namespace TikTokLiveGame
             else if (liveEvent.type == "member")
             {
                 AddEnergy(1f);
-                AddFeed($"{liveEvent.nickname} vào sàn", new Color(0.35f, 0.95f, 1f));
+                AddFeed($"{liveEvent.nickname} joined the arena", new Color(0.35f, 0.95f, 1f));
             }
             else if (liveEvent.type is "follow" or "share")
             {
-                AddFeed($"{liveEvent.nickname} đã {liveEvent.type}", new Color(1f, 0.85f, 0.3f));
+                AddFeed($"{liveEvent.nickname} was {liveEvent.type}", new Color(1f, 0.85f, 0.3f));
             }
             else if (liveEvent.type == "reset")
             {
@@ -249,7 +249,7 @@ namespace TikTokLiveGame
         private void DrawHeader(float width)
         {
             GUI.Box(new Rect(18, 16, width - 36, 58), GUIContent.none, panelStyle);
-            GUI.Label(new Rect(34, 23, 245, 28), "ÔNG CHÚ MMO", titleStyle);
+            GUI.Label(new Rect(34, 23, 245, 28), "LIVE MMO", titleStyle);
             string node = client != null && client.IsConnected ? "NODE ONLINE" : "NODE OFFLINE";
             GUI.Label(new Rect(275, 29, 95, 22), node, smallStyle);
             if (width > 900f) GUI.Label(new Rect(width - 250, 24, 230, 24), "F1 CONTROL   F2 CHROMA", smallStyle);
@@ -270,12 +270,12 @@ namespace TikTokLiveGame
             
             GUIStyle activeTab = new GUIStyle(buttonStyle) { normal = { background = buttonHover, textColor = Color.yellow } };
             if (GUI.Button(new Rect(34, 96, 155, 32), "KẾT NỐI & DEMO", controlTab == 0 ? activeTab : buttonStyle)) controlTab = 0;
-            if (GUI.Button(new Rect(195, 96, 169, 32), "THÊM KHÁCH VIP", controlTab == 1 ? activeTab : buttonStyle)) controlTab = 1;
+            if (GUI.Button(new Rect(195, 96, 169, 32), "ADD VIP GUEST", controlTab == 1 ? activeTab : buttonStyle)) controlTab = 1;
 
             if (controlTab == 0)
             {
                 GUI.Label(new Rect(34, 136, 330, 28), connectionStatus, labelStyle);
-                GUI.Label(new Rect(34, 166, 330, 24), $"Người chơi {playerManager?.Count ?? 0}   Event {events}   Diamond {diamonds}", smallStyle);
+                GUI.Label(new Rect(34, 166, 330, 24), $"Player {playerManager?.Count ?? 0}   Event {events}   Diamond {diamonds}", smallStyle);
                 username = GUI.TextField(new Rect(34, 196, 205, 38), username, inputStyle);
                 if (GUI.Button(new Rect(247, 196, 118, 38), "KẾT NỐI", buttonStyle))
                 {
@@ -289,11 +289,11 @@ namespace TikTokLiveGame
                 if (GUI.Button(new Rect(250, 246, 115, 40), "GIFT 100", buttonStyle)) client.DemoGift(100);
                 
                 if (GUI.Button(new Rect(34, 296, 100, 36), "RESET", buttonStyle)) client.ResetGame();
-                if (GUI.Button(new Rect(142, 296, 100, 36), "ẨN (F1)", buttonStyle)) controlsVisible = false;
+                if (GUI.Button(new Rect(142, 296, 100, 36), "HIDE (F1)", buttonStyle)) controlsVisible = false;
                 if (GUI.Button(new Rect(250, 296, 115, 36), "GIFT 1000", buttonStyle)) client.DemoGift(1000);
                 
-                if (GUI.Button(new Rect(34, 344, 100, 36), "NGẮT LIVE", buttonStyle)) client.DisconnectTikTok();
-                if (GUI.Button(new Rect(142, 344, 100, 36), "DỪNG DEMO", buttonStyle)) client.StopDemo();
+                if (GUI.Button(new Rect(34, 344, 100, 36), "DISCONNECT LIVE", buttonStyle)) client.DisconnectTikTok();
+                if (GUI.Button(new Rect(142, 344, 100, 36), "STOP DEMO", buttonStyle)) client.StopDemo();
                 if (GUI.Button(new Rect(250, 344, 115, 36), chromaMode ? "HIỆN SÂN" : "CHROMA", buttonStyle)) ToggleChroma();
             }
             else
@@ -308,15 +308,15 @@ namespace TikTokLiveGame
                 GUI.Label(new Rect(34, 226, 330, 28), "2. Tặng quà cho nhân vật này:", labelStyle);
                 if (GUI.Button(new Rect(34, 260, 100, 40), "1 Hoa", buttonStyle))
                 {
-                    HandleEvent(new TikTokEvent { type = "gift", userId = manualUsername, nickname = manualUsername, action = "gift", giftName = "Hoa hồng", diamondCount = 1, durationMs = 3000 });
+                    HandleEvent(new TikTokEvent { type = "gift", userId = manualUsername, nickname = manualUsername, action = "gift", giftName = "Rose", diamondCount = 1, durationMs = 3000 });
                 }
                 if (GUI.Button(new Rect(142, 260, 100, 40), "100 Xu", buttonStyle))
                 {
-                    HandleEvent(new TikTokEvent { type = "gift", userId = manualUsername, nickname = manualUsername, action = "gift", giftName = "Mũ", diamondCount = 100, durationMs = 5000 });
+                    HandleEvent(new TikTokEvent { type = "gift", userId = manualUsername, nickname = manualUsername, action = "gift", giftName = "Hat", diamondCount = 100, durationMs = 5000 });
                 }
                 if (GUI.Button(new Rect(250, 260, 115, 40), "1000 Xu", buttonStyle))
                 {
-                    HandleEvent(new TikTokEvent { type = "gift", userId = manualUsername, nickname = manualUsername, action = "gift", giftName = "Siêu xe", diamondCount = 1000, durationMs = 8000 });
+                    HandleEvent(new TikTokEvent { type = "gift", userId = manualUsername, nickname = manualUsername, action = "gift", giftName = "LUXURY CAR", diamondCount = 1000, durationMs = 8000 });
                 }
                 
                 if (GUI.Button(new Rect(34, 320, 100, 36), "ẨN (F1)", buttonStyle)) controlsVisible = false;
@@ -343,7 +343,7 @@ namespace TikTokLiveGame
             Donor[] top = donors.Values.OrderByDescending(donor => donor.Score).Take(3).ToArray();
             float x = width - 358f;
             GUI.Box(new Rect(x, 84, 340, 150), GUIContent.none, panelStyle);
-            GUI.Label(new Rect(x + 18, 94, 304, 28), "TOP 3 TẶNG QUÀ", titleStyle);
+            GUI.Label(new Rect(x + 18, 94, 304, 28), "TOP 3 GIFTED", titleStyle);
             for (int index = 0; index < top.Length; index++)
             {
                 Color old = GUI.color;

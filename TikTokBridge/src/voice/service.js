@@ -63,6 +63,7 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
     let lastGenerationMs = 0;
     let lastAck = null;
     let lastAudio = null;
+    let unityDiagnostics = null;
     let finishTimer = null;
     let idleTimer = null;
     let startedAt = Date.now();
@@ -173,9 +174,13 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
             lastAudio,
             ducking: {
                 level: config.duckLevel,
-                fadeMs: config.duckFadeMs,
+                attackMs: config.duckAttackMs,
+                releaseMs: config.duckReleaseMs,
+                // Legacy field consumed by older control-panel builds.
+                fadeMs: config.duckReleaseMs,
                 active: Boolean(current)
             },
+            unityDiagnostics,
             providerStatus: config.provider ? providers.providerStatus(config.provider) : null,
             providers: providers.listProviders(),
             audioCache: audioCache.snapshot(),
@@ -518,7 +523,9 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
                 voice: result.voice,
                 durationMs: result.durationMs,
                 boostDb: config.boostDb,
-                normalizationGainDb: result.audioGain?.normalizationGainDb || 0
+                normalizationGainDb: result.audioGain?.normalizationGainDb || 0,
+                outputLufs: result.audioGain?.outputLufs || 0,
+                targetLufs: result.audioGain?.targetLufs || 0
             });
             item.durationMs = audio.durationMs;
             item.audioId = audio.id;
@@ -527,11 +534,19 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
                 provider: result.provider,
                 voice: result.voice,
                 durationMs: audio.durationMs,
+                sampleRate: audio.sampleRate,
+                channels: audio.channels,
+                bits: audio.bits,
                 peakDb: audio.peakDb,
                 rmsDb: audio.rmsDb,
+                lufs: audio.lufs,
+                truePeak: audio.truePeak,
+                truePeakDb: audio.truePeakDb,
                 boostDb: config.boostDb,
                 normalizationGainDb: result.audioGain?.normalizationGainDb || 0,
+                targetLufs: result.audioGain?.targetLufs || 0,
                 limited: Boolean(result.audioGain?.limited),
+                clipped: Boolean(result.audioGain?.clipped),
                 at: Date.now()
             };
 
@@ -546,9 +561,19 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
                 durationMs: audio.durationMs,
                 volume: config.volume,
                 duckLevel: config.duckLevel,
-                duckFadeMs: config.duckFadeMs,
+                duckAttackMs: config.duckAttackMs,
+                duckReleaseMs: config.duckReleaseMs,
+                // Legacy field for overlays that have not been rebuilt yet.
+                duckFadeMs: config.duckReleaseMs,
                 voice: result.voice,
                 provider: result.provider,
+                lufs: audio.lufs,
+                truePeakDb: audio.truePeakDb,
+                peakDb: audio.peakDb,
+                rmsDb: audio.rmsDb,
+                sampleRate: audio.sampleRate,
+                channels: audio.channels,
+                bits: audio.bits,
                 autonomous: Boolean(item.autonomous),
                 createdAt: Date.now()
             };
@@ -699,7 +724,14 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
             bypassCooldown: true,
             priority: PRIORITIES.test,
             dedupeKey: `voice:test:${Date.now()}`,
-            rawTemplate: ''
+            rawTemplate: '',
+            test: true
+        });
+    }
+
+    function queueTestAudio() {
+        return queueTest({
+            text: 'Cloud Disco audio check. This is the Unity stream voice. One, two, three.'
         });
     }
 
@@ -802,6 +834,44 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
         return lastAck;
     }
 
+    function numberOrNull(value) {
+        const number = Number(value);
+        return Number.isFinite(number) ? number : null;
+    }
+
+    function recordUnityDiagnostics(input = {}) {
+        unityDiagnostics = {
+            at: Date.now(),
+            state: text(input.state, 40, 'unknown'),
+            provider: text(input.provider, 40, ''),
+            voice: text(input.voice, 80, ''),
+            audioSourceVolume: numberOrNull(input.audioSourceVolume),
+            spatialBlend: numberOrNull(input.spatialBlend),
+            pitch: numberOrNull(input.pitch),
+            mute: input.mute === true,
+            musicVolume: numberOrNull(input.musicVolume),
+            musicDuckMultiplier: numberOrNull(input.musicDuckMultiplier),
+            ducking: input.ducking === true,
+            duckLevel: numberOrNull(input.duckLevel),
+            duckAttackMs: numberOrNull(input.duckAttackMs),
+            duckReleaseMs: numberOrNull(input.duckReleaseMs),
+            listenerVolume: numberOrNull(input.listenerVolume),
+            listenerCount: numberOrNull(input.listenerCount),
+            mixerGroup: text(input.mixerGroup, 100, ''),
+            lufs: numberOrNull(input.lufs),
+            truePeakDb: numberOrNull(input.truePeakDb),
+            peakDb: numberOrNull(input.peakDb),
+            rmsDb: numberOrNull(input.rmsDb),
+            sampleRate: numberOrNull(input.sampleRate),
+            channels: numberOrNull(input.channels),
+            bits: numberOrNull(input.bits),
+            downloadError: text(input.downloadError, 240, ''),
+            playbackError: text(input.playbackError, 240, '')
+        };
+        broadcastStatus();
+        return unityDiagnostics;
+    }
+
     async function start() {
         const loaded = await loadVoiceConfig(configPath);
         config = sanitizeVoiceConfig(loaded.config);
@@ -838,12 +908,14 @@ function createVoiceService({ configPath, broadcast, broadcastToRole, logger = c
         onGameEvent,
         updateConfig,
         queueTest,
+        queueTestAudio,
         queueAutonomousTest,
         preview,
         pronounce,
         stopCurrent,
         clearQueue,
         acknowledge,
+        recordUnityDiagnostics,
         setLiveSessionActive,
         setLiveViewerCount,
         publicConfig,

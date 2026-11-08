@@ -1,18 +1,25 @@
 'use strict';
 
+const { analyzeSamples } = require('./loudness');
+
 /**
- * Loudness normalization + output gain for TTS WAVs.
+ * Voice loudness pipeline.
  *
- * TTS providers return wildly different levels (Kokoro float32 peaks around
- * 0.4–0.7, SAPI often sits close to full scale). The bridge normalizes RMS to a
- * common target, applies an optional output gain, and then runs a soft peak
- * limiter. The resulting WAV is cached once, so Unity never has to apply a
- * second gain stage. Unsupported layouts are returned untouched.
+ * Input formats are preserved (float32, PCM16, PCM24, PCM32; mono or stereo).
+ * The voice is normalized to a fixed pre-gain integrated loudness, the
+ * operator's output gain is applied, and a smooth limiter keeps the sample peak
+ * below a headroom ceiling. True peak is estimated at 4x oversampling.
+ *
+ * With the default +6 dB output gain:
+ *   normalization target -22.5 LUFS + 6 dB -> about -16.5 LUFS final,
+ *   before any gain reduction from the limiter.
  */
-const TARGET_RMS_DB = -20;
-const LIMIT_THRESHOLD = 0.78;
-const LIMIT_CEILING = 0.98;
-const MAX_NORMALIZATION_GAIN = 6;
+const TARGET_PRE_GAIN_LUFS = -22.5;
+const LIMIT_THRESHOLD = 0.70;
+// -1.7 dBFS sample ceiling leaves room for the 4x true-peak estimate.
+const LIMIT_CEILING = 0.82;
+const MAX_NORMALIZATION_GAIN_DB = 12;
+const TRUE_PEAK_CEILING_DB = -1;
 
 function readWavLayout(buffer) {
     if (!Buffer.isBuffer(buffer) || buffer.length < 44 ||
@@ -24,6 +31,8 @@ function readWavLayout(buffer) {
     let format = 0;
     let bits = 0;
     let channels = 0;
+    let sampleRate = 0;
+    let byteRate = 0;
     let dataOffset = -1;
     let dataSize = 0;
     while (offset + 8 <= buffer.length) {
@@ -31,9 +40,16 @@ function readWavLayout(buffer) {
         const size = buffer.readUInt32LE(offset + 4);
         const start = offset + 8;
         if (id === 'fmt ' && start + 16 <= buffer.length) {
-            format = buffer.readUInt16LE(start);
+            const formatTag = buffer.readUInt16LE(start);
             channels = buffer.readUInt16LE(start + 2);
+            sampleRate = buffer.readUInt32LE(start + 4);
+            byteRate = buffer.readUInt32LE(start + 8);
             bits = buffer.readUInt16LE(start + 14);
+            // WAVE_FORMAT_EXTENSIBLE stores the effective PCM/float format in
+            // the first two bytes of the SubFormat GUID.
+            format = formatTag === 0xFFFE && start + 26 <= buffer.length
+                ? buffer.readUInt16LE(start + 24)
+                : formatTag;
         } else if (id === 'data') {
             dataOffset = start;
             dataSize = Math.min(size, Math.max(0, buffer.length - start));
@@ -42,13 +58,26 @@ function readWavLayout(buffer) {
         offset = start + size + (size % 2);
         if (size <= 0) break;
     }
-    const stride = bits / 8;
-    if (dataOffset < 0 || dataSize <= 0 || channels < 1 ||
-        ![16, 24, 32, 64].includes(bits) || !(format === 1 || format === 3) ||
-        stride <= 0 || dataSize % stride !== 0) {
+    const bytesPerSample = bits / 8;
+    const frameSize = bytesPerSample * channels;
+    if (dataOffset < 0 || dataSize <= 0 || channels < 1 || sampleRate <= 0 ||
+        byteRate <= 0 || ![16, 24, 32, 64].includes(bits) ||
+        !(format === 1 || format === 3) || frameSize <= 0 ||
+        dataSize % frameSize !== 0) {
         return null;
     }
-    return { format, bits, channels, dataOffset, dataSize, stride };
+    return {
+        format,
+        bits,
+        channels,
+        sampleRate,
+        byteRate,
+        bytesPerSample,
+        frameSize,
+        dataOffset,
+        dataSize,
+        frameCount: dataSize / frameSize
+    };
 }
 
 function sampleReader(buffer, layout) {
@@ -85,27 +114,50 @@ function sampleWriter(buffer, layout) {
     };
 }
 
+function readWavChannels(buffer, layout) {
+    const readSample = sampleReader(buffer, layout);
+    const channels = Array.from({ length: layout.channels }, () =>
+        new Float64Array(layout.frameCount));
+    for (let frame = 0; frame < layout.frameCount; frame += 1) {
+        const frameOffset = layout.dataOffset + frame * layout.frameSize;
+        for (let channel = 0; channel < layout.channels; channel += 1) {
+            channels[channel][frame] = readSample(frameOffset + channel * layout.bytesPerSample);
+        }
+    }
+    return channels;
+}
+
+function emptyMeasurement() {
+    return {
+        durationMs: 0,
+        sampleRate: 0,
+        channels: 0,
+        bits: 0,
+        format: 0,
+        peak: 0,
+        rms: 0,
+        peakDb: -Infinity,
+        rmsDb: -Infinity,
+        lufs: -Infinity,
+        integratedLufs: -Infinity,
+        truePeak: 0,
+        truePeakDb: -Infinity,
+        blockCount: 0,
+        gatedBlockCount: 0
+    };
+}
+
 function measureWav(buffer) {
     const layout = readWavLayout(buffer);
-    if (!layout) return { durationMs: 0, peak: 0, rms: 0, peakDb: -Infinity, rmsDb: -Infinity };
-    const readSample = sampleReader(buffer, layout);
-    let peak = 0;
-    let sumSquares = 0;
-    let count = 0;
-    for (let index = layout.dataOffset; index + layout.stride <= layout.dataOffset + layout.dataSize; index += layout.stride) {
-        const sample = readSample(index);
-        const absolute = Math.abs(sample);
-        if (absolute > peak) peak = absolute;
-        sumSquares += sample * sample;
-        count += 1;
-    }
-    if (!count) return { durationMs: 0, peak: 0, rms: 0, peakDb: -Infinity, rmsDb: -Infinity };
-    const rms = Math.sqrt(sumSquares / count);
+    if (!layout) return emptyMeasurement();
+    const channels = readWavChannels(buffer, layout);
+    const analysis = analyzeSamples(channels, layout.sampleRate);
     return {
-        peak,
-        rms,
-        peakDb: peak > 0 ? 20 * Math.log10(peak) : -Infinity,
-        rmsDb: rms > 0 ? 20 * Math.log10(rms) : -Infinity
+        ...analysis,
+        channels: layout.channels,
+        bits: layout.bits,
+        format: layout.format,
+        lufs: analysis.integratedLufs
     };
 }
 
@@ -121,9 +173,7 @@ function softLimit(sample) {
 /**
  * @param {Buffer} buffer WAV bytes.
  * @param {number} boostDb Additional output gain, clamped to 0–18 dB.
- * @returns {{buffer: Buffer, applied: boolean, gainDb: number, normalizationGainDb: number,
- *   totalGainDb: number, limited: boolean, inputPeakDb: number, inputRmsDb: number,
- *   outputPeakDb: number, outputRmsDb: number, peak: number, rms: number}}
+ * @returns {object} The processed buffer plus input/output measurements.
  */
 function amplifyWav(buffer, boostDb) {
     const requestedDb = Math.max(0, Math.min(18, Number(boostDb) || 0));
@@ -131,65 +181,79 @@ function amplifyWav(buffer, boostDb) {
     if (!layout) {
         const measured = measureWav(buffer);
         return {
-            buffer, applied: false, gainDb: 0, normalizationGainDb: 0, totalGainDb: 0,
-            limited: false, inputPeakDb: measured.peakDb, inputRmsDb: measured.rmsDb,
-            outputPeakDb: measured.peakDb, outputRmsDb: measured.rmsDb,
-            peak: measured.peak, rms: measured.rms
+            buffer,
+            applied: false,
+            gainDb: 0,
+            normalizationGainDb: 0,
+            totalGainDb: 0,
+            limited: false,
+            clipped: false,
+            targetLufs: TARGET_PRE_GAIN_LUFS,
+            outputGainDb: requestedDb,
+            input: measured,
+            output: measured,
+            inputPeakDb: measured.peakDb,
+            inputRmsDb: measured.rmsDb,
+            inputLufs: measured.lufs,
+            inputTruePeakDb: measured.truePeakDb,
+            outputPeakDb: measured.peakDb,
+            outputRmsDb: measured.rmsDb,
+            outputLufs: measured.lufs,
+            outputTruePeakDb: measured.truePeakDb,
+            peak: measured.peak,
+            rms: measured.rms,
+            lufs: measured.lufs,
+            truePeak: measured.truePeak,
+            truePeakDb: measured.truePeakDb
         };
     }
 
+    const input = measureWav(buffer);
+    if (!input || input.peak <= 0.000001 || !Number.isFinite(input.lufs)) {
+        return {
+            buffer,
+            applied: false,
+            gainDb: 0,
+            normalizationGainDb: 0,
+            totalGainDb: 0,
+            limited: false,
+            clipped: false,
+            targetLufs: TARGET_PRE_GAIN_LUFS,
+            outputGainDb: requestedDb,
+            input,
+            output: input,
+            inputPeakDb: input.peakDb,
+            inputRmsDb: input.rmsDb,
+            inputLufs: input.lufs,
+            inputTruePeakDb: input.truePeakDb,
+            outputPeakDb: input.peakDb,
+            outputRmsDb: input.rmsDb,
+            outputLufs: input.lufs,
+            outputTruePeakDb: input.truePeakDb,
+            peak: input.peak,
+            rms: input.rms,
+            lufs: input.lufs,
+            truePeak: input.truePeak,
+            truePeakDb: input.truePeakDb
+        };
+    }
+
+    const normalizationGainDb = Math.max(
+        -MAX_NORMALIZATION_GAIN_DB,
+        Math.min(MAX_NORMALIZATION_GAIN_DB, TARGET_PRE_GAIN_LUFS - input.lufs)
+    );
+    const totalGainDb = normalizationGainDb + requestedDb;
+    const totalGain = 10 ** (totalGainDb / 20);
     const readSample = sampleReader(buffer, layout);
-    const writeSample = sampleWriter(buffer, layout);
-    let peak = 0;
-    let sumSquares = 0;
-    let count = 0;
-    for (let index = layout.dataOffset; index + layout.stride <= layout.dataOffset + layout.dataSize; index += layout.stride) {
-        const sample = readSample(index);
-        const absolute = Math.abs(sample);
-        if (absolute > peak) peak = absolute;
-        sumSquares += sample * sample;
-        count += 1;
-    }
-    if (!count || peak <= 0.000001) {
-        return {
-            buffer, applied: false, gainDb: 0, normalizationGainDb: 0, totalGainDb: 0,
-            limited: false, inputPeakDb: -Infinity, inputRmsDb: -Infinity,
-            outputPeakDb: -Infinity, outputRmsDb: -Infinity, peak: 0, rms: 0
-        };
-    }
-
-    const rms = Math.sqrt(sumSquares / count);
-    const targetRms = 10 ** (TARGET_RMS_DB / 20);
-    const normalizationGain = rms > 0
-        ? Math.min(MAX_NORMALIZATION_GAIN, targetRms / rms)
-        : 1;
-    const outputGain = 10 ** (requestedDb / 20);
-    const totalGain = normalizationGain * outputGain;
-    const normalizationGainDb = normalizationGain > 0 ? 20 * Math.log10(normalizationGain) : 0;
-    const totalGainDb = totalGain > 0 ? 20 * Math.log10(totalGain) : 0;
-
-    if (Math.abs(totalGain - 1) < 0.001) {
-        return {
-            buffer, applied: false, gainDb: 0, normalizationGainDb, totalGainDb: 0,
-            limited: false, inputPeakDb: 20 * Math.log10(peak), inputRmsDb: 20 * Math.log10(rms),
-            outputPeakDb: 20 * Math.log10(peak), outputRmsDb: 20 * Math.log10(rms),
-            peak, rms
-        };
-    }
-
     const output = Buffer.from(buffer);
-    let outputPeak = 0;
-    let outputSumSquares = 0;
+    const writeSample = sampleWriter(output, layout);
     let limited = false;
-    for (let index = layout.dataOffset; index + layout.stride <= layout.dataOffset + layout.dataSize; index += layout.stride) {
+    for (let index = layout.dataOffset; index < layout.dataOffset + layout.dataSize; index += layout.bytesPerSample) {
         const raw = readSample(index) * totalGain;
-        const sample = softLimit(raw);
-        if (Math.abs(raw) > LIMIT_CEILING) limited = true;
-        if (Math.abs(sample) > outputPeak) outputPeak = Math.abs(sample);
-        outputSumSquares += sample * sample;
-        writeSample(index, sample);
+        if (Math.abs(raw) > LIMIT_THRESHOLD) limited = true;
+        writeSample(index, softLimit(raw));
     }
-    const outputRms = Math.sqrt(outputSumSquares / count);
+    const outputMeasurement = measureWav(output);
     return {
         buffer: output,
         applied: true,
@@ -197,13 +261,33 @@ function amplifyWav(buffer, boostDb) {
         normalizationGainDb,
         totalGainDb,
         limited,
-        inputPeakDb: 20 * Math.log10(peak),
-        inputRmsDb: 20 * Math.log10(rms),
-        outputPeakDb: outputPeak > 0 ? 20 * Math.log10(outputPeak) : -Infinity,
-        outputRmsDb: outputRms > 0 ? 20 * Math.log10(outputRms) : -Infinity,
-        peak: outputPeak,
-        rms: outputRms
+        clipped: outputMeasurement.truePeak >= 0.999,
+        truePeakOverCeiling: outputMeasurement.truePeakDb > TRUE_PEAK_CEILING_DB,
+        outputPeak: outputMeasurement.peak,
+        targetLufs: TARGET_PRE_GAIN_LUFS,
+        outputGainDb: requestedDb,
+        input,
+        output: outputMeasurement,
+        inputPeakDb: input.peakDb,
+        inputRmsDb: input.rmsDb,
+        inputLufs: input.lufs,
+        inputTruePeakDb: input.truePeakDb,
+        outputPeakDb: outputMeasurement.peakDb,
+        outputRmsDb: outputMeasurement.rmsDb,
+        outputLufs: outputMeasurement.lufs,
+        outputTruePeakDb: outputMeasurement.truePeakDb,
+        peak: outputMeasurement.peak,
+        rms: outputMeasurement.rms,
+        lufs: outputMeasurement.lufs,
+        truePeak: outputMeasurement.truePeak,
+        truePeakDb: outputMeasurement.truePeakDb
     };
 }
 
-module.exports = { amplifyWav, measureWav };
+module.exports = {
+    TRUE_PEAK_CEILING_DB,
+    TARGET_PRE_GAIN_LUFS,
+    amplifyWav,
+    measureWav,
+    readWavLayout
+};

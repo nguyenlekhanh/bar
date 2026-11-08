@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "playlist": [
+    "Aftershock.mp3",
+    "Electric Circuit.mp3",
+    "Finally Free (1).mp3",
+    "Finally Free.mp3",
+    "Golden Hour Waves (1).mp3",
+    "Golden Hours.mp3",
+    "music1.mp3",
+    "Neon Energy.mp3",
+    "Non Stop Go (1).mp3",
+    "Non Stop Go.mp3",
+    "Saigon Bounce.mp3",
+    "Summer Breeze.mp3",
+    "Sunshine Horizon.mp3",
+    "thisisbeatkitchen-a-short-forever-150-bpm-hardstyle-instrumental-237415.mp3",
+    "thisisbeatkitchen-living-for-the-moment-150-bpm-hardstyle-instrumental-237419.mp3"
+  ],
+  "current": "Finally Free (1).mp3",
+  "shuffle": false,
+  "repeat": true,
+  "volume": 0.35,
+  "trackVolumes": {},
+  "playbackPreference": "playing"
+}

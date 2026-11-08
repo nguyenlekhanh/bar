@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="instructions.css">
     <link rel="stylesheet" href="gif-manager.css">
     <link rel="stylesheet" href="voice-manager.css">
+    <link rel="stylesheet" href="music-manager.css">
 </head>
 <body>
 
@@ -26,6 +27,7 @@
         <button class="tab-btn" data-tab="events">🎯 Events</button>
         <button class="tab-btn" data-tab="background">🖼 Background</button>
         <button class="tab-btn" data-tab="instructions">📋 Instructions</button>
+        <button class="tab-btn" data-tab="music">🎛 DJ Music</button>
         <button class="tab-btn" data-tab="voice">🎙 Voice Manager</button>
         <button class="tab-btn" data-tab="gifs">🎞 GIF Manager</button>
         <button class="tab-btn" data-tab="session">📊 Session</button>
@@ -472,6 +474,94 @@
     </article>
 </template>
 
+<!-- ── DJ MUSIC MANAGER ── -->
+<section class="tab-panel" id="tab-music">
+    <div class="page-header">
+        <p class="page-eyebrow">Audio control</p>
+        <h1 class="page-title">🎛 DJ Music Manager</h1>
+        <p class="page-desc">Manage the files in <code>DJ_MUSIC</code>, the live playlist and playback. Track names are visible here only, never in Unity or the stream overlay.</p>
+    </div>
+
+    <div id="music-message" class="master-msg" aria-live="polite"></div>
+
+    <div class="music-stats">
+        <div class="stat-item"><p class="stat-label">🎵 Files</p><p class="stat-value" id="music-stat-files">—</p></div>
+        <div class="stat-item"><p class="stat-label">📋 Playlist</p><p class="stat-value" id="music-stat-playlist">—</p></div>
+        <div class="stat-item"><p class="stat-label">▶ State</p><p class="stat-value music-stat-text" id="music-stat-state">—</p></div>
+        <div class="stat-item"><p class="stat-label">🖥 Unity</p><p class="stat-value music-stat-text" id="music-stat-unity">—</p></div>
+    </div>
+
+    <div class="grid-2">
+        <div class="card">
+            <div class="card-header">
+                <div><p class="card-label">Now playing</p><h2 class="card-title" id="music-current">—</h2></div>
+                <span class="music-badge" id="music-state-badge">Stopped</span>
+            </div>
+            <p class="music-current-detail" id="music-current-detail">Waiting for Unity state…</p>
+            <div class="music-progress"><div id="music-progress-bar"></div></div>
+            <div class="music-controls">
+                <button id="music-prev" class="btn btn-secondary" title="Previous track">⏮ Prev</button>
+                <button id="music-play" class="btn btn-primary" title="Play or pause">▶ Play</button>
+                <button id="music-next" class="btn btn-secondary" title="Next track">Next ⏭</button>
+                <button id="music-refresh" class="btn btn-secondary" title="Rescan DJ_MUSIC">↻ Rescan</button>
+            </div>
+            <div class="music-switches">
+                <label class="toggle-wrap"><input id="music-shuffle" type="checkbox"><span class="toggle-track"></span> Shuffle</label>
+                <label class="toggle-wrap"><input id="music-repeat" type="checkbox" checked><span class="toggle-track"></span> Repeat</label>
+            </div>
+            <p class="help">Unity remains the audio engine. Playback commands are sent over the existing bridge WebSocket, and the AI MC ducking continues on the same AudioSource.</p>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><div><p class="card-label">Mix</p><h2 class="card-title">Volume</h2></div></div>
+            <label class="music-range-label">Master volume <span class="music-range-value" id="music-master-value">35%</span>
+                <input id="music-master-volume" type="range" min="0" max="1" step="0.01" value="0.35">
+            </label>
+            <label class="music-range-label">Current track volume <span class="music-range-value" id="music-track-value">100%</span>
+                <input id="music-track-volume" type="range" min="0" max="1" step="0.01" value="1">
+            </label>
+            <p class="help">Master volume writes the existing <code>VOLUME.txt</code> fallback and is sent to Unity. Track volume is stored per filename and survives restarts.</p>
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <div class="card">
+            <div class="card-header">
+                <div><p class="card-label">Library</p><h2 class="card-title">Music files</h2></div>
+                <button id="music-library-refresh" class="btn btn-secondary btn-sm">↻ Refresh</button>
+            </div>
+            <div class="music-upload-row">
+                <input id="music-file" type="file" accept=".mp3,.wav,.ogg,audio/mpeg,audio/wav,audio/ogg" multiple>
+                <button id="music-upload" class="btn btn-primary btn-sm">Upload files</button>
+            </div>
+            <p class="help">MP3, WAV or OGG only. Uploads are signature-checked and written atomically inside <code>DJ_MUSIC</code>.</p>
+            <div id="music-library" class="music-list"><span class="muted">Loading…</span></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div><p class="card-label">Queue</p><h2 class="card-title">Current playlist</h2></div>
+                <span class="muted" id="music-playlist-count">—</span>
+            </div>
+            <p class="help">The bridge keeps this order after a restart. Use ↑/↓ to reorder; playback is not interrupted by a reorder.</p>
+            <div id="music-playlist" class="music-list"><span class="muted">Loading…</span></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <p class="card-label">Diagnostics</p>
+        <dl class="music-diagnostics">
+            <dt>Unity state</dt><dd id="music-diag-unity">—</dd>
+            <dt>Actual AudioSource volume</dt><dd id="music-diag-volume">—</dd>
+            <dt>Position / duration</dt><dd id="music-diag-position">—</dd>
+            <dt>Last command</dt><dd id="music-diag-command">—</dd>
+            <dt>Last acknowledgement</dt><dd id="music-diag-ack">—</dd>
+            <dt>Last error</dt><dd id="music-diag-error">None</dd>
+        </dl>
+        <p class="help">State is reported by Unity, not inferred by the bridge. A saved state is restored without automatically starting playback when the bridge restarts.</p>
+    </div>
+</section>
+
 <!-- ── VOICE MANAGER ── -->
 <section class="tab-panel" id="tab-voice">
     <div class="page-header">
@@ -498,7 +588,8 @@
                 <label class="voice-field">Voice volume <span class="voice-range"><input id="voice-volume" type="range" min="0" max="1" step="0.01" value="1"><output id="voice-volume-value">100%</output></span></label>
                 <label class="voice-field">Output gain (dB) <span class="voice-range"><input id="voice-boost-db" type="range" min="0" max="18" step="1" value="6"><output id="voice-boost-db-value">+6 dB</output></span></label>
                 <label class="voice-field">Music duck level <span class="voice-range"><input id="voice-duck-level" type="range" min="0.05" max="1" step="0.01" value="0.18"><output id="voice-duck-level-value">18%</output></span></label>
-                <label class="voice-field">Ducking fade <span class="voice-range"><input id="voice-duck-fade" type="range" min="80" max="2000" step="10" value="350"><output id="voice-duck-fade-value">350 ms</output></span></label>
+                <label class="voice-field">Duck attack <span class="voice-range"><input id="voice-duck-attack" type="range" min="40" max="1000" step="10" value="180"><output id="voice-duck-attack-value">180 ms</output></span></label>
+                <label class="voice-field">Duck release <span class="voice-range"><input id="voice-duck-release" type="range" min="80" max="2000" step="10" value="450"><output id="voice-duck-release-value">450 ms</output></span></label>
             </div>
             <p class="help">Kokoro runs locally after its one-time model download. Windows SAPI is the offline fallback; OpenAI is optional and reads its key only from the bridge environment.</p>
         </div>
@@ -612,6 +703,7 @@
             <textarea id="voice-test-text" rows="3" placeholder="Yo! This is your Cloud Disco MC. Let's get this party started!"></textarea>
             <div class="card-actions voice-actions">
                 <button id="voice-test" class="btn btn-primary btn-sm">▶ Test Voice on Unity</button>
+                <button id="voice-test-audio" class="btn btn-primary btn-sm">🎧 Test Audio (Unity)</button>
                 <button id="voice-preview" class="btn btn-secondary btn-sm">🔊 Preview in browser</button>
                 <button id="voice-stop" class="btn btn-danger btn-sm">■ Stop Voice</button>
                 <button id="voice-clear" class="btn btn-secondary btn-sm">Clear Queue</button>
@@ -638,6 +730,29 @@
             </dl>
             <audio id="voice-preview-audio" preload="none" controls></audio>
         </div>
+    </div>
+
+    <div class="card voice-diagnostics-card">
+        <div class="card-header">
+            <div><p class="card-label">Runtime truth</p><h2 class="card-title">AUDIO DIAGNOSTICS</h2></div>
+            <span id="voice-diag-live" class="muted">Waiting for Unity telemetry…</span>
+        </div>
+        <dl class="voice-status-list voice-diagnostics-list">
+            <dt>Playback state</dt><dd id="voice-diag-state">—</dd>
+            <dt>TTS provider / voice</dt><dd id="voice-diag-provider">—</dd>
+            <dt>AudioSource volume</dt><dd id="voice-diag-source">—</dd>
+            <dt>Spatial blend / pitch / mute</dt><dd id="voice-diag-mix">—</dd>
+            <dt>Music volume / duck multiplier</dt><dd id="voice-diag-music">—</dd>
+            <dt>Ducking state</dt><dd id="voice-diag-duck">—</dd>
+            <dt>AudioListener volume / count</dt><dd id="voice-diag-listener">—</dd>
+            <dt>Mixer group</dt><dd id="voice-diag-mixer">—</dd>
+            <dt>Last WAV peak / RMS</dt><dd id="voice-diag-level">—</dd>
+            <dt>Last WAV LUFS / true peak</dt><dd id="voice-diag-loudness">—</dd>
+            <dt>WAV format</dt><dd id="voice-diag-format">—</dd>
+            <dt>Download error</dt><dd id="voice-diag-download">None</dd>
+            <dt>Playback error</dt><dd id="voice-diag-playback">None</dd>
+        </dl>
+        <p class="help">Values are reported by the Unity AudioSource and MusicPlaylistPlayer, not inferred by the bridge. Test Audio queues a real English (US) announcement through Kokoro → bridge WAV → Unity → ducked music.</p>
     </div>
 </section>
 
@@ -855,9 +970,9 @@
         <div class="card">
             <p class="card-label" style="margin-bottom:12px;">💬 Chat commands viewers type</p>
             <div class="cmd-list">
-                <div class="cmd-item"><code>nhảy / dance</code><span>The dancer dances</span></div>
-                <div class="cmd-item"><code>đi vòng / walk</code><span>Walks in a circle</span></div>
-                <div class="cmd-item"><code>đổi nv</code><span>Switches to a random character</span></div>
+                <div class="cmd-item"><code>dance</code><span>The dancer dances</span></div>
+                <div class="cmd-item"><code>walk</code><span>Walks in a circle</span></div>
+                <div class="cmd-item"><code>change</code><span>Switches to a random character</span></div>
             </div>
         </div>
     </div>
@@ -949,6 +1064,7 @@
 <script src="control.js"></script>
 <script src="instructions.js"></script>
 <script src="gif-manager.js"></script>
+<script src="music-manager.js"></script>
 <script src="voice-manager.js"></script>
 </body>
 </html>

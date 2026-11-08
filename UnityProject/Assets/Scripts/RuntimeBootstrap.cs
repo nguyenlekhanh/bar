@@ -17,6 +17,7 @@ namespace TikTokLiveGame
             // scene are not upscaled from a 540x960 backbuffer.
             Screen.SetResolution(1080, 1920, false);
             ClubSceneBuilder.Build();
+            EnsureAudioListener();
             StreamViewport.ApplyToCamera(Camera.main);
             CreateLetterboxBackground();
 
@@ -27,6 +28,7 @@ namespace TikTokLiveGame
             players.transform.SetParent(root.transform);
             GiftEffectManager giftEffects = root.AddComponent<GiftEffectManager>();
             MusicPlaylistPlayer music = root.AddComponent<MusicPlaylistPlayer>();
+            music.Initialize(client);
             VoiceAnnouncementPlayer voice = root.AddComponent<VoiceAnnouncementPlayer>();
             voice.Initialize(client, music);
             TikTokGameController game = root.AddComponent<TikTokGameController>();
@@ -34,6 +36,24 @@ namespace TikTokLiveGame
             LiveInstructionOverlay instructions = root.AddComponent<LiveInstructionOverlay>();
             instructions.Initialize(client);
             VisualCaptureHarness.InstallIfRequested(root);
+        }
+
+        private static void EnsureAudioListener()
+        {
+            AudioListener[] listeners = Object.FindObjectsByType<AudioListener>(FindObjectsSortMode.None);
+            if (listeners.Length == 0)
+            {
+                if (Camera.main != null) Camera.main.gameObject.AddComponent<AudioListener>();
+                Debug.LogWarning("[Audio] No AudioListener existed; added one to the main camera.");
+                listeners = Object.FindObjectsByType<AudioListener>(FindObjectsSortMode.None);
+            }
+            for (int index = 1; index < listeners.Length; index++)
+            {
+                listeners[index].enabled = false;
+                Debug.LogWarning($"[Audio] Disabled duplicate AudioListener on '{listeners[index].gameObject.name}'.");
+            }
+            if (listeners.Length > 0 && !listeners[0].enabled) listeners[0].enabled = true;
+            Debug.Log($"[Audio] AudioListener count={listeners.Length}, masterVolume={AudioListener.volume:0.00}, muted={AudioListener.pause}");
         }
 
         private static void CreateLetterboxBackground()

@@ -1,7 +1,7 @@
 {
-  "id": "bg-mw5t3jm8",
+  "id": "bg-mw86mb3o",
   "type": "image",
-  "file": "nenamphu.png",
+  "file": "livebar1.jpg",
   "fitMode": "native",
   "loop": true,
   "rotation": 0,
@@ -10,5 +10,5 @@
     "flipHorizontal": false,
     "flipVertical": false
   },
-  "generation": 29
+  "generation": 30
 }

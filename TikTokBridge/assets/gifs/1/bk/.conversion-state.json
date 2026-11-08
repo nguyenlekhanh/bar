@@ -1,0 +1,1315 @@
+{
+  "version": 1,
+  "entries": {
+    "version": 1,
+    "entries": {
+      "version": 1,
+      "entries": {
+        "version": 1,
+        "entries": {
+          "version": 1,
+          "entries": {
+            "version": 1,
+            "entries": {
+              "a.gif": {
+                "sha256": "e3e36f209973ab2a4d2cd9969278c8acaef0fd589ac4cae2894cb5893a2db3b3",
+                "animationId": "a",
+                "frameCount": 10,
+                "fps": 25,
+                "convertedAt": "2026-11-06T22:07:32.604Z"
+              },
+              "b.gif": {
+                "sha256": "d4109e2d84c0833967d11121d0d9ef0d90aba6978f161d61828e54eae63d7b25",
+                "animationId": "b",
+                "frameCount": 12,
+                "fps": 10,
+                "convertedAt": "2026-11-06T22:07:32.844Z"
+              },
+              "c.gif": {
+                "sha256": "065ae6623e0e11a201aa8753309290081e8440ae32aa3e4e9c685efde8b4c315",
+                "animationId": "c",
+                "frameCount": 8,
+                "fps": 10,
+                "convertedAt": "2026-11-06T22:07:32.990Z"
+              },
+              "d.gif": {
+                "sha256": "0ad1c6239b7e7aa7ed24f31259da185a341b525a63840f5c0b3ce87b61cbcc1d",
+                "animationId": "d",
+                "frameCount": 16,
+                "fps": 14.3,
+                "convertedAt": "2026-11-06T22:07:33.194Z"
+              },
+              "e.gif": {
+                "sha256": "7ec22f9ea2d28490ce5514870b468a3ab5694a3a414ea8b1a15b6e8583934509",
+                "animationId": "e",
+                "frameCount": 8,
+                "fps": 14.3,
+                "convertedAt": "2026-11-06T22:07:33.335Z"
+              },
+              "g.gif": {
+                "sha256": "47aa3225f802d64475b827c8ceec2de9073ad0263bcb092b9c6c3240df5efd75",
+                "animationId": "g",
+                "frameCount": 15,
+                "fps": 8.8,
+                "convertedAt": "2026-11-06T22:07:33.679Z"
+              },
+              "h.gif": {
+                "sha256": "a4d829511edcb817fee7de885c189e4615aebc4ee39cf90358ab056b05dc2854",
+                "animationId": "h",
+                "frameCount": 9,
+                "fps": 20,
+                "convertedAt": "2026-11-06T22:07:33.801Z"
+              },
+              "hanhan_video_dance.gif": {
+                "sha256": "c7d4e2722088a481865fed8700b8fdb28e5d6932f10d1deb770f2f9ed454b067",
+                "animationId": "hanhan_video_dance",
+                "frameCount": 40,
+                "fps": 10,
+                "convertedAt": "2026-11-06T22:07:34.688Z"
+              },
+              "j.gif": {
+                "sha256": "457abcbb0315a605ec9703c7f5075b979a7d10a0a4c192a57221600b30e45824",
+                "animationId": "j",
+                "frameCount": 14,
+                "fps": 10,
+                "convertedAt": "2026-11-06T22:07:34.875Z"
+              },
+              "k.gif": {
+                "sha256": "17747d6464b255626e6889940e6efa781ffe9b91ddcacf14d0892f26dee58766",
+                "animationId": "k",
+                "frameCount": 9,
+                "fps": 10,
+                "convertedAt": "2026-11-06T22:07:35.046Z"
+              },
+              "l.gif": {
+                "sha256": "351103324623722a803ebc02ccce58653b8163d9be341e4e67a3906650313f7d",
+                "animationId": "l",
+                "frameCount": 9,
+                "fps": 100,
+                "convertedAt": "2026-11-06T22:07:35.329Z"
+              },
+              "mushroom_dance_01.gif": {
+                "sha256": "39098d133f8f0c04923a7d138714d3dc5638a92ca69b212bec6f3dd837892481",
+                "animationId": "mushroom_dance_01",
+                "frameCount": 14,
+                "fps": 11.3,
+                "convertedAt": "2026-11-06T22:07:35.640Z"
+              },
+              "mushroom_dance_02.gif": {
+                "sha256": "552a3c37322e5e5263f2e419df1ce3bfe3392db22c90df12c1318788aaf86084",
+                "animationId": "mushroom_dance_02",
+                "frameCount": 68,
+                "fps": 25,
+                "convertedAt": "2026-11-06T22:07:37.022Z"
+              },
+              "mushroom_dance_03.gif": {
+                "sha256": "80fb7eb1f002a33e324b2014d33031593dab2962c67d4fa428c7279455244b40",
+                "animationId": "mushroom_dance_03",
+                "frameCount": 4,
+                "fps": 7.7,
+                "convertedAt": "2026-11-06T22:07:37.075Z"
+              },
+              "mushroom_dance_05.gif": {
+                "sha256": "3028389e78ec9bd94166b0daf75edb6fb34fa55ad1e9ad66bbb4c6ba9e70e8eb",
+                "animationId": "mushroom_dance_05",
+                "frameCount": 70,
+                "fps": 25,
+                "convertedAt": "2026-11-06T22:07:38.333Z"
+              },
+              "mushroom_dance_06.gif": {
+                "sha256": "5c6801c9f412fc6c0442928d2c3508ffe4b619858892909c4fb63b661c63f730",
+                "animationId": "mushroom_dance_06",
+                "frameCount": 24,
+                "fps": 10,
+                "convertedAt": "2026-11-06T22:07:38.653Z"
+              },
+              "mushroom_dance_08.gif": {
+                "sha256": "37284cb3313c92a06b7b370fad078442fc38929a6098aaf338b7c0b8d93ae943",
+                "animationId": "mushroom_dance_08",
+                "frameCount": 9,
+                "fps": 6.7,
+                "convertedAt": "2026-11-06T22:07:38.838Z"
+              },
+              "mushroom_dance_09.gif": {
+                "sha256": "e69255d2359985def6f70030ff76f9f14553b20b798277f93f782888ccdc3742",
+                "animationId": "mushroom_dance_09",
+                "frameCount": 10,
+                "fps": 5,
+                "convertedAt": "2026-11-06T22:07:39.034Z"
+              },
+              "mushroom_dance_12.gif": {
+                "sha256": "56680d4bdb74559ede56f439beb93e8d5f6911b8632fda2dcda70116ba7e41fb",
+                "animationId": "mushroom_dance_12",
+                "frameCount": 6,
+                "fps": 7.8,
+                "convertedAt": "2026-11-06T22:07:39.164Z"
+              },
+              "mushroom_dance_13.gif": {
+                "sha256": "411bde61cef3dc28a7f58ff1ab0a2786ff185e4b07cc480dd679881599d7a887",
+                "animationId": "mushroom_dance_13",
+                "frameCount": 4,
+                "fps": 10,
+                "convertedAt": "2026-11-06T22:07:39.222Z"
+              },
+              "mushroom_dance_14.gif": {
+                "sha256": "3a29dcba5b484aee81f713ee736375e5934e9cfaae8f54dc2d48a1e5957ab400",
+                "animationId": "mushroom_dance_14",
+                "frameCount": 4,
+                "fps": 10,
+                "convertedAt": "2026-11-06T22:07:39.307Z"
+              },
+              "mushroom_dance_15.gif": {
+                "sha256": "fc90f3d19ec0480edfd7e98e74aeeb07318074ac054b3504b67709539e52eca8",
+                "animationId": "mushroom_dance_15",
+                "frameCount": 11,
+                "fps": 10,
+                "convertedAt": "2026-11-06T22:07:39.540Z"
+              },
+              "mushroom_dance_16.gif": {
+                "sha256": "5d1911cb0c29a37d7a5be37fa8fd16adca4321366fd603b5d24a5c96383f04cc",
+                "animationId": "mushroom_dance_16",
+                "frameCount": 21,
+                "fps": 14.3,
+                "convertedAt": "2026-11-06T22:07:39.866Z"
+              },
+              "mushroom_dance_17.gif": {
+                "sha256": "1e23e9e2b21d27c4bea910c4a373cec6512e050a5c6717d71c1221825910f83f",
+                "animationId": "mushroom_dance_17",
+                "frameCount": 16,
+                "fps": 33.3,
+                "convertedAt": "2026-11-06T22:07:40.136Z"
+              },
+              "mushroom_dance_18.gif": {
+                "sha256": "5f884fe027050bc44c7b0ce43f0fc1cc1a894b851d547a0fbbd4f9d6de2c6c02",
+                "animationId": "mushroom_dance_18",
+                "frameCount": 45,
+                "fps": 10,
+                "convertedAt": "2026-11-06T22:07:40.855Z"
+              },
+              "mushroom_dance_19.gif": {
+                "sha256": "a956bf8d5914fe4d228ee680b39efcfb763f40be7ec091d445b351585e27c394",
+                "animationId": "mushroom_dance_19",
+                "frameCount": 35,
+                "fps": 25,
+                "convertedAt": "2026-11-06T22:07:41.602Z"
+              },
+              "mushroom_dance_42.gif": {
+                "sha256": "4918113a04430034eaa9790713b2c9e8cb2726970bc27f4170dda38d9c88b821",
+                "animationId": "mushroom_dance_42",
+                "frameCount": 4,
+                "fps": 14.3,
+                "convertedAt": "2026-11-06T22:07:41.667Z"
+              },
+              "mushroom_dance_55.gif": {
+                "sha256": "8687c7db5ca8b478de8b5f8def12a73849719d8cc1d6af0a55805f1cae6e1a9a",
+                "animationId": "mushroom_dance_55",
+                "frameCount": 10,
+                "fps": 10,
+                "convertedAt": "2026-11-06T22:07:41.832Z"
+              },
+              "mushroom_magic_02.gif": {
+                "sha256": "b252d6d0b8ee759cc2b54d1325f01dc56cb67c9971a3d8afdf54926bd238de53",
+                "animationId": "mushroom_magic_02",
+                "frameCount": 16,
+                "fps": 33.3,
+                "convertedAt": "2026-11-06T22:07:42.159Z"
+              },
+              "mushroom_magic_05.gif": {
+                "sha256": "234e8e579127901dc47de2f3df39d2d49d6859f8926a8e50f161f30f98f5cd83",
+                "animationId": "mushroom_magic_05",
+                "frameCount": 31,
+                "fps": 10,
+                "convertedAt": "2026-11-06T22:07:42.713Z"
+              },
+              "mushroom_magic_07.gif": {
+                "sha256": "a2d22c7a6bb50c9a8db25e5bceaf0fc8b1684f2bad75556516d2952f59a33582",
+                "animationId": "mushroom_magic_07",
+                "frameCount": 27,
+                "fps": 33.3,
+                "convertedAt": "2026-11-06T22:07:43.198Z"
+              },
+              "x.gif": {
+                "sha256": "ee969ca398f85dfdd922105e64d1f4d39b0534ed094e5a0dc69ba7fe623d0f39",
+                "animationId": "x",
+                "frameCount": 35,
+                "fps": 10,
+                "convertedAt": "2026-11-06T22:07:44.024Z"
+              },
+              "z.gif": {
+                "sha256": "7bdb81d6720c62d9e4a8ecc696cb3164ea59b0162dbd7606dfc34cb6a2f84da5",
+                "animationId": "z",
+                "frameCount": 20,
+                "fps": 10,
+                "convertedAt": "2026-11-06T22:07:44.462Z"
+              },
+              "tenor.gif": {
+                "sha256": "781b9d4d5c0b09ec30a69e5bc09e2d610cc1e67a28fb9d9f89908045876cf470",
+                "animationId": "tenor",
+                "frameCount": 27,
+                "fps": 16.7,
+                "convertedAt": "2026-11-06T22:33:07.217Z"
+              }
+            },
+            "a.gif": {
+              "sha256": "e3e36f209973ab2a4d2cd9969278c8acaef0fd589ac4cae2894cb5893a2db3b3",
+              "animationId": "a",
+              "frameCount": 10,
+              "fps": 25,
+              "convertedAt": "2026-11-06T22:33:07.658Z"
+            },
+            "d.gif": {
+              "sha256": "0ad1c6239b7e7aa7ed24f31259da185a341b525a63840f5c0b3ce87b61cbcc1d",
+              "animationId": "d",
+              "frameCount": 16,
+              "fps": 14.3,
+              "convertedAt": "2026-11-06T22:33:08.525Z"
+            },
+            "g.gif": {
+              "sha256": "47aa3225f802d64475b827c8ceec2de9073ad0263bcb092b9c6c3240df5efd75",
+              "animationId": "g",
+              "frameCount": 15,
+              "fps": 8.8,
+              "convertedAt": "2026-11-06T22:33:09.225Z"
+            },
+            "h.gif": {
+              "sha256": "a4d829511edcb817fee7de885c189e4615aebc4ee39cf90358ab056b05dc2854",
+              "animationId": "h",
+              "frameCount": 9,
+              "fps": 20,
+              "convertedAt": "2026-11-06T22:33:09.409Z"
+            },
+            "hanhan_video_dance.gif": {
+              "sha256": "c7d4e2722088a481865fed8700b8fdb28e5d6932f10d1deb770f2f9ed454b067",
+              "animationId": "hanhan_video_dance",
+              "frameCount": 40,
+              "fps": 10,
+              "convertedAt": "2026-11-06T22:33:10.578Z"
+            },
+            "j.gif": {
+              "sha256": "457abcbb0315a605ec9703c7f5075b979a7d10a0a4c192a57221600b30e45824",
+              "animationId": "j",
+              "frameCount": 14,
+              "fps": 10,
+              "convertedAt": "2026-11-06T22:33:10.772Z"
+            },
+            "k.gif": {
+              "sha256": "17747d6464b255626e6889940e6efa781ffe9b91ddcacf14d0892f26dee58766",
+              "animationId": "k",
+              "frameCount": 9,
+              "fps": 10,
+              "convertedAt": "2026-11-06T22:33:11.006Z"
+            },
+            "l.gif": {
+              "sha256": "351103324623722a803ebc02ccce58653b8163d9be341e4e67a3906650313f7d",
+              "animationId": "l",
+              "frameCount": 9,
+              "fps": 100,
+              "convertedAt": "2026-11-06T22:33:11.477Z"
+            },
+            "mushroom_dance_01.gif": {
+              "sha256": "39098d133f8f0c04923a7d138714d3dc5638a92ca69b212bec6f3dd837892481",
+              "animationId": "mushroom_dance_01",
+              "frameCount": 14,
+              "fps": 11.3,
+              "convertedAt": "2026-11-06T22:33:11.756Z"
+            },
+            "mushroom_dance_02.gif": {
+              "sha256": "552a3c37322e5e5263f2e419df1ce3bfe3392db22c90df12c1318788aaf86084",
+              "animationId": "mushroom_dance_02",
+              "frameCount": 68,
+              "fps": 25,
+              "convertedAt": "2026-11-06T22:33:13.233Z"
+            },
+            "mushroom_dance_09.gif": {
+              "sha256": "e69255d2359985def6f70030ff76f9f14553b20b798277f93f782888ccdc3742",
+              "animationId": "mushroom_dance_09",
+              "frameCount": 10,
+              "fps": 5,
+              "convertedAt": "2026-11-06T22:33:15.412Z"
+            },
+            "mushroom_dance_12.gif": {
+              "sha256": "56680d4bdb74559ede56f439beb93e8d5f6911b8632fda2dcda70116ba7e41fb",
+              "animationId": "mushroom_dance_12",
+              "frameCount": 6,
+              "fps": 7.8,
+              "convertedAt": "2026-11-06T22:33:15.531Z"
+            },
+            "mushroom_dance_13.gif": {
+              "sha256": "411bde61cef3dc28a7f58ff1ab0a2786ff185e4b07cc480dd679881599d7a887",
+              "animationId": "mushroom_dance_13",
+              "frameCount": 4,
+              "fps": 10,
+              "convertedAt": "2026-11-06T22:33:15.638Z"
+            },
+            "mushroom_dance_14.gif": {
+              "sha256": "3a29dcba5b484aee81f713ee736375e5934e9cfaae8f54dc2d48a1e5957ab400",
+              "animationId": "mushroom_dance_14",
+              "frameCount": 4,
+              "fps": 10,
+              "convertedAt": "2026-11-06T22:33:15.731Z"
+            },
+            "mushroom_dance_15.gif": {
+              "sha256": "fc90f3d19ec0480edfd7e98e74aeeb07318074ac054b3504b67709539e52eca8",
+              "animationId": "mushroom_dance_15",
+              "frameCount": 11,
+              "fps": 10,
+              "convertedAt": "2026-11-06T22:33:15.999Z"
+            },
+            "mushroom_dance_18.gif": {
+              "sha256": "5f884fe027050bc44c7b0ce43f0fc1cc1a894b851d547a0fbbd4f9d6de2c6c02",
+              "animationId": "mushroom_dance_18",
+              "frameCount": 45,
+              "fps": 10,
+              "convertedAt": "2026-11-06T22:33:17.379Z"
+            },
+            "mushroom_dance_19.gif": {
+              "sha256": "a956bf8d5914fe4d228ee680b39efcfb763f40be7ec091d445b351585e27c394",
+              "animationId": "mushroom_dance_19",
+              "frameCount": 35,
+              "fps": 25,
+              "convertedAt": "2026-11-06T22:33:18.114Z"
+            },
+            "mushroom_dance_42.gif": {
+              "sha256": "4918113a04430034eaa9790713b2c9e8cb2726970bc27f4170dda38d9c88b821",
+              "animationId": "mushroom_dance_42",
+              "frameCount": 4,
+              "fps": 14.3,
+              "convertedAt": "2026-11-06T22:33:18.172Z"
+            },
+            "mushroom_magic_05.gif": {
+              "sha256": "234e8e579127901dc47de2f3df39d2d49d6859f8926a8e50f161f30f98f5cd83",
+              "animationId": "mushroom_magic_05",
+              "frameCount": 31,
+              "fps": 10,
+              "convertedAt": "2026-11-06T22:33:19.290Z"
+            },
+            "x.gif": {
+              "sha256": "ee969ca398f85dfdd922105e64d1f4d39b0534ed094e5a0dc69ba7fe623d0f39",
+              "animationId": "x",
+              "frameCount": 35,
+              "fps": 10,
+              "convertedAt": "2026-11-06T22:33:21.813Z"
+            },
+            "e.gif": {
+              "sha256": "7ec22f9ea2d28490ce5514870b468a3ab5694a3a414ea8b1a15b6e8583934509",
+              "animationId": "e",
+              "frameCount": 8,
+              "fps": 14.3,
+              "convertedAt": "2026-11-06T22:52:49.163Z"
+            },
+            "mushroom_dance_03.gif": {
+              "sha256": "80fb7eb1f002a33e324b2014d33031593dab2962c67d4fa428c7279455244b40",
+              "animationId": "mushroom_dance_03",
+              "frameCount": 4,
+              "fps": 7.7,
+              "convertedAt": "2026-11-06T22:52:49.256Z"
+            },
+            "mushroom_dance_05.gif": {
+              "sha256": "3028389e78ec9bd94166b0daf75edb6fb34fa55ad1e9ad66bbb4c6ba9e70e8eb",
+              "animationId": "mushroom_dance_05",
+              "frameCount": 70,
+              "fps": 25,
+              "convertedAt": "2026-11-06T22:52:50.377Z"
+            },
+            "mushroom_dance_08.gif": {
+              "sha256": "37284cb3313c92a06b7b370fad078442fc38929a6098aaf338b7c0b8d93ae943",
+              "animationId": "mushroom_dance_08",
+              "frameCount": 9,
+              "fps": 6.7,
+              "convertedAt": "2026-11-06T22:52:50.812Z"
+            },
+            "mushroom_dance_16.gif": {
+              "sha256": "5d1911cb0c29a37d7a5be37fa8fd16adca4321366fd603b5d24a5c96383f04cc",
+              "animationId": "mushroom_dance_16",
+              "frameCount": 21,
+              "fps": 14.3,
+              "convertedAt": "2026-11-06T22:52:51.098Z"
+            },
+            "mushroom_dance_17.gif": {
+              "sha256": "1e23e9e2b21d27c4bea910c4a373cec6512e050a5c6717d71c1221825910f83f",
+              "animationId": "mushroom_dance_17",
+              "frameCount": 16,
+              "fps": 33.3,
+              "convertedAt": "2026-11-06T22:52:51.327Z"
+            },
+            "mushroom_dance_55.gif": {
+              "sha256": "8687c7db5ca8b478de8b5f8def12a73849719d8cc1d6af0a55805f1cae6e1a9a",
+              "animationId": "mushroom_dance_55",
+              "frameCount": 10,
+              "fps": 10,
+              "convertedAt": "2026-11-06T22:52:51.527Z"
+            },
+            "mushroom_magic_07.gif": {
+              "sha256": "a2d22c7a6bb50c9a8db25e5bceaf0fc8b1684f2bad75556516d2952f59a33582",
+              "animationId": "mushroom_magic_07",
+              "frameCount": 27,
+              "fps": 33.3,
+              "convertedAt": "2026-11-06T22:52:52.309Z"
+            },
+            "tenor.gif": {
+              "sha256": "781b9d4d5c0b09ec30a69e5bc09e2d610cc1e67a28fb9d9f89908045876cf470",
+              "animationId": "tenor",
+              "frameCount": 27,
+              "fps": 16.7,
+              "convertedAt": "2026-11-06T22:52:53.422Z"
+            },
+            "z.gif": {
+              "sha256": "7bdb81d6720c62d9e4a8ecc696cb3164ea59b0162dbd7606dfc34cb6a2f84da5",
+              "animationId": "z",
+              "frameCount": 20,
+              "fps": 10,
+              "convertedAt": "2026-11-06T22:52:54.092Z"
+            },
+            "live_demo.gif": {
+              "sha256": "e3e36f209973ab2a4d2cd9969278c8acaef0fd589ac4cae2894cb5893a2db3b3",
+              "animationId": "live_demo",
+              "frameCount": 10,
+              "fps": 25,
+              "convertedAt": "2026-11-06T23:05:05.924Z"
+            }
+          },
+          "a.gif": {
+            "sha256": "e3e36f209973ab2a4d2cd9969278c8acaef0fd589ac4cae2894cb5893a2db3b3",
+            "animationId": "a",
+            "frameCount": 10,
+            "fps": 25,
+            "convertedAt": "2026-11-06T23:10:06.131Z"
+          },
+          "b.gif": {
+            "sha256": "d4109e2d84c0833967d11121d0d9ef0d90aba6978f161d61828e54eae63d7b25",
+            "animationId": "b",
+            "frameCount": 12,
+            "fps": 10,
+            "convertedAt": "2026-11-06T23:10:06.385Z"
+          },
+          "c.gif": {
+            "sha256": "065ae6623e0e11a201aa8753309290081e8440ae32aa3e4e9c685efde8b4c315",
+            "animationId": "c",
+            "frameCount": 8,
+            "fps": 10,
+            "convertedAt": "2026-11-06T23:10:06.549Z"
+          },
+          "d.gif": {
+            "sha256": "0ad1c6239b7e7aa7ed24f31259da185a341b525a63840f5c0b3ce87b61cbcc1d",
+            "animationId": "d",
+            "frameCount": 16,
+            "fps": 14.3,
+            "convertedAt": "2026-11-06T23:10:06.817Z"
+          },
+          "g.gif": {
+            "sha256": "47aa3225f802d64475b827c8ceec2de9073ad0263bcb092b9c6c3240df5efd75",
+            "animationId": "g",
+            "frameCount": 15,
+            "fps": 8.8,
+            "convertedAt": "2026-11-06T23:10:07.357Z"
+          },
+          "h.gif": {
+            "sha256": "781b9d4d5c0b09ec30a69e5bc09e2d610cc1e67a28fb9d9f89908045876cf470",
+            "animationId": "h",
+            "frameCount": 27,
+            "fps": 16.7,
+            "convertedAt": "2026-11-06T23:36:04.801Z"
+          },
+          "j.gif": {
+            "sha256": "457abcbb0315a605ec9703c7f5075b979a7d10a0a4c192a57221600b30e45824",
+            "animationId": "j",
+            "frameCount": 14,
+            "fps": 10,
+            "convertedAt": "2026-11-06T23:10:08.574Z"
+          },
+          "l.gif": {
+            "sha256": "351103324623722a803ebc02ccce58653b8163d9be341e4e67a3906650313f7d",
+            "animationId": "l",
+            "frameCount": 9,
+            "fps": 100,
+            "convertedAt": "2026-11-06T23:10:09.271Z"
+          },
+          "mushroom_dance_01.gif": {
+            "sha256": "39098d133f8f0c04923a7d138714d3dc5638a92ca69b212bec6f3dd837892481",
+            "animationId": "mushroom_dance_01",
+            "frameCount": 14,
+            "fps": 11.3,
+            "convertedAt": "2026-11-06T23:10:09.640Z"
+          },
+          "mushroom_dance_02.gif": {
+            "sha256": "552a3c37322e5e5263f2e419df1ce3bfe3392db22c90df12c1318788aaf86084",
+            "animationId": "mushroom_dance_02",
+            "frameCount": 68,
+            "fps": 25,
+            "convertedAt": "2026-11-06T23:10:13.969Z"
+          },
+          "mushroom_dance_03.gif": {
+            "sha256": "80fb7eb1f002a33e324b2014d33031593dab2962c67d4fa428c7279455244b40",
+            "animationId": "mushroom_dance_03",
+            "frameCount": 4,
+            "fps": 7.7,
+            "convertedAt": "2026-11-06T23:10:14.080Z"
+          },
+          "mushroom_dance_12.gif": {
+            "sha256": "56680d4bdb74559ede56f439beb93e8d5f6911b8632fda2dcda70116ba7e41fb",
+            "animationId": "mushroom_dance_12",
+            "frameCount": 6,
+            "fps": 7.8,
+            "convertedAt": "2026-11-06T23:10:16.444Z"
+          },
+          "mushroom_dance_13.gif": {
+            "sha256": "411bde61cef3dc28a7f58ff1ab0a2786ff185e4b07cc480dd679881599d7a887",
+            "animationId": "mushroom_dance_13",
+            "frameCount": 4,
+            "fps": 10,
+            "convertedAt": "2026-11-06T23:10:16.534Z"
+          },
+          "mushroom_dance_14.gif": {
+            "sha256": "3a29dcba5b484aee81f713ee736375e5934e9cfaae8f54dc2d48a1e5957ab400",
+            "animationId": "mushroom_dance_14",
+            "frameCount": 4,
+            "fps": 10,
+            "convertedAt": "2026-11-06T23:10:16.609Z"
+          },
+          "mushroom_dance_15.gif": {
+            "sha256": "fc90f3d19ec0480edfd7e98e74aeeb07318074ac054b3504b67709539e52eca8",
+            "animationId": "mushroom_dance_15",
+            "frameCount": 11,
+            "fps": 10,
+            "convertedAt": "2026-11-06T23:10:16.891Z"
+          },
+          "mushroom_dance_16.gif": {
+            "sha256": "5d1911cb0c29a37d7a5be37fa8fd16adca4321366fd603b5d24a5c96383f04cc",
+            "animationId": "mushroom_dance_16",
+            "frameCount": 21,
+            "fps": 14.3,
+            "convertedAt": "2026-11-06T23:10:17.265Z"
+          },
+          "mushroom_dance_18.gif": {
+            "sha256": "5f884fe027050bc44c7b0ce43f0fc1cc1a894b851d547a0fbbd4f9d6de2c6c02",
+            "animationId": "mushroom_dance_18",
+            "frameCount": 45,
+            "fps": 10,
+            "convertedAt": "2026-11-06T23:10:18.272Z"
+          },
+          "mushroom_dance_19.gif": {
+            "sha256": "a956bf8d5914fe4d228ee680b39efcfb763f40be7ec091d445b351585e27c394",
+            "animationId": "mushroom_dance_19",
+            "frameCount": 35,
+            "fps": 25,
+            "convertedAt": "2026-11-06T23:10:18.914Z"
+          },
+          "mushroom_dance_42.gif": {
+            "sha256": "4918113a04430034eaa9790713b2c9e8cb2726970bc27f4170dda38d9c88b821",
+            "animationId": "mushroom_dance_42",
+            "frameCount": 4,
+            "fps": 14.3,
+            "convertedAt": "2026-11-06T23:10:18.981Z"
+          },
+          "mushroom_dance_55.gif": {
+            "sha256": "8687c7db5ca8b478de8b5f8def12a73849719d8cc1d6af0a55805f1cae6e1a9a",
+            "animationId": "mushroom_dance_55",
+            "frameCount": 10,
+            "fps": 10,
+            "convertedAt": "2026-11-06T23:10:19.145Z"
+          },
+          "mushroom_magic_02.gif": {
+            "sha256": "b252d6d0b8ee759cc2b54d1325f01dc56cb67c9971a3d8afdf54926bd238de53",
+            "animationId": "mushroom_magic_02",
+            "frameCount": 16,
+            "fps": 33.3,
+            "convertedAt": "2026-11-06T23:10:19.490Z"
+          },
+          "mushroom_magic_07.gif": {
+            "sha256": "a2d22c7a6bb50c9a8db25e5bceaf0fc8b1684f2bad75556516d2952f59a33582",
+            "animationId": "mushroom_magic_07",
+            "frameCount": 27,
+            "fps": 33.3,
+            "convertedAt": "2026-11-06T23:10:20.433Z"
+          },
+          "tenor.gif": {
+            "sha256": "781b9d4d5c0b09ec30a69e5bc09e2d610cc1e67a28fb9d9f89908045876cf470",
+            "animationId": "tenor",
+            "frameCount": 27,
+            "fps": 16.7,
+            "convertedAt": "2026-11-06T23:10:21.417Z"
+          },
+          "x.gif": {
+            "sha256": "ee969ca398f85dfdd922105e64d1f4d39b0534ed094e5a0dc69ba7fe623d0f39",
+            "animationId": "x",
+            "frameCount": 35,
+            "fps": 10,
+            "convertedAt": "2026-11-06T23:10:22.301Z"
+          },
+          "z.gif": {
+            "sha256": "7bdb81d6720c62d9e4a8ecc696cb3164ea59b0162dbd7606dfc34cb6a2f84da5",
+            "animationId": "z",
+            "frameCount": 20,
+            "fps": 10,
+            "convertedAt": "2026-11-06T23:10:22.759Z"
+          },
+          "hanhan_video_dance.gif": {
+            "sha256": "c7d4e2722088a481865fed8700b8fdb28e5d6932f10d1deb770f2f9ed454b067",
+            "animationId": "hanhan_video_dance",
+            "frameCount": 40,
+            "fps": 10,
+            "convertedAt": "2026-11-06T23:33:49.240Z"
+          },
+          "k.gif": {
+            "sha256": "17747d6464b255626e6889940e6efa781ffe9b91ddcacf14d0892f26dee58766",
+            "animationId": "k",
+            "frameCount": 9,
+            "fps": 10,
+            "convertedAt": "2026-11-06T23:33:49.462Z"
+          },
+          "mushroom_dance_06.gif": {
+            "sha256": "5c6801c9f412fc6c0442928d2c3508ffe4b619858892909c4fb63b661c63f730",
+            "animationId": "mushroom_dance_06",
+            "frameCount": 24,
+            "fps": 10,
+            "convertedAt": "2026-11-06T23:33:50.749Z"
+          },
+          "mushroom_dance_08.gif": {
+            "sha256": "37284cb3313c92a06b7b370fad078442fc38929a6098aaf338b7c0b8d93ae943",
+            "animationId": "mushroom_dance_08",
+            "frameCount": 9,
+            "fps": 6.7,
+            "convertedAt": "2026-11-06T23:33:50.891Z"
+          },
+          "mushroom_magic_05.gif": {
+            "sha256": "234e8e579127901dc47de2f3df39d2d49d6859f8926a8e50f161f30f98f5cd83",
+            "animationId": "mushroom_magic_05",
+            "frameCount": 31,
+            "fps": 10,
+            "convertedAt": "2026-11-06T23:33:52.003Z"
+          },
+          "e.gif": {
+            "sha256": "7ec22f9ea2d28490ce5514870b468a3ab5694a3a414ea8b1a15b6e8583934509",
+            "animationId": "e",
+            "frameCount": 8,
+            "fps": 14.3,
+            "convertedAt": "2026-11-06T23:33:52.362Z"
+          },
+          "mushroom_dance_05.gif": {
+            "sha256": "3028389e78ec9bd94166b0daf75edb6fb34fa55ad1e9ad66bbb4c6ba9e70e8eb",
+            "animationId": "mushroom_dance_05",
+            "frameCount": 70,
+            "fps": 25,
+            "convertedAt": "2026-11-06T23:33:54.041Z"
+          },
+          "mushroom_dance_09.gif": {
+            "sha256": "e69255d2359985def6f70030ff76f9f14553b20b798277f93f782888ccdc3742",
+            "animationId": "mushroom_dance_09",
+            "frameCount": 10,
+            "fps": 5,
+            "convertedAt": "2026-11-06T23:33:54.304Z"
+          },
+          "mushroom_dance_17.gif": {
+            "sha256": "1e23e9e2b21d27c4bea910c4a373cec6512e050a5c6717d71c1221825910f83f",
+            "animationId": "mushroom_dance_17",
+            "frameCount": 16,
+            "fps": 33.3,
+            "convertedAt": "2026-11-06T23:33:55.144Z"
+          },
+          "h (2).gif": {
+            "sha256": "781b9d4d5c0b09ec30a69e5bc09e2d610cc1e67a28fb9d9f89908045876cf470",
+            "animationId": "h_2",
+            "frameCount": 27,
+            "fps": 16.7,
+            "convertedAt": "2026-11-06T23:35:27.051Z"
+          }
+        },
+        "a.gif": {
+          "sha256": "e3e36f209973ab2a4d2cd9969278c8acaef0fd589ac4cae2894cb5893a2db3b3",
+          "animationId": "a",
+          "frameCount": 10,
+          "fps": 25,
+          "convertedAt": "2026-11-06T23:36:48.686Z"
+        },
+        "d.gif": {
+          "sha256": "0ad1c6239b7e7aa7ed24f31259da185a341b525a63840f5c0b3ce87b61cbcc1d",
+          "animationId": "d",
+          "frameCount": 16,
+          "fps": 14.3,
+          "convertedAt": "2026-11-06T23:36:49.485Z"
+        },
+        "g.gif": {
+          "sha256": "47aa3225f802d64475b827c8ceec2de9073ad0263bcb092b9c6c3240df5efd75",
+          "animationId": "g",
+          "frameCount": 15,
+          "fps": 8.8,
+          "convertedAt": "2026-11-06T23:36:50.130Z"
+        },
+        "hanhan_video_dance.gif": {
+          "sha256": "c7d4e2722088a481865fed8700b8fdb28e5d6932f10d1deb770f2f9ed454b067",
+          "animationId": "hanhan_video_dance",
+          "frameCount": 40,
+          "fps": 10,
+          "convertedAt": "2026-11-06T23:36:51.281Z"
+        },
+        "j.gif": {
+          "sha256": "457abcbb0315a605ec9703c7f5075b979a7d10a0a4c192a57221600b30e45824",
+          "animationId": "j",
+          "frameCount": 14,
+          "fps": 10,
+          "convertedAt": "2026-11-06T23:36:51.478Z"
+        },
+        "l.gif": {
+          "sha256": "351103324623722a803ebc02ccce58653b8163d9be341e4e67a3906650313f7d",
+          "animationId": "l",
+          "frameCount": 9,
+          "fps": 100,
+          "convertedAt": "2026-11-06T23:36:52.050Z"
+        },
+        "mushroom_dance_03.gif": {
+          "sha256": "80fb7eb1f002a33e324b2014d33031593dab2962c67d4fa428c7279455244b40",
+          "animationId": "mushroom_dance_03",
+          "frameCount": 4,
+          "fps": 7.7,
+          "convertedAt": "2026-11-06T23:36:53.780Z"
+        },
+        "mushroom_dance_05.gif": {
+          "sha256": "3028389e78ec9bd94166b0daf75edb6fb34fa55ad1e9ad66bbb4c6ba9e70e8eb",
+          "animationId": "mushroom_dance_05",
+          "frameCount": 70,
+          "fps": 25,
+          "convertedAt": "2026-11-06T23:36:55.108Z"
+        },
+        "mushroom_dance_13.gif": {
+          "sha256": "411bde61cef3dc28a7f58ff1ab0a2786ff185e4b07cc480dd679881599d7a887",
+          "animationId": "mushroom_dance_13",
+          "frameCount": 4,
+          "fps": 10,
+          "convertedAt": "2026-11-06T23:36:55.876Z"
+        },
+        "mushroom_dance_14.gif": {
+          "sha256": "3a29dcba5b484aee81f713ee736375e5934e9cfaae8f54dc2d48a1e5957ab400",
+          "animationId": "mushroom_dance_14",
+          "frameCount": 4,
+          "fps": 10,
+          "convertedAt": "2026-11-06T23:36:55.939Z"
+        },
+        "mushroom_dance_42.gif": {
+          "sha256": "4918113a04430034eaa9790713b2c9e8cb2726970bc27f4170dda38d9c88b821",
+          "animationId": "mushroom_dance_42",
+          "frameCount": 4,
+          "fps": 14.3,
+          "convertedAt": "2026-11-06T23:36:58.114Z"
+        },
+        "mushroom_dance_55.gif": {
+          "sha256": "8687c7db5ca8b478de8b5f8def12a73849719d8cc1d6af0a55805f1cae6e1a9a",
+          "animationId": "mushroom_dance_55",
+          "frameCount": 10,
+          "fps": 10,
+          "convertedAt": "2026-11-06T23:36:58.253Z"
+        },
+        "mushroom_magic_02.gif": {
+          "sha256": "b252d6d0b8ee759cc2b54d1325f01dc56cb67c9971a3d8afdf54926bd238de53",
+          "animationId": "mushroom_magic_02",
+          "frameCount": 16,
+          "fps": 33.3,
+          "convertedAt": "2026-11-06T23:36:58.510Z"
+        },
+        "mushroom_magic_05.gif": {
+          "sha256": "234e8e579127901dc47de2f3df39d2d49d6859f8926a8e50f161f30f98f5cd83",
+          "animationId": "mushroom_magic_05",
+          "frameCount": 31,
+          "fps": 10,
+          "convertedAt": "2026-11-06T23:36:59.043Z"
+        },
+        "mushroom_magic_07.gif": {
+          "sha256": "a2d22c7a6bb50c9a8db25e5bceaf0fc8b1684f2bad75556516d2952f59a33582",
+          "animationId": "mushroom_magic_07",
+          "frameCount": 27,
+          "fps": 33.3,
+          "convertedAt": "2026-11-06T23:36:59.607Z"
+        },
+        "x.gif": {
+          "sha256": "ee969ca398f85dfdd922105e64d1f4d39b0534ed094e5a0dc69ba7fe623d0f39",
+          "animationId": "x",
+          "frameCount": 35,
+          "fps": 10,
+          "convertedAt": "2026-11-06T23:37:00.386Z"
+        },
+        "z.gif": {
+          "sha256": "7bdb81d6720c62d9e4a8ecc696cb3164ea59b0162dbd7606dfc34cb6a2f84da5",
+          "animationId": "z",
+          "frameCount": 20,
+          "fps": 10,
+          "convertedAt": "2026-11-06T23:37:00.830Z"
+        },
+        "h.gif": {
+          "sha256": "781b9d4d5c0b09ec30a69e5bc09e2d610cc1e67a28fb9d9f89908045876cf470",
+          "animationId": "h",
+          "frameCount": 27,
+          "fps": 16.7,
+          "convertedAt": "2026-11-06T23:37:09.156Z"
+        }
+      },
+      "b.gif": {
+        "sha256": "d4109e2d84c0833967d11121d0d9ef0d90aba6978f161d61828e54eae63d7b25",
+        "animationId": "b",
+        "frameCount": 12,
+        "fps": 10,
+        "convertedAt": "2026-11-06T23:37:09.801Z"
+      },
+      "c.gif": {
+        "sha256": "065ae6623e0e11a201aa8753309290081e8440ae32aa3e4e9c685efde8b4c315",
+        "animationId": "c",
+        "frameCount": 8,
+        "fps": 10,
+        "convertedAt": "2026-11-06T23:37:09.978Z"
+      },
+      "d.gif": {
+        "sha256": "0ad1c6239b7e7aa7ed24f31259da185a341b525a63840f5c0b3ce87b61cbcc1d",
+        "animationId": "d",
+        "frameCount": 16,
+        "fps": 14.3,
+        "convertedAt": "2026-11-06T23:37:10.188Z"
+      },
+      "g.gif": {
+        "sha256": "47aa3225f802d64475b827c8ceec2de9073ad0263bcb092b9c6c3240df5efd75",
+        "animationId": "g",
+        "frameCount": 15,
+        "fps": 8.8,
+        "convertedAt": "2026-11-06T23:37:10.780Z"
+      },
+      "hanhan_video_dance.gif": {
+        "sha256": "c7d4e2722088a481865fed8700b8fdb28e5d6932f10d1deb770f2f9ed454b067",
+        "animationId": "hanhan_video_dance",
+        "frameCount": 40,
+        "fps": 10,
+        "convertedAt": "2026-11-06T23:37:12.850Z"
+      },
+      "j.gif": {
+        "sha256": "457abcbb0315a605ec9703c7f5075b979a7d10a0a4c192a57221600b30e45824",
+        "animationId": "j",
+        "frameCount": 14,
+        "fps": 10,
+        "convertedAt": "2026-11-06T23:37:13.066Z"
+      },
+      "k.gif": {
+        "sha256": "17747d6464b255626e6889940e6efa781ffe9b91ddcacf14d0892f26dee58766",
+        "animationId": "k",
+        "frameCount": 9,
+        "fps": 10,
+        "convertedAt": "2026-11-06T23:37:13.262Z"
+      },
+      "mushroom_dance_01.gif": {
+        "sha256": "39098d133f8f0c04923a7d138714d3dc5638a92ca69b212bec6f3dd837892481",
+        "animationId": "mushroom_dance_01",
+        "frameCount": 14,
+        "fps": 11.3,
+        "convertedAt": "2026-11-06T23:37:13.910Z"
+      },
+      "mushroom_dance_02.gif": {
+        "sha256": "552a3c37322e5e5263f2e419df1ce3bfe3392db22c90df12c1318788aaf86084",
+        "animationId": "mushroom_dance_02",
+        "frameCount": 68,
+        "fps": 25,
+        "convertedAt": "2026-11-06T23:37:15.271Z"
+      },
+      "mushroom_dance_03.gif": {
+        "sha256": "80fb7eb1f002a33e324b2014d33031593dab2962c67d4fa428c7279455244b40",
+        "animationId": "mushroom_dance_03",
+        "frameCount": 4,
+        "fps": 7.7,
+        "convertedAt": "2026-11-06T23:37:15.356Z"
+      },
+      "mushroom_dance_05.gif": {
+        "sha256": "3028389e78ec9bd94166b0daf75edb6fb34fa55ad1e9ad66bbb4c6ba9e70e8eb",
+        "animationId": "mushroom_dance_05",
+        "frameCount": 70,
+        "fps": 25,
+        "convertedAt": "2026-11-06T23:37:16.478Z"
+      },
+      "mushroom_dance_08.gif": {
+        "sha256": "37284cb3313c92a06b7b370fad078442fc38929a6098aaf338b7c0b8d93ae943",
+        "animationId": "mushroom_dance_08",
+        "frameCount": 9,
+        "fps": 6.7,
+        "convertedAt": "2026-11-06T23:37:16.878Z"
+      },
+      "mushroom_dance_09.gif": {
+        "sha256": "e69255d2359985def6f70030ff76f9f14553b20b798277f93f782888ccdc3742",
+        "animationId": "mushroom_dance_09",
+        "frameCount": 10,
+        "fps": 5,
+        "convertedAt": "2026-11-06T23:37:17.125Z"
+      },
+      "mushroom_dance_13.gif": {
+        "sha256": "411bde61cef3dc28a7f58ff1ab0a2786ff185e4b07cc480dd679881599d7a887",
+        "animationId": "mushroom_dance_13",
+        "frameCount": 4,
+        "fps": 10,
+        "convertedAt": "2026-11-06T23:37:17.277Z"
+      },
+      "mushroom_dance_14.gif": {
+        "sha256": "3a29dcba5b484aee81f713ee736375e5934e9cfaae8f54dc2d48a1e5957ab400",
+        "animationId": "mushroom_dance_14",
+        "frameCount": 4,
+        "fps": 10,
+        "convertedAt": "2026-11-06T23:37:17.346Z"
+      },
+      "mushroom_dance_15.gif": {
+        "sha256": "fc90f3d19ec0480edfd7e98e74aeeb07318074ac054b3504b67709539e52eca8",
+        "animationId": "mushroom_dance_15",
+        "frameCount": 11,
+        "fps": 10,
+        "convertedAt": "2026-11-06T23:37:17.618Z"
+      },
+      "mushroom_dance_16.gif": {
+        "sha256": "5d1911cb0c29a37d7a5be37fa8fd16adca4321366fd603b5d24a5c96383f04cc",
+        "animationId": "mushroom_dance_16",
+        "frameCount": 21,
+        "fps": 14.3,
+        "convertedAt": "2026-11-06T23:37:17.989Z"
+      },
+      "mushroom_dance_17.gif": {
+        "sha256": "1e23e9e2b21d27c4bea910c4a373cec6512e050a5c6717d71c1221825910f83f",
+        "animationId": "mushroom_dance_17",
+        "frameCount": 16,
+        "fps": 33.3,
+        "convertedAt": "2026-11-06T23:37:18.414Z"
+      },
+      "mushroom_dance_18.gif": {
+        "sha256": "5f884fe027050bc44c7b0ce43f0fc1cc1a894b851d547a0fbbd4f9d6de2c6c02",
+        "animationId": "mushroom_dance_18",
+        "frameCount": 45,
+        "fps": 10,
+        "convertedAt": "2026-11-06T23:37:19.123Z"
+      },
+      "mushroom_dance_19.gif": {
+        "sha256": "a956bf8d5914fe4d228ee680b39efcfb763f40be7ec091d445b351585e27c394",
+        "animationId": "mushroom_dance_19",
+        "frameCount": 35,
+        "fps": 25,
+        "convertedAt": "2026-11-06T23:37:19.925Z"
+      },
+      "mushroom_dance_42.gif": {
+        "sha256": "4918113a04430034eaa9790713b2c9e8cb2726970bc27f4170dda38d9c88b821",
+        "animationId": "mushroom_dance_42",
+        "frameCount": 4,
+        "fps": 14.3,
+        "convertedAt": "2026-11-06T23:37:19.991Z"
+      },
+      "mushroom_dance_55.gif": {
+        "sha256": "8687c7db5ca8b478de8b5f8def12a73849719d8cc1d6af0a55805f1cae6e1a9a",
+        "animationId": "mushroom_dance_55",
+        "frameCount": 10,
+        "fps": 10,
+        "convertedAt": "2026-11-06T23:37:20.197Z"
+      },
+      "mushroom_magic_02.gif": {
+        "sha256": "b252d6d0b8ee759cc2b54d1325f01dc56cb67c9971a3d8afdf54926bd238de53",
+        "animationId": "mushroom_magic_02",
+        "frameCount": 16,
+        "fps": 33.3,
+        "convertedAt": "2026-11-06T23:37:20.549Z"
+      },
+      "mushroom_magic_05.gif": {
+        "sha256": "234e8e579127901dc47de2f3df39d2d49d6859f8926a8e50f161f30f98f5cd83",
+        "animationId": "mushroom_magic_05",
+        "frameCount": 31,
+        "fps": 10,
+        "convertedAt": "2026-11-06T23:37:21.027Z"
+      },
+      "x.gif": {
+        "sha256": "ee969ca398f85dfdd922105e64d1f4d39b0534ed094e5a0dc69ba7fe623d0f39",
+        "animationId": "x",
+        "frameCount": 35,
+        "fps": 10,
+        "convertedAt": "2026-11-06T23:37:22.259Z"
+      },
+      "a.gif": {
+        "sha256": "e3e36f209973ab2a4d2cd9969278c8acaef0fd589ac4cae2894cb5893a2db3b3",
+        "animationId": "a",
+        "frameCount": 10,
+        "fps": 25,
+        "convertedAt": "2026-11-08T01:59:35.202Z"
+      },
+      "e.gif": {
+        "sha256": "7ec22f9ea2d28490ce5514870b468a3ab5694a3a414ea8b1a15b6e8583934509",
+        "animationId": "e",
+        "frameCount": 8,
+        "fps": 14.3,
+        "convertedAt": "2026-11-06T23:37:35.459Z"
+      },
+      "l.gif": {
+        "sha256": "351103324623722a803ebc02ccce58653b8163d9be341e4e67a3906650313f7d",
+        "animationId": "l",
+        "frameCount": 9,
+        "fps": 100,
+        "convertedAt": "2026-11-06T23:37:36.547Z"
+      },
+      "mushroom_dance_06.gif": {
+        "sha256": "5c6801c9f412fc6c0442928d2c3508ffe4b619858892909c4fb63b661c63f730",
+        "animationId": "mushroom_dance_06",
+        "frameCount": 24,
+        "fps": 10,
+        "convertedAt": "2026-11-06T23:37:36.811Z"
+      },
+      "mushroom_dance_12.gif": {
+        "sha256": "56680d4bdb74559ede56f439beb93e8d5f6911b8632fda2dcda70116ba7e41fb",
+        "animationId": "mushroom_dance_12",
+        "frameCount": 6,
+        "fps": 7.8,
+        "convertedAt": "2026-11-06T23:37:36.907Z"
+      },
+      "mushroom_magic_07.gif": {
+        "sha256": "a2d22c7a6bb50c9a8db25e5bceaf0fc8b1684f2bad75556516d2952f59a33582",
+        "animationId": "mushroom_magic_07",
+        "frameCount": 27,
+        "fps": 33.3,
+        "convertedAt": "2026-11-06T23:37:37.281Z"
+      },
+      "z.gif": {
+        "sha256": "7bdb81d6720c62d9e4a8ecc696cb3164ea59b0162dbd7606dfc34cb6a2f84da5",
+        "animationId": "z",
+        "frameCount": 20,
+        "fps": 10,
+        "convertedAt": "2026-11-06T23:37:37.736Z"
+      },
+      "h.gif": {
+        "sha256": "781b9d4d5c0b09ec30a69e5bc09e2d610cc1e67a28fb9d9f89908045876cf470",
+        "animationId": "h",
+        "frameCount": 27,
+        "fps": 16.7,
+        "convertedAt": "2026-11-07T01:19:53.103Z"
+      }
+    },
+    "a-2.gif": {
+      "sha256": "64d9302dfb4dfa251f7e039982b37d3eea1d7bfcba0e1d77e7ca5ea137896ef9",
+      "animationId": "a_2",
+      "frameCount": 96,
+      "fps": 16,
+      "convertedAt": "2026-11-08T01:59:42.624Z"
+    },
+    "a.gif": {
+      "sha256": "e3e36f209973ab2a4d2cd9969278c8acaef0fd589ac4cae2894cb5893a2db3b3",
+      "animationId": "a",
+      "frameCount": 10,
+      "fps": 25,
+      "convertedAt": "2026-11-08T01:59:42.825Z"
+    },
+    "b.gif": {
+      "sha256": "d4109e2d84c0833967d11121d0d9ef0d90aba6978f161d61828e54eae63d7b25",
+      "animationId": "b",
+      "frameCount": 12,
+      "fps": 10,
+      "convertedAt": "2026-11-08T01:59:43.069Z"
+    },
+    "c.gif": {
+      "sha256": "065ae6623e0e11a201aa8753309290081e8440ae32aa3e4e9c685efde8b4c315",
+      "animationId": "c",
+      "frameCount": 8,
+      "fps": 10,
+      "convertedAt": "2026-11-08T01:59:43.238Z"
+    },
+    "d.gif": {
+      "sha256": "0ad1c6239b7e7aa7ed24f31259da185a341b525a63840f5c0b3ce87b61cbcc1d",
+      "animationId": "d",
+      "frameCount": 16,
+      "fps": 14.3,
+      "convertedAt": "2026-11-08T01:59:43.439Z"
+    },
+    "e.gif": {
+      "sha256": "7ec22f9ea2d28490ce5514870b468a3ab5694a3a414ea8b1a15b6e8583934509",
+      "animationId": "e",
+      "frameCount": 8,
+      "fps": 14.3,
+      "convertedAt": "2026-11-08T01:59:43.599Z"
+    },
+    "g.gif": {
+      "sha256": "47aa3225f802d64475b827c8ceec2de9073ad0263bcb092b9c6c3240df5efd75",
+      "animationId": "g",
+      "frameCount": 15,
+      "fps": 8.8,
+      "convertedAt": "2026-11-08T01:59:43.967Z"
+    },
+    "h.gif": {
+      "sha256": "781b9d4d5c0b09ec30a69e5bc09e2d610cc1e67a28fb9d9f89908045876cf470",
+      "animationId": "h",
+      "frameCount": 27,
+      "fps": 16.7,
+      "convertedAt": "2026-11-08T01:59:44.994Z"
+    },
+    "hanhan_video_dance.gif": {
+      "sha256": "c7d4e2722088a481865fed8700b8fdb28e5d6932f10d1deb770f2f9ed454b067",
+      "animationId": "hanhan_video_dance",
+      "frameCount": 40,
+      "fps": 10,
+      "convertedAt": "2026-11-08T01:59:46.178Z"
+    },
+    "j.gif": {
+      "sha256": "457abcbb0315a605ec9703c7f5075b979a7d10a0a4c192a57221600b30e45824",
+      "animationId": "j",
+      "frameCount": 14,
+      "fps": 10,
+      "convertedAt": "2026-11-08T01:59:46.375Z"
+    },
+    "k.gif": {
+      "sha256": "17747d6464b255626e6889940e6efa781ffe9b91ddcacf14d0892f26dee58766",
+      "animationId": "k",
+      "frameCount": 9,
+      "fps": 10,
+      "convertedAt": "2026-11-08T01:59:46.583Z"
+    },
+    "l.gif": {
+      "sha256": "351103324623722a803ebc02ccce58653b8163d9be341e4e67a3906650313f7d",
+      "animationId": "l",
+      "frameCount": 9,
+      "fps": 100,
+      "convertedAt": "2026-11-08T01:59:46.992Z"
+    },
+    "mushroom_dance_01.gif": {
+      "sha256": "39098d133f8f0c04923a7d138714d3dc5638a92ca69b212bec6f3dd837892481",
+      "animationId": "mushroom_dance_01",
+      "frameCount": 14,
+      "fps": 11.3,
+      "convertedAt": "2026-11-08T01:59:47.247Z"
+    },
+    "mushroom_dance_02.gif": {
+      "sha256": "552a3c37322e5e5263f2e419df1ce3bfe3392db22c90df12c1318788aaf86084",
+      "animationId": "mushroom_dance_02",
+      "frameCount": 68,
+      "fps": 25,
+      "convertedAt": "2026-11-08T01:59:48.418Z"
+    },
+    "mushroom_dance_03.gif": {
+      "sha256": "80fb7eb1f002a33e324b2014d33031593dab2962c67d4fa428c7279455244b40",
+      "animationId": "mushroom_dance_03",
+      "frameCount": 4,
+      "fps": 7.7,
+      "convertedAt": "2026-11-08T01:59:48.518Z"
+    },
+    "mushroom_dance_05.gif": {
+      "sha256": "3028389e78ec9bd94166b0daf75edb6fb34fa55ad1e9ad66bbb4c6ba9e70e8eb",
+      "animationId": "mushroom_dance_05",
+      "frameCount": 70,
+      "fps": 25,
+      "convertedAt": "2026-11-08T01:59:49.629Z"
+    },
+    "mushroom_dance_06.gif": {
+      "sha256": "5c6801c9f412fc6c0442928d2c3508ffe4b619858892909c4fb63b661c63f730",
+      "animationId": "mushroom_dance_06",
+      "frameCount": 24,
+      "fps": 10,
+      "convertedAt": "2026-11-08T01:59:49.825Z"
+    },
+    "mushroom_dance_08.gif": {
+      "sha256": "37284cb3313c92a06b7b370fad078442fc38929a6098aaf338b7c0b8d93ae943",
+      "animationId": "mushroom_dance_08",
+      "frameCount": 9,
+      "fps": 6.7,
+      "convertedAt": "2026-11-08T01:59:49.944Z"
+    },
+    "mushroom_dance_09.gif": {
+      "sha256": "e69255d2359985def6f70030ff76f9f14553b20b798277f93f782888ccdc3742",
+      "animationId": "mushroom_dance_09",
+      "frameCount": 10,
+      "fps": 5,
+      "convertedAt": "2026-11-08T01:59:50.075Z"
+    },
+    "mushroom_dance_12.gif": {
+      "sha256": "56680d4bdb74559ede56f439beb93e8d5f6911b8632fda2dcda70116ba7e41fb",
+      "animationId": "mushroom_dance_12",
+      "frameCount": 6,
+      "fps": 7.8,
+      "convertedAt": "2026-11-08T01:59:50.177Z"
+    },
+    "mushroom_dance_13.gif": {
+      "sha256": "411bde61cef3dc28a7f58ff1ab0a2786ff185e4b07cc480dd679881599d7a887",
+      "animationId": "mushroom_dance_13",
+      "frameCount": 4,
+      "fps": 10,
+      "convertedAt": "2026-11-08T01:59:50.225Z"
+    },
+    "mushroom_dance_14.gif": {
+      "sha256": "3a29dcba5b484aee81f713ee736375e5934e9cfaae8f54dc2d48a1e5957ab400",
+      "animationId": "mushroom_dance_14",
+      "frameCount": 4,
+      "fps": 10,
+      "convertedAt": "2026-11-08T01:59:50.281Z"
+    },
+    "mushroom_dance_15.gif": {
+      "sha256": "fc90f3d19ec0480edfd7e98e74aeeb07318074ac054b3504b67709539e52eca8",
+      "animationId": "mushroom_dance_15",
+      "frameCount": 11,
+      "fps": 10,
+      "convertedAt": "2026-11-08T01:59:50.533Z"
+    },
+    "mushroom_dance_16.gif": {
+      "sha256": "5d1911cb0c29a37d7a5be37fa8fd16adca4321366fd603b5d24a5c96383f04cc",
+      "animationId": "mushroom_dance_16",
+      "frameCount": 21,
+      "fps": 14.3,
+      "convertedAt": "2026-11-08T01:59:50.827Z"
+    },
+    "mushroom_dance_17.gif": {
+      "sha256": "1e23e9e2b21d27c4bea910c4a373cec6512e050a5c6717d71c1221825910f83f",
+      "animationId": "mushroom_dance_17",
+      "frameCount": 16,
+      "fps": 33.3,
+      "convertedAt": "2026-11-08T01:59:51.038Z"
+    },
+    "mushroom_dance_18.gif": {
+      "sha256": "5f884fe027050bc44c7b0ce43f0fc1cc1a894b851d547a0fbbd4f9d6de2c6c02",
+      "animationId": "mushroom_dance_18",
+      "frameCount": 45,
+      "fps": 10,
+      "convertedAt": "2026-11-08T01:59:51.586Z"
+    },
+    "mushroom_dance_19.gif": {
+      "sha256": "a956bf8d5914fe4d228ee680b39efcfb763f40be7ec091d445b351585e27c394",
+      "animationId": "mushroom_dance_19",
+      "frameCount": 35,
+      "fps": 25,
+      "convertedAt": "2026-11-08T01:59:52.211Z"
+    },
+    "mushroom_dance_42.gif": {
+      "sha256": "4918113a04430034eaa9790713b2c9e8cb2726970bc27f4170dda38d9c88b821",
+      "animationId": "mushroom_dance_42",
+      "frameCount": 4,
+      "fps": 14.3,
+      "convertedAt": "2026-11-08T01:59:52.272Z"
+    },
+    "mushroom_dance_55.gif": {
+      "sha256": "8687c7db5ca8b478de8b5f8def12a73849719d8cc1d6af0a55805f1cae6e1a9a",
+      "animationId": "mushroom_dance_55",
+      "frameCount": 10,
+      "fps": 10,
+      "convertedAt": "2026-11-08T01:59:52.405Z"
+    },
+    "mushroom_magic_02.gif": {
+      "sha256": "b252d6d0b8ee759cc2b54d1325f01dc56cb67c9971a3d8afdf54926bd238de53",
+      "animationId": "mushroom_magic_02",
+      "frameCount": 16,
+      "fps": 33.3,
+      "convertedAt": "2026-11-08T01:59:52.672Z"
+    },
+    "mushroom_magic_05.gif": {
+      "sha256": "234e8e579127901dc47de2f3df39d2d49d6859f8926a8e50f161f30f98f5cd83",
+      "animationId": "mushroom_magic_05",
+      "frameCount": 31,
+      "fps": 10,
+      "convertedAt": "2026-11-08T01:59:53.125Z"
+    },
+    "mushroom_magic_07.gif": {
+      "sha256": "a2d22c7a6bb50c9a8db25e5bceaf0fc8b1684f2bad75556516d2952f59a33582",
+      "animationId": "mushroom_magic_07",
+      "frameCount": 27,
+      "fps": 33.3,
+      "convertedAt": "2026-11-08T01:59:53.576Z"
+    },
+    "x.gif": {
+      "sha256": "ee969ca398f85dfdd922105e64d1f4d39b0534ed094e5a0dc69ba7fe623d0f39",
+      "animationId": "x",
+      "frameCount": 35,
+      "fps": 10,
+      "convertedAt": "2026-11-08T01:59:54.204Z"
+    },
+    "z.gif": {
+      "sha256": "7bdb81d6720c62d9e4a8ecc696cb3164ea59b0162dbd7606dfc34cb6a2f84da5",
+      "animationId": "z",
+      "frameCount": 20,
+      "fps": 10,
+      "convertedAt": "2026-11-08T01:59:54.609Z"
+    }
+  }
+}

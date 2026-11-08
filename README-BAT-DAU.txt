@@ -49,6 +49,6 @@ Luu y:
 - Xem file LICENSE de biet chi tiet giay phep MIT.
 
 Lien he:
-- Website : https://ongchummo.com
-- Zalo    : 0977.896.644
-- Email   : toanhvan90@gmail.com
+- Website : https://xxx.com
+- Zalo    : xxx
+- Email   : xxx@gmail.com

@@ -244,6 +244,9 @@ function defaultVoiceConfig() {
         volume: 1.0,
         boostDb: 6,
         duckLevel: 0.18,
+        duckAttackMs: 180,
+        duckReleaseMs: 450,
+        // Legacy alias retained so existing settings and older overlays keep working.
         duckFadeMs: 350,
         maxQueue: 12,
         expireMs: 45000,

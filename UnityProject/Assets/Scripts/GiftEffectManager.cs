@@ -32,7 +32,7 @@ namespace TikTokLiveGame
             int count = Time.unscaledTime - combo.LastTime <= 5f ? combo.Count + 1 : 1;
             combos[data.userId ?? string.Empty] = new ComboState(count, Time.unscaledTime);
             string comboText = count > 1 ? $"  (COMBO x{count})" : string.Empty;
-            BannerText = $"Chủ tịch: {data.nickname} đã tặng {gift} cho anh em bar!{comboText}";
+            BannerText = $"President: {data.nickname} gifted {gift} to the bar crew!{comboText}";
             BannerUntil = Time.unscaledTime + Mathf.Clamp(data.durationMs / 1000f, 3f, 10f);
 
             bool spotlightAction = data.action is "camera" or "vip" or "topdj" or "fireworks" or "medal";
@@ -92,7 +92,7 @@ namespace TikTokLiveGame
 
         public void PartyBurst()
         {
-            BannerText = "PARTY ENERGY MAX — CẢ SÀN CÙNG QUẨY";
+            BannerText = "PARTY ENERGY MAX";
             BannerUntil = Time.unscaledTime + 6f;
             LaunchFireworks(5);
         }

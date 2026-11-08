@@ -45,7 +45,17 @@ namespace TikTokLiveGame
         public string provider;
         public float volume = 1f;
         public float duckLevel = 0.18f;
+        public float duckAttackMs = 180f;
+        public float duckReleaseMs = 450f;
         public float duckFadeMs = 350f;
+        // Measured by the bridge after WAV normalization/limiting.
+        public float lufs;
+        public float truePeakDb;
+        public float peakDb;
+        public float rmsDb;
+        public int sampleRate;
+        public int channels;
+        public int bits;
         public string[] userIds;
         public int animationDurationMs;
         public bool spectatorOnly;
@@ -54,6 +64,23 @@ namespace TikTokLiveGame
         public TikTokPlayerData[] players;
         public TikTokPlayerData[] vipScores;
         public BackgroundConfigPayload background;
+        // DJ Music Manager commands/state. These names are used by the admin
+        // bridge only and are never drawn by the Unity game UI.
+        public string commandId;
+        public string track;
+        public string[] playlist;
+        public string[] trackVolumeNames;
+        public float[] trackVolumeValues;
+        public float masterVolume;
+        public float trackVolume;
+        public float position;
+        public float duration;
+        public bool playing;
+        public bool paused;
+        public bool loading;
+        public bool shuffle;
+        public bool repeat;
+        public string error;
     }
 
     [Serializable]
@@ -97,6 +124,41 @@ namespace TikTokLiveGame
         public string type;
         public string role;
         public string username;
+        public string state;
+        public string provider;
+        public string voice;
+        public float audioSourceVolume;
+        public float spatialBlend;
+        public float pitch;
+        public bool mute;
+        public float musicVolume;
+        public float masterVolume;
+        public float trackVolume;
+        public string track;
+        public string commandId;
+        public float position;
+        public bool playing;
+        public bool paused;
+        public bool loading;
+        public bool shuffle;
+        public bool repeat;
+        public float musicDuckMultiplier;
+        public bool ducking;
+        public float duckLevel;
+        public float duckAttackMs;
+        public float duckReleaseMs;
+        public float listenerVolume;
+        public int listenerCount;
+        public string mixerGroup;
+        public float lufs;
+        public float truePeakDb;
+        public float peakDb;
+        public float rmsDb;
+        public int sampleRate;
+        public int channels;
+        public int bits;
+        public string downloadError;
+        public string playbackError;
         public string action;
         public string giftName;
         public string eventId;

@@ -82,3 +82,7 @@ crashlytics-build.properties
 
 # ── Launcher runtime state ───────────────────
 .runtime/
+
+
+.freebuff/
+backups/

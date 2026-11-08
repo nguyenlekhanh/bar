@@ -6,7 +6,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && node --check src/config/environment.js && node --check src/security.js && node --check src/tiktok/normalize-event.js && node --check src/tiktok/normalize-tikfinity-event.js && node --check src/voice/defaults.js && node --check src/voice/username-pronunciation.js && node --check src/voice/dialogue.js && node --check src/voice/queue.js && node --check src/voice/config.js && node --check src/voice/audio-cache.js && node --check src/voice/wav-gain.js && node --check src/voice/providers.js && node --check src/voice/service.js && node --check public/control.js && node --check public/voice-manager.js && node --check scripts/download-mushroom-gifs.js",
+    "check": "node --check server.js && node --check src/config/environment.js && node --check src/security.js && node --check src/tiktok/normalize-event.js && node --check src/tiktok/normalize-tikfinity-event.js && node --check src/voice/defaults.js && node --check src/voice/username-pronunciation.js && node --check src/voice/dialogue.js && node --check src/voice/queue.js && node --check src/voice/config.js && node --check src/voice/audio-cache.js && node --check src/voice/wav-gain.js && node --check src/voice/providers.js && node --check src/voice/service.js && node --check src/music/library.js && node --check src/music/service.js && node --check public/control.js && node --check public/music-manager.js && node --check public/voice-manager.js && node --check scripts/download-mushroom-gifs.js",
     "test:voice": "node scripts/voice-selftest.js",
     "download:gifs": "node scripts/download-mushroom-gifs.js && node scripts/convert-gifs.js",
     "gifs:convert": "node scripts/convert-gifs.js",

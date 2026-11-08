@@ -13,15 +13,22 @@ function readWavInfo(buffer) {
     let byteRate = 0;
     let sampleRate = 0;
     let channels = 0;
+    let bits = 0;
+    let format = 0;
     let dataBytes = 0;
     while (offset + 8 <= buffer.length) {
         const id = buffer.toString('ascii', offset, offset + 4);
         const size = buffer.readUInt32LE(offset + 4);
         const start = offset + 8;
         if (id === 'fmt ' && start + 16 <= buffer.length) {
+            const formatTag = buffer.readUInt16LE(start);
             channels = buffer.readUInt16LE(start + 2);
             sampleRate = buffer.readUInt32LE(start + 4);
             byteRate = buffer.readUInt32LE(start + 8);
+            bits = buffer.readUInt16LE(start + 14);
+            format = formatTag === 0xFFFE && start + 26 <= buffer.length
+                ? buffer.readUInt16LE(start + 24)
+                : formatTag;
         } else if (id === 'data') {
             dataBytes = Math.min(size, Math.max(0, buffer.length - start));
             break;
@@ -35,10 +42,15 @@ function readWavInfo(buffer) {
         durationMs,
         sampleRate,
         channels,
+        bits: bits || level.bits,
+        format: format || level.format,
         peak: level.peak,
         rms: level.rms,
         peakDb: level.peakDb,
-        rmsDb: level.rmsDb
+        rmsDb: level.rmsDb,
+        lufs: level.lufs,
+        truePeak: level.truePeak,
+        truePeakDb: level.truePeakDb
     };
 }
 
@@ -84,6 +96,8 @@ class VoiceAudioCache {
             voice: String(meta.voice || ''),
             boostDb: Number(meta.boostDb) || 0,
             normalizationGainDb: Number(meta.normalizationGainDb) || 0,
+            outputLufs: Number(meta.outputLufs) || 0,
+            targetLufs: Number(meta.targetLufs) || 0,
             url: `/api/voice/audio/${id}.wav`
         };
         this.records.set(id, record);

@@ -65,6 +65,7 @@ const {
 } = require('./src/instructions/config');
 const { saveInstructionIcon, MAX_ICON_BYTES } = require('./src/instructions/icons');
 const { createVoiceService } = require('./src/voice/service');
+const { createMusicService, MAX_UPLOAD_BYTES: MAX_MUSIC_UPLOAD_BYTES } = require('./src/music/service');
 
 const app = express();
 const server = http.createServer(app);
@@ -102,6 +103,12 @@ const instructionConfigPath = process.env.INSTRUCTION_CONFIG
     ? path.resolve(process.env.INSTRUCTION_CONFIG)
     : path.join(__dirname, 'config', 'instructions.json');
 const instructionIconsDir = path.join(assetsDir, 'instruction-icons');
+const musicDir = process.env.DJ_MUSIC_DIR
+    ? path.resolve(process.env.DJ_MUSIC_DIR)
+    : path.join(__dirname, '..', 'DJ_MUSIC');
+const musicStatePath = process.env.MUSIC_STATE
+    ? path.resolve(process.env.MUSIC_STATE)
+    : path.join(__dirname, 'config', 'music.json');
 const voiceConfigPath = process.env.VOICE_CONFIG
     ? path.resolve(process.env.VOICE_CONFIG)
     : path.join(__dirname, 'config', 'voice.json');
@@ -144,6 +151,13 @@ const voiceService = createVoiceService({
     configPath: voiceConfigPath,
     broadcast,
     broadcastToRole,
+    logger: console
+});
+const musicService = createMusicService({
+    musicDir,
+    statePath: musicStatePath,
+    broadcastToRole,
+    getOverlayCount: () => overlayClientCount(),
     logger: console
 });
 
@@ -301,6 +315,55 @@ app.post('/api/instruction-icons', controlPanelOnly, instructionIconParser, asyn
     }
 });
 
+/* ── DJ MUSIC MANAGER ──────────────────────────────────── */
+const musicBodyParser = express.json({ limit: '64kb' });
+const musicUploadParser = (req, res, next) => {
+    express.raw({ type: () => true, limit: MAX_MUSIC_UPLOAD_BYTES })(req, res, error => {
+        if (!error) return next();
+        if (error.type === 'entity.too.large') {
+            return res.status(413).json({ error: 'The music file is larger than 100 MB.' });
+        }
+        return res.status(400).json({ error: 'The music upload could not be read.' });
+    });
+};
+
+app.get('/api/music', controlPanelOnly, (_req, res) => {
+    res.json(musicService.getSnapshot());
+});
+
+app.post('/api/music', controlPanelOnly, musicBodyParser, async (req, res) => {
+    try {
+        const result = await musicService.updateSettings(req.body || {});
+        res.json({ ...result, message: 'Music settings saved.' });
+    } catch (error) {
+        res.status(400).json({ error: error.message || 'Could not save music settings.' });
+    }
+});
+
+app.post('/api/music/command', controlPanelOnly, musicBodyParser, async (req, res) => {
+    const result = await musicService.command(req.body?.action, req.body || {});
+    if (!result.ok) return res.status(400).json({ error: result.error });
+    res.json({ ...result, message: result.message || 'Music command accepted.' });
+});
+
+app.post('/api/music/upload', controlPanelOnly, musicUploadParser, async (req, res) => {
+    try {
+        const name = String(req.query.name || '');
+        const result = await musicService.upload(name, req.body);
+        if (!result.ok) return res.status(result.conflict ? 409 : 400).json({ error: result.error });
+        res.status(201).json({ ...result, message: 'Music file uploaded.' });
+    } catch (error) {
+        console.error('Could not upload music:', error.message);
+        res.status(500).json({ error: 'Could not upload the music file.' });
+    }
+});
+
+app.post('/api/music/remove', controlPanelOnly, musicBodyParser, async (req, res) => {
+    const result = await musicService.remove(req.body?.file);
+    if (!result.ok) return res.status(400).json({ error: result.error });
+    res.json({ ...result, message: result.switchedTo ? `Removed. Switched to ${result.switchedTo}.` : 'Music file removed.' });
+});
+
 /* ── LIVE AI DJ / VOICE MANAGER ─────────────────────────── */
 const voiceBodyParser = express.json({ limit: '128kb' });
 
@@ -349,6 +412,12 @@ app.post('/api/voice/test', controlPanelOnly, voiceBodyParser, (req, res) => {
 app.post('/api/voice/autonomous/test', controlPanelOnly, (_req, res) => {
     const result = voiceService.queueAutonomousTest();
     if (!result.accepted) return res.status(409).json({ error: `Autonomous MC test was not queued: ${result.reason}.` });
+    res.json({ queued: true, item: result.item, status: voiceService.getStatus() });
+});
+
+app.post('/api/voice/test-audio', controlPanelOnly, (_req, res) => {
+    const result = voiceService.queueTestAudio();
+    if (!result.accepted) return res.status(409).json({ error: `Audio test was not queued: ${result.reason}.` });
     res.json({ queued: true, item: result.item, status: voiceService.getStatus() });
 });
 
@@ -1410,10 +1479,10 @@ function emitDemoAction(action, userIndex = 1, value = 1, giftName = '', manualN
         return processGameEvent({ type: 'chat', eventId, ...user, comment: 'jump' });
     }
     if (action === 'walk') {
-        return processGameEvent({ type: 'chat', eventId, ...user, comment: 'đi vòng' });
+        return processGameEvent({ type: 'chat', eventId, ...user, comment: 'walk' });
     }
     if (action === 'change') {
-        return processGameEvent({ type: 'chat', eventId, ...user, comment: 'đổi nv' });
+        return processGameEvent({ type: 'chat', eventId, ...user, comment: 'change' });
     }
     if (action === 'like') {
         return processGameEvent({ type: 'like', eventId, ...user, likeCount: value });
@@ -1659,6 +1728,8 @@ async function handleClientMessage(ws, message) {
         send(ws, { type: 'background_config', action: 'set', background: backgroundPayload() });
         send(ws, { type: 'instruction_config', config: instructionConfig });
         send(ws, { type: 'voice_config', config: voiceService.publicConfig() });
+        if (ws.role === 'overlay') send(ws, musicService.configMessage());
+        if (ws.role === 'control') send(ws, musicService.getSnapshot());
         if (ws.role === 'control') send(ws, { type: 'voice_status', ...voiceService.getStatus() });
         if (ws.role === 'control') send(ws, { type: 'master_config', master: masterConfig });
         if (ws.role === 'control') send(ws, giftCatalogMessage());
@@ -1695,6 +1766,27 @@ async function handleClientMessage(ws, message) {
             return send(ws, { type: 'error', message: 'Only Unity can acknowledge voice playback.' });
         }
         return voiceService.acknowledge(message);
+    }
+
+    if (message.type === 'voice_diagnostics') {
+        if (ws.role !== 'overlay') {
+            return send(ws, { type: 'error', message: 'Only Unity can report voice diagnostics.' });
+        }
+        return voiceService.recordUnityDiagnostics(message);
+    }
+
+    if (message.type === 'music_ack') {
+        if (ws.role !== 'overlay') {
+            return send(ws, { type: 'error', message: 'Only Unity can acknowledge music commands.' });
+        }
+        return musicService.acknowledge(message);
+    }
+
+    if (message.type === 'music_state') {
+        if (ws.role !== 'overlay') {
+            return send(ws, { type: 'error', message: 'Only Unity can report music state.' });
+        }
+        return musicService.updateActual(message);
     }
 
     if (message.type === 'animation_ack') {
@@ -1951,7 +2043,8 @@ wss.on('connection', (ws, request) => {
         }
         // One acknowledgement per broadcast gift is normal overlay traffic, not
         // a command flood; everything else still shares the command rate limit.
-        const skipsRateLimit = message.type === 'animation_ack' || message.type === 'voice_ack';
+        const skipsRateLimit = message.type === 'animation_ack' || message.type === 'voice_ack' ||
+            message.type === 'voice_diagnostics' || message.type === 'music_ack' || message.type === 'music_state';
         if (!skipsRateLimit && !consumeRateLimit(ws.rateLimit)) {
             return ws.close(1008, 'Rate limit exceeded');
         }
@@ -1988,6 +2081,8 @@ refreshInstructionConfig()
     .catch(error => console.error('Could not read the gift animation mapping:', error.message))
     .then(() => voiceService.start())
     .catch(error => console.error('Could not read the voice configuration:', error.message))
+    .then(() => musicService.start())
+    .catch(error => console.error('Could not start the music manager:', error.message))
     .finally(() => {
         server.listen(PORT, HOST, () => {
             console.log(`TikTok Live Game: http://${HOST}:${PORT}`);
@@ -2021,6 +2116,7 @@ server.on('error', (err) => {
 async function shutdown() {
     stopDemo();
     voiceService.dispose();
+    await musicService.stop();
     clearInterval(heartbeatTimer);
     desiredUsername = null;
     cancelReconnect();

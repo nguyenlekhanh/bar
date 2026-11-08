@@ -12,7 +12,7 @@
       "action": "join",
       "displayDiamonds": 0,
       "durationMs": 2000,
-      "label": "THAM GIA SÀN",
+      "label": "JOIN AREA",
       "variant": "aura",
       "fireworkBursts": 0
     },
@@ -40,7 +40,7 @@
       "action": "medal",
       "displayDiamonds": 10,
       "durationMs": 60000,
-      "label": "CÁNH VIP",
+      "label": "VIP WING",
       "variant": "fire",
       "fireworkBursts": 0
     },
@@ -54,7 +54,7 @@
       "action": "change",
       "displayDiamonds": 1,
       "durationMs": 2500,
-      "label": "ĐỔI NHÂN VẬT",
+      "label": "CHANGE CHARACTER",
       "variant": "",
       "fireworkBursts": 0
     },
@@ -68,7 +68,7 @@
       "action": "walk",
       "displayDiamonds": 5,
       "durationMs": 5000,
-      "label": "ĐI VÒNG",
+      "label": "WALK AROUND",
       "variant": "",
       "fireworkBursts": 0
     },
@@ -82,7 +82,7 @@
       "action": "fireworks",
       "displayDiamonds": 10,
       "durationMs": 8000,
-      "label": "PHÁO HOA",
+      "label": "FIREWORKS",
       "variant": "",
       "fireworkBursts": 4
     },
@@ -96,7 +96,7 @@
       "action": "grow",
       "displayDiamonds": 199,
       "durationMs": 8000,
-      "label": "BIG TO LÊN",
+      "label": "MAKE IT BIGGER!",
       "variant": "",
       "fireworkBursts": 0
     },

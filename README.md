@@ -177,7 +177,7 @@ Truy cập [http://127.0.0.1:3000/control.html](http://127.0.0.1:3000/control.ht
 
 ## 🎵 Thêm nhạc & video
 
-- **Nhạc nền DJ:** Thả file `.mp3`, `.wav`, `.ogg` vào thư mục `DJ_MUSIC/` (game tự quét lại mỗi 4 giây, không cần tắt game; đổi `DJ_MUSIC/VOLUME.txt` là áp dụng ngay; nhạc phát theo tên file rồi lặp lại, không bị ngắt khi mất kết nối TikTok)
+- **Nhạc nền DJ:** Thả file `.mp3`, `.wav`, `.ogg` vào thư mục `DJ_MUSIC/` (game tự quét lại mỗi 4 giây, không cần tắt game; đổi `DJ_MUSIC/VOLUME.txt` là áp dụng ngay; nhạc phát theo tên file rồi lặp lại, không bị ngắt khi mất kết nối TikTok). Hoặc mở **Control Panel → 🎛 DJ Music** để upload/xóa, sắp xếp playlist, play/pause, next/previous, shuffle, repeat và chỉnh volume. Tên bài chỉ hiển thị trong panel admin, không xuất hiện trong Unity/overlay.
 - **Video nền:** Thả file `.mp4`, `.mov`, `.webm` hoặc ảnh `.png`, `.jpg` vào `DJ_VIDEO/`
 - Game tự phát lặp và tắt tiếng video
 

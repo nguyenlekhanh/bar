@@ -25,20 +25,22 @@ namespace TikTokLiveGame
         private const int CrowdRows = 17;
         private const int CrowdCapacity = CrowdColumns * CrowdRows;
 
-        private static readonly string[] NpcNames =
-        {
-            "Bắp Rang", "Cà Khịa", "Tí Tởn", "Tèo Teo", "Bảy Bóng", "Sáu Lắc", "Năm Rung", "Út Quẩy",
-            "Cô Ba Lắc", "Chú Tư Nhún", "Anh Hai Quẩy", "Bé Hột Mít", "Mèo Mập", "Heo Hay Hờn", "Gà Mơ", "Vịt Lộn",
-            "Cá Khô", "Mực Một Nắng", "Bánh Bao", "Bánh Bèo", "Bún Đậu", "Mắm Tôm", "Chả Lụa", "Trà Đá",
-            "Sữa Đậu", "Khoai Lang", "Đậu Phộng", "Hạt Dưa", "Xoài Lắc", "Cóc Dầm", "Chanh Chua", "Ớt Hiểm",
-            "Củ Cải", "Rau Răm", "Hành Phi", "Tỏi Bay", "Gừng Cay", "Muối Tiêu", "Nước Mắm", "Cơm Nguội",
-            "Dép Tổ Ong", "Quần Hoa", "Áo Bông", "Tóc Dựng", "Răng Khểnh", "Má Bánh Bao", "Mắt Hí", "Bụng Bự",
-            "Chân Ngắn", "Cổ Cao", "Đầu Nấm", "Mặt Ngầu", "Hay Dỗi", "Hay Cười", "Thích Quẩy", "Lười Nhảy",
-            "Ngủ Gật", "Đi Trễ", "Quên Dép", "Mất Sóng", "Hết Pin", "Kẹt Xe", "Rớt Mạng", "Đang Ăn",
-            "Chưa Tắm", "No Căng", "Say Nhẹ", "Khát Nước", "Lạc Trôi", "Quẩy Dở", "Nhún Sai", "Lắc Nhầm",
-            "Cười Xỉu", "Tưng Tửng", "Ngơ Ngác", "Hơi Mệt", "Rất Ổn", "Không Sao", "Bình Tĩnh", "Vui Vẻ"
-        };
+        // private static readonly string[] NpcNames =
+        // {
+        //     "Bắp Rang", "Cà Khịa", "Tí Tởn", "Tèo Teo", "Bảy Bóng", "Sáu Lắc", "Năm Rung", "Út Quẩy",
+        //     "Cô Ba Lắc", "Chú Tư Nhún", "Anh Hai Quẩy", "Bé Hột Mít", "Mèo Mập", "Heo Hay Hờn", "Gà Mơ", "Vịt Lộn",
+        //     "Cá Khô", "Mực Một Nắng", "Bánh Bao", "Bánh Bèo", "Bún Đậu", "Mắm Tôm", "Chả Lụa", "Trà Đá",
+        //     "Sữa Đậu", "Khoai Lang", "Đậu Phộng", "Hạt Dưa", "Xoài Lắc", "Cóc Dầm", "Chanh Chua", "Ớt Hiểm",
+        //     "Củ Cải", "Rau Răm", "Hành Phi", "Tỏi Bay", "Gừng Cay", "Muối Tiêu", "Nước Mắm", "Cơm Nguội",
+        //     "Dép Tổ Ong", "Quần Hoa", "Áo Bông", "Tóc Dựng", "Răng Khểnh", "Má Bánh Bao", "Mắt Hí", "Bụng Bự",
+        //     "Chân Ngắn", "Cổ Cao", "Đầu Nấm", "Mặt Ngầu", "Hay Dỗi", "Hay Cười", "Thích Quẩy", "Lười Nhảy",
+        //     "Ngủ Gật", "Đi Trễ", "Quên Dép", "Mất Sóng", "Hết Pin", "Kẹt Xe", "Rớt Mạng", "Đang Ăn",
+        //     "Chưa Tắm", "No Căng", "Say Nhẹ", "Khát Nước", "Lạc Trôi", "Quẩy Dở", "Nhún Sai", "Lắc Nhầm",
+        //     "Cười Xỉu", "Tưng Tửng", "Ngơ Ngác", "Hơi Mệt", "Rất Ổn", "Không Sao", "Bình Tĩnh", "Vui Vẻ"
+        // };
 
+        private static readonly string[] NpcNames = { "Bobby", "Rocky", "Milo", "Teddy", "Joey", "Ricky", "Benny", "Ziggy", "Daisy", "Molly", "Chloe", "Ruby", "Lola", "Rosie", "Penny", "Bonnie", "Charlie", "Oliver", "Max", "Leo", "Archie", "Felix", "Oscar", "Toby", "Coco", "Peanut", "Mochi", "Cookie", "Pickles", "Nugget", "Waffles", "Biscuit", "Muffin", "Donut", "Nacho", "Taco", "Cheddar", "Pudding", "Jellybean", "Cupcake", "Bubbles", "Giggles", "Wiggles", "Boogie", "Blinky", "Bongo", "Dizzy", "Bumpy", "Scooter", "Skippy", "Jumpy", "Twinkle", "Sparky", "Blinky", "Snickers", "Doodle", "Peaches", "Pumpkin", "Blueberry", "Cherry", "Mango", "Kiwi", "Cinnamon", "Marshmallow", "Goofy", "Wacky", "Snoozy", "Sleepy", "Grumpy", "Cheeky", "Funky", "Tipsy", "Disco Dave", "DJ Benny", "Crazy Carl", "Party Pete", "Dancing Danny", "Funky Fred", "Lucky Lou", "Mad Mike" };
+        
         public int Count => players.Count;
         public PlayerActor Find(string userId) => !string.IsNullOrWhiteSpace(userId) && players.TryGetValue(userId, out PlayerActor actor) ? actor : null;
 

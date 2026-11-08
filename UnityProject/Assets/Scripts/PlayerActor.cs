@@ -215,10 +215,10 @@ namespace TikTokLiveGame
         private void ApplyEvolution()
         {
             if (titleLabel == null) return;
-            string title = GiftPower >= 1000 ? "CHỦ TỊCH"
-                : GiftPower >= 200 ? "VUA SÀN NHẢY"
-                : GiftPower >= 50 ? "DÂN CHƠI"
-                : GiftPower >= 10 ? "TÂN BINH"
+            string title = GiftPower >= 1000 ? "PARTY BOSS"
+                : GiftPower >= 200 ? "DANCE FLOOR KING"
+                : GiftPower >= 50 ? "PARTYGOER"
+                : GiftPower >= 10 ? "ROOKIE"
                 : string.Empty;
             SetTitleText(title);
             SetTitleVisible(!string.IsNullOrEmpty(title) && (giftFocused || topRank > 0 || GiftPower >= 10 || crowdScale >= 0.56f));

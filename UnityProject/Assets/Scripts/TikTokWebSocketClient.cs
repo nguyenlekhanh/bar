@@ -207,6 +207,77 @@ namespace TikTokLiveGame
             error = string.IsNullOrWhiteSpace(error) ? string.Empty : error.Trim()
         });
 
+        /// <summary>Reports the real Unity AudioSource/music-duck state for diagnostics.</summary>
+        public void VoiceDiagnostics(string state, string provider, string voice,
+            float audioSourceVolume, float spatialBlend, float pitch, bool mute,
+            float musicVolume, float musicDuckMultiplier, bool ducking,
+            float duckLevel, float duckAttackMs, float duckReleaseMs,
+            float listenerVolume, int listenerCount, string mixerGroup,
+            float lufs, float truePeakDb, float peakDb, float rmsDb,
+            int sampleRate, int channels, int bits, string downloadError, string playbackError) =>
+            Send(new ClientMessage
+            {
+                type = "voice_diagnostics",
+                state = state ?? string.Empty,
+                provider = provider ?? string.Empty,
+                voice = voice ?? string.Empty,
+                audioSourceVolume = audioSourceVolume,
+                spatialBlend = spatialBlend,
+                pitch = pitch,
+                mute = mute,
+                musicVolume = musicVolume,
+                musicDuckMultiplier = musicDuckMultiplier,
+                ducking = ducking,
+                duckLevel = duckLevel,
+                duckAttackMs = duckAttackMs,
+                duckReleaseMs = duckReleaseMs,
+                listenerVolume = listenerVolume,
+                listenerCount = listenerCount,
+                mixerGroup = mixerGroup ?? string.Empty,
+                lufs = lufs,
+                truePeakDb = truePeakDb,
+                peakDb = peakDb,
+                rmsDb = rmsDb,
+                sampleRate = sampleRate,
+                channels = channels,
+                bits = bits,
+                downloadError = downloadError ?? string.Empty,
+                playbackError = playbackError ?? string.Empty
+            });
+
+        /// <summary>Confirms that Unity actually applied a DJ music command.</summary>
+        public void MusicAck(string commandId, bool ok, string error = null,
+            string track = null, bool playing = false) => Send(new ClientMessage
+        {
+            type = "music_ack",
+            commandId = commandId ?? string.Empty,
+            ok = ok,
+            error = string.IsNullOrWhiteSpace(error) ? string.Empty : error.Trim(),
+            track = track ?? string.Empty,
+            playing = playing
+        });
+
+        /// <summary>Reports the real MusicPlaylistPlayer state, not a bridge guess.</summary>
+        public void MusicState(string track, bool playing, bool paused, bool loading,
+            float position, float duration, float musicVolume, float masterVolume,
+            float trackVolume, bool shuffle, bool repeat, string error = null,
+            string reason = null) => Send(new ClientMessage
+        {
+            type = "music_state",
+            track = track ?? string.Empty,
+            playing = playing,
+            paused = paused,
+            loading = loading,
+            position = position,
+            duration = duration,
+            musicVolume = musicVolume,
+            masterVolume = masterVolume,
+            trackVolume = trackVolume,
+            shuffle = shuffle,
+            repeat = repeat,
+            error = string.IsNullOrWhiteSpace(error) ? string.Empty : error.Trim()
+        });
+
         public void DemoGift(int diamonds, int userIndex = 1) => Send(new ClientMessage
         {
             type = "demo_event",

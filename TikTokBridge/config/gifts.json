@@ -11,19 +11,19 @@
       "aliases": ["tiktok", "tik tok"],
       "action": "change",
       "durationMs": 2500,
-      "label": "ĐỔI NHÂN VẬT"
+      "label": "CHANGE CHARACTER"
     },
     {
       "aliases": ["finger heart", "trái tim ngón tay", "trai tim ngon tay", "tim ngón tay", "tim ngon tay"],
       "action": "walk",
       "durationMs": 5000,
-      "label": "ĐI VÒNG"
+      "label": "WALK AROUND"
     },
     {
       "aliases": ["portal", "cổng không gian", "cong khong gian"],
       "action": "grow",
       "durationMs": 8000,
-      "label": "NHÂN VẬT KHỔNG LỒ"
+      "label": "GIANT CHARACTER"
     },
     {
       "aliases": ["galaxy", "interstellar", "ngôi sao", "ngoi sao", "tiktok universe", "universe"],
@@ -39,25 +39,25 @@
     {
       "minimum": 10,
       "tier": 1,
-      "label": "TÂN BINH SÀN QUẨY",
+      "label": "DANCE FLOOR ROOKIE",
       "variant": "aura"
     },
     {
       "minimum": 50,
       "tier": 2,
-      "label": "DÂN CHƠI NEON",
+      "label": "NEON PARTYGOER",
       "variant": "neon"
     },
     {
       "minimum": 200,
       "tier": 3,
-      "label": "VUA SÀN NHẢY",
+      "label": "DANCE FLOOR KING",
       "variant": "fire"
     },
     {
       "minimum": 1000,
       "tier": 4,
-      "label": "CHỦ TỊCH SÀN QUẨY",
+      "label": "DANCE FLOOR BOSS",
       "variant": "royal"
     }
   ],
@@ -66,21 +66,21 @@
       "minimum": 1000,
       "action": "fireworks",
       "durationMs": 15000,
-      "label": "ĐẠI GIA MỞ TIỆC",
+      "label": "MEGA PARTY HOST",
       "fireworkBursts": 6
     },
     {
       "minimum": 500,
       "action": "fireworks",
       "durationMs": 12000,
-      "label": "MƯA PHÁO HOA",
+      "label": "FIREWORKS SHOW",
       "fireworkBursts": 4
     },
     {
       "minimum": 200,
       "action": "vip",
       "durationMs": 10000,
-      "label": "SIÊU VIP CAMERA"
+      "label": "SUPER VIP CAMERA"
     },
     {
       "minimum": 100,
@@ -93,26 +93,26 @@
       "action": "medal",
       "durationMs": 90000,
       "spotlightMs": 7000,
-      "label": "VUA SÀN NHẢY",
+      "label": "DANCE FLOOR KING",
       "variant": "fire"
     },
     {
       "minimum": 20,
       "action": "camera",
       "durationMs": 6000,
-      "label": "CAMERA SÀN NHẢY"
+      "label": "DANCE FLOOR CAMERA"
     },
     {
       "minimum": 5,
       "action": "dance",
       "durationMs": 5000,
-      "label": "NHẢY CỰC SUNG"
+      "label": "EPIC DANCE PARTY"
     },
     {
       "minimum": 1,
       "action": "dance",
       "durationMs": 3000,
-      "label": "CẢM ƠN QUÀ"
+      "label": "THANK YOU FOR THE GIFT"
     }
   ]
 }
