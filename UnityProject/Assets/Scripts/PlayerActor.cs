@@ -103,10 +103,10 @@ namespace TikTokLiveGame
             avatarRenderer.enabled = false;
 
             nameLabel = OverlayTypography.CreateWorldText(
-                transform, "Name", 0, true, 1.06f, Color.white,
+                transform, "Name", 0, true, 2.00f, Color.white,
                 TextAlignmentOptions.MidlineLeft, characterRenderer.sortingOrder + 10);
             nameLabel.text = FormatDisplayName(Nickname);
-            nameLabel.rectTransform.sizeDelta = new Vector2(3.2f, 0.2f);
+            nameLabel.rectTransform.sizeDelta = new Vector2(5.4f, 0.40f);
             nameLabel.transform.localPosition = new Vector3(0.18f, 2.1f, 0f);
 
             rankLabel = CreateLabel("Rank", new Vector3(0f, 3.05f, 0f), 1.27f, new Color(1f, 0.82f, 0.2f), characterRenderer.sortingOrder + 15);
