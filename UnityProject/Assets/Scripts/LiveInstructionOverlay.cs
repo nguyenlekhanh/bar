@@ -59,6 +59,10 @@ namespace TikTokLiveGame
         private const int MaxRows = 20;
         private const float DesignHeight = 1920f;
         private const float PageSeconds = 5.5f;
+        // Inter's TMP line box measures about 0.121 world units per font point in
+        // world mode, and the panel's design line height is 1.18x the font size.
+        private const float LineBoxPerPoint = 0.121f;
+        private const float LineHeightScale = 1.18f;
         private static readonly Regex IconFilePattern = new(@"^[a-z0-9][a-z0-9_-]{0,63}\.png$", RegexOptions.Compiled);
         private static readonly HashSet<string> BuiltinIcons = new()
         {
@@ -71,7 +75,8 @@ namespace TikTokLiveGame
         private readonly Dictionary<string, Sprite> iconCache = new();
         private readonly HashSet<string> loadingIcons = new();
         private readonly HashSet<string> failedIcons = new();
-        private readonly List<float> rowHeights = new();
+        private readonly List<ChipLayout> chips = new();
+        private readonly List<float> lineHeights = new();
 
         private TikTokWebSocketClient client;
         private Camera overlayCamera;
@@ -113,12 +118,6 @@ namespace TikTokLiveGame
             public Color iconColor;
             public bool enabled;
             public bool highlight;
-            public string titleDisplay;
-            public string subtitleDisplay;
-            public int titleLineCount;
-            public int subtitleLineCount;
-            public float titleHeight;
-            public float subtitleHeight;
         }
 
         private sealed class RowView
@@ -128,7 +127,26 @@ namespace TikTokLiveGame
             public SpriteRenderer accent;
             public SpriteRenderer icon;
             public TextMeshPro title;
-            public TextMeshPro subtitle;
+        }
+
+        private sealed class ChipLayout
+        {
+            public RowView row;
+            public InstructionLine line;
+            public float x;
+            public float y;
+            public float width;
+            public float height;
+            public int lineIndex;
+        }
+
+        private sealed class FlowResult
+        {
+            public float width;
+            public float height;
+            public float padding;
+            public float iconSize;
+            public float iconGap;
         }
 
         private void Awake() => EnsureCreated();
@@ -225,11 +243,9 @@ namespace TikTokLiveGame
             view.title = OverlayTypography.CreateWorldText(
                 view.root.transform, "Title", OverlayLayer, true, 64f, Color.white,
                 TextAlignmentOptions.MidlineLeft, 4);
-            view.subtitle = OverlayTypography.CreateWorldText(
-                view.root.transform, "Subtitle", OverlayLayer, false, 48f, Color.white,
-                TextAlignmentOptions.MidlineLeft, 3);
+            view.title.richText = true;
+            view.title.textWrappingMode = TextWrappingModes.NoWrap;
             view.title.transform.localPosition = new Vector3(0f, 0f, -0.2f);
-            view.subtitle.transform.localPosition = new Vector3(0f, 0f, -0.2f);
             view.root.SetActive(false);
             return view;
         }
@@ -321,8 +337,8 @@ namespace TikTokLiveGame
             foreach (InstructionLineDto raw in source.lines ?? Array.Empty<InstructionLineDto>())
             {
                 if (raw == null) continue;
-                string title = CleanText(raw.title, 60);
-                string subtitle = CleanText(raw.subtitle, 90);
+                string title = CleanText(raw.title, 160);
+                string subtitle = CleanText(raw.subtitle, 240);
                 if (string.IsNullOrEmpty(title) && string.IsNullOrEmpty(subtitle)) continue;
                 string icon = string.IsNullOrWhiteSpace(raw.icon) ? "image" : raw.icon.Trim().ToLowerInvariant();
                 if (!BuiltinIcons.Contains(icon)) icon = "image";
@@ -373,17 +389,10 @@ namespace TikTokLiveGame
             }
 
             float scale = UiScale;
-            float width = Mathf.Clamp(config.panelWidth * scale, 150f, layoutWidth - 24f);
             float marginX = config.marginX * scale;
             float marginY = config.marginY * scale;
-            float padding = 13f * scale;
-            float iconSize = config.iconSize * scale;
-            float fontSize = config.fontSize * scale;
-            float subtitleSize = fontSize * 0.62f;
-            float textGap = 4f * scale;
-            float rowGap = config.lineSpacing * scale;
-            float textLeft = -width * 0.5f + padding + iconSize + 12f * scale;
-            float textWidth = width - padding * 2f - iconSize - 12f * scale;
+            float availableWidth = Mathf.Max(160f, layoutWidth - marginX * 2f);
+            float availableHeight = Mathf.Max(160f, layoutHeight - marginY * 2f);
 
             int maxVisible = Mathf.Clamp(config.maxVisibleLines, 1, MaxRows);
             int pageCount = Mathf.Max(1, Mathf.CeilToInt(enabledLines.Count / (float)maxVisible));
@@ -392,20 +401,19 @@ namespace TikTokLiveGame
             int from = config.scroll ? Mathf.Clamp(pageStart, 0, enabledLines.Count - 1) : 0;
             int visibleCount = Mathf.Min(maxVisible, enabledLines.Count - from);
 
-            rowHeights.Clear();
-            for (int index = 0; index < visibleCount; index++)
+            FlowResult flow = null;
+            float fit = 1f;
+            for (int attempt = 0; attempt < 6; attempt++)
             {
-                InstructionLine line = enabledLines[from + index];
-                PrepareText(line, textWidth, fontSize, subtitleSize);
-                float textHeight = line.titleHeight + (line.subtitleHeight > 0f ? textGap + line.subtitleHeight : 0f);
-                rowHeights.Add(Mathf.Max(iconSize, textHeight) + 8f * scale);
+                flow = LayoutFlow(from, visibleCount, availableWidth, scale, fit);
+                if (flow.height <= availableHeight + 0.5f) break;
+                float next = Mathf.Clamp(fit * Mathf.Sqrt(availableHeight / flow.height) * 0.98f, 0.4f, fit - 0.02f);
+                if (next <= 0.4001f) break;
+                fit = next;
             }
 
-            float contentHeight = 0f;
-            for (int index = 0; index < rowHeights.Count; index++)
-                contentHeight += rowHeights[index] + (index > 0 ? rowGap : 0f);
-            float panelWidth = width;
-            float panelHeight = contentHeight + padding * 2f;
+            float panelWidth = flow.width;
+            float panelHeight = Mathf.Min(flow.height, availableHeight);
             float panelX = config.position.Contains("left")
                 ? -layoutWidth * 0.5f + marginX + panelWidth * 0.5f
                 : config.position.Contains("right")
@@ -428,119 +436,143 @@ namespace TikTokLiveGame
             panelBorder.transform.localPosition = new Vector3(panelX, panelY + panelHeight * 0.5f - 2f * scale, -0.03f);
             panelBorder.transform.localScale = new Vector3(panelWidth, Mathf.Max(1f, 2f * scale), 1f);
 
-            float top = panelY + panelHeight * 0.5f - padding;
+            float iconSize = flow.iconSize;
+            float iconGap = flow.iconGap;
             for (int index = 0; index < rows.Count; index++)
             {
                 RowView row = rows[index];
-                if (index >= visibleCount)
+                if (index >= chips.Count)
                 {
                     row.root.SetActive(false);
                     continue;
                 }
 
-                InstructionLine line = enabledLines[from + index];
-                float rowHeight = rowHeights[index];
-                float rowCenterY = top - rowHeight * 0.5f;
-                top -= rowHeight + rowGap;
+                ChipLayout chip = chips[index];
+                float chipLeft = -panelWidth * 0.5f + flow.padding + chip.x;
                 row.root.SetActive(true);
-                row.root.transform.localPosition = new Vector3(panelX, rowCenterY, 0f);
-                row.highlight.transform.localPosition = new Vector3(0f, 0f, -0.04f);
-                row.highlight.transform.localScale = new Vector3(panelWidth, rowHeight, 1f);
-                row.accent.transform.localPosition = new Vector3(-panelWidth * 0.5f + 2f * scale, 0f, -0.08f);
-                row.accent.transform.localScale = new Vector3(Mathf.Max(2f, 3f * scale), rowHeight, 1f);
-                row.icon.transform.localPosition = new Vector3(-panelWidth * 0.5f + padding + iconSize * 0.5f, 0f, -0.1f);
+                row.root.transform.localPosition = new Vector3(panelX, panelY + chip.y, 0f);
+                row.highlight.transform.localPosition = new Vector3(chipLeft + chip.width * 0.5f, 0f, -0.04f);
+                row.highlight.transform.localScale = new Vector3(chip.width, chip.height, 1f);
+                row.accent.transform.localPosition = new Vector3(chipLeft - 3f * scale, 0f, -0.08f);
+                row.accent.transform.localScale = new Vector3(Mathf.Max(2f, 3f * scale), chip.height * 0.86f, 1f);
+                row.icon.transform.localPosition = new Vector3(chipLeft + iconSize * 0.5f, 0f, -0.1f);
                 row.icon.transform.localScale = Vector3.one * iconSize;
-                row.icon.sprite = SpriteFor(line);
-
-                float textHeight = line.titleHeight + (line.subtitleHeight > 0f ? textGap + line.subtitleHeight : 0f);
-                float textTop = rowHeight * 0.5f - (rowHeight - textHeight) * 0.5f;
-                row.title.text = line.titleDisplay;
-                ApplyTextScale(row.title, line.titleHeight, line.titleLineCount, textWidth);
-                row.title.transform.localPosition = new Vector3(textLeft, textTop - line.titleHeight * 0.5f, -0.2f);
-                row.title.gameObject.SetActive(line.titleDisplay.Length > 0);
-                row.subtitle.text = line.subtitleDisplay;
-                ApplyTextScale(row.subtitle, line.subtitleHeight, line.subtitleLineCount, textWidth);
-                row.subtitle.transform.localPosition = new Vector3(
-                    textLeft,
-                    textTop - line.titleHeight - textGap - line.subtitleHeight * 0.5f,
-                    -0.2f);
-                row.subtitle.gameObject.SetActive(line.subtitleDisplay.Length > 0);
-                row.root.SetActive(true);
+                row.icon.sprite = SpriteFor(chip.line);
+                row.title.transform.localPosition = new Vector3(chipLeft + iconSize + iconGap, 0f, -0.2f);
+                row.title.gameObject.SetActive(true);
             }
 
             pageTimer = Mathf.Clamp(pageTimer, 0f, PageSeconds);
         }
 
-        private static void PrepareText(InstructionLine line, float textWidth, float fontSize, float subtitleSize)
+        /// <summary>
+        /// Flows every visible instruction into one continuous run of text,
+        /// starting a new line only when the next chip would pass the usable
+        /// width. A chip wider than the panel wraps internally, so instruction
+        /// text is never clipped, truncated or pushed off screen.
+        /// </summary>
+        private FlowResult LayoutFlow(int from, int visibleCount, float availableWidth, float scale, float fit)
         {
-            // Uppercase bold glyphs are wider than the average lowercase width,
-            // so keep a healthy margin rather than letting text clip at the edge.
-            int titleChars = Mathf.Max(6, Mathf.FloorToInt(textWidth / Mathf.Max(1f, fontSize * 0.70f)));
-            int subtitleChars = Mathf.Max(8, Mathf.FloorToInt(textWidth / Mathf.Max(1f, subtitleSize * 0.58f)));
-            line.titleDisplay = Wrap(line.title, titleChars, 2, out line.titleLineCount);
-            line.subtitleDisplay = Wrap(line.subtitle, subtitleChars, 2, out line.subtitleLineCount);
-            line.titleHeight = line.titleDisplay.Length == 0 ? 0f : line.titleLineCount * fontSize * 1.18f;
-            line.subtitleHeight = line.subtitleDisplay.Length == 0 ? 0f : line.subtitleLineCount * subtitleSize * 1.2f;
+            float padding = 13f * scale * fit;
+            float iconSize = Mathf.Max(8f, config.iconSize * scale * fit);
+            float iconGap = Mathf.Max(2f, 10f * scale * fit);
+            float chipGap = Mathf.Max(6f, 18f * scale * fit);
+            float lineGap = Mathf.Max(0f, config.lineSpacing * scale * fit);
+            float fontSize = Mathf.Max(6f, config.fontSize * scale * fit);
+            float lineBox = fontSize * LineHeightScale;
+            float points = lineBox / LineBoxPerPoint;
+
+            chips.Clear();
+            float totalWidth = 0f;
+            for (int index = 0; index < visibleCount; index++)
+            {
+                ChipLayout chip = new() { row = rows[index], line = enabledLines[from + index] };
+                chip.row.root.SetActive(true);
+                chip.row.title.gameObject.SetActive(true);
+                chip.row.title.richText = true;
+                chip.row.title.fontSize = points;
+                chip.row.title.textWrappingMode = TextWrappingModes.NoWrap;
+                chip.row.title.text = BuildChipText(chip.line, points);
+                chip.row.title.ForceMeshUpdate(true, true);
+                float textWidth = Mathf.Max(fontSize, chip.row.title.textBounds.size.x);
+                chip.width = iconSize + iconGap + textWidth;
+                chip.height = Mathf.Max(iconSize, chip.row.title.textBounds.size.y, lineBox);
+                chips.Add(chip);
+                totalWidth += chip.width + (index > 0 ? chipGap : 0f);
+            }
+
+            bool singleLine = totalWidth + padding * 2f <= availableWidth + 0.5f;
+            float width = Mathf.Min(singleLine ? totalWidth + padding * 2f : availableWidth, availableWidth);
+            // panelWidth is a minimum: a short run hugs its text, a long run uses
+            // the full width the screen allows before it is allowed to wrap.
+            float minWidth = Mathf.Min(Mathf.Max(120f, config.panelWidth * scale * fit), availableWidth);
+            width = Mathf.Max(width, minWidth);
+            float contentWidth = Mathf.Max(40f, width - padding * 2f);
+
+            foreach (ChipLayout chip in chips)
+            {
+                if (chip.width <= contentWidth + 0.5f) continue;
+                float textWidth = Mathf.Max(fontSize, contentWidth - iconSize - iconGap);
+                chip.row.title.textWrappingMode = TextWrappingModes.Normal;
+                chip.row.title.rectTransform.sizeDelta = new Vector2(textWidth, lineBox);
+                chip.row.title.ForceMeshUpdate(true, true);
+                chip.width = contentWidth;
+                chip.height = Mathf.Max(iconSize, chip.row.title.textBounds.size.y, lineBox);
+            }
+
+            lineHeights.Clear();
+            float cursor = 0f;
+            float lineHeight = 0f;
+            foreach (ChipLayout chip in chips)
+            {
+                if (cursor > 0f && cursor + chip.width > contentWidth + 0.5f)
+                {
+                    lineHeights.Add(lineHeight);
+                    cursor = 0f;
+                    lineHeight = 0f;
+                }
+                chip.x = cursor;
+                chip.lineIndex = lineHeights.Count;
+                cursor += chip.width + chipGap;
+                lineHeight = Mathf.Max(lineHeight, chip.height);
+            }
+            lineHeights.Add(Mathf.Max(lineHeight, lineBox));
+
+            float height = padding * 2f;
+            for (int index = 0; index < lineHeights.Count; index++)
+                height += lineHeights[index] + (index > 0 ? lineGap : 0f);
+
+            float lineCenter = height * 0.5f - padding;
+            for (int index = 0; index < lineHeights.Count; index++)
+            {
+                lineCenter -= lineHeights[index] * 0.5f;
+                foreach (ChipLayout chip in chips)
+                    if (chip.lineIndex == index) chip.y = lineCenter;
+                lineCenter -= lineHeights[index] * 0.5f + lineGap;
+            }
+
+            return new FlowResult
+            {
+                width = width,
+                height = height,
+                padding = padding,
+                iconSize = iconSize,
+                iconGap = iconGap
+            };
         }
 
-        private static string Wrap(string text, int maxChars, int maxLines, out int lineCount)
+        private static string BuildChipText(InstructionLine line, float titlePoints)
         {
-            lineCount = 0;
-            if (string.IsNullOrEmpty(text)) return string.Empty;
-            string[] words = text.Split(' ');
-            List<string> lines = new();
-            string current = string.Empty;
-            bool truncated = false;
-            for (int index = 0; index < words.Length; index++)
-            {
-                string word = words[index];
-                if (word.Length == 0) continue;
-                while (word.Length > maxChars)
-                {
-                    if (!string.IsNullOrEmpty(current))
-                    {
-                        lines.Add(current);
-                        current = string.Empty;
-                        if (lines.Count == maxLines) { truncated = true; break; }
-                    }
-                    lines.Add(word.Substring(0, maxChars));
-                    word = word.Substring(maxChars);
-                    if (lines.Count == maxLines) { truncated = true; break; }
-                }
-                if (truncated) break;
-                string candidate = current.Length == 0 ? word : $"{current} {word}";
-                if (candidate.Length > maxChars && current.Length > 0)
-                {
-                    lines.Add(current);
-                    current = word;
-                    if (lines.Count == maxLines) { truncated = index < words.Length - 1; break; }
-                }
-                else current = candidate;
-            }
-            if (!truncated && lines.Count < maxLines && current.Length > 0) lines.Add(current);
-            if (lines.Count == 0) lines.Add(current);
-            if (truncated && lines.Count > 0)
-            {
-                string last = lines[^1];
-                lines[^1] = last.Length >= maxChars ? last.Substring(0, Mathf.Max(1, maxChars - 1)) + "…" : last + "…";
-            }
-            lineCount = lines.Count;
-            return string.Join("\n", lines);
+            string title = EscapeRichText(line.title);
+            if (string.IsNullOrEmpty(line.subtitle)) return title;
+            int subtitlePoints = Mathf.Max(1, Mathf.RoundToInt(titlePoints * 0.62f));
+            return $"{title} <size={subtitlePoints}>{EscapeRichText(line.subtitle)}</size>";
         }
 
-        private static void ApplyTextScale(TextMeshPro text, float totalHeight, int lineCount, float width)
-        {
-            if (totalHeight <= 0f || text == null) return;
-            // Inter's TMP line box is about 0.121 * fontSize in world mode.
-            // Convert the row's existing design height into a point size so the
-            // panel keeps its geometry instead of growing with every line.
-            int lines = Mathf.Max(1, lineCount);
-            float lineHeight = totalHeight / lines;
-            text.fontSize = Mathf.Clamp(lineHeight / 0.121f, 1f, 800f);
-            text.rectTransform.sizeDelta = new Vector2(Mathf.Max(1f, width), totalHeight);
-            text.transform.localScale = Vector3.one;
-            text.ForceMeshUpdate(false, false);
-        }
+        private static string EscapeRichText(string value) =>
+            string.IsNullOrEmpty(value)
+                ? string.Empty
+                : value.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
 
         private Sprite SpriteFor(InstructionLine line)
         {
@@ -737,8 +769,6 @@ namespace TikTokLiveGame
                 Color text = line.textColor;
                 text.a = alpha;
                 row.title.color = text;
-                text.a *= 0.72f;
-                row.subtitle.color = text;
                 Color iconColor = line.iconColor;
                 iconColor.a = alpha;
                 row.icon.color = iconColor;

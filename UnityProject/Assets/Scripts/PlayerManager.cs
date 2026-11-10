@@ -151,13 +151,15 @@ namespace TikTokLiveGame
             PlayerActor actor = GetOrCreate(data);
             if (actor == null) return;
 
-            if (data.type == "chat")
+            // A viewer joining the live is spawned and animated through this same
+            // branch the "hey" comment uses; only its rule-provided action differs.
+            if (data.type is "chat" or "member")
             {
                 if (!string.IsNullOrWhiteSpace(data.action))
                 {
                     ApplyAction(actor, data, data.durationMs > 0 ? data.durationMs / 1000f : 5f);
                 }
-                else
+                else if (data.type == "chat")
                 {
                     string command = Normalize(data.comment);
                     if (command.Contains("doi nv")) actor.ChangeCharacter();

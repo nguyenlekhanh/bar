@@ -46,6 +46,17 @@ test('normalizes avatar URLs from legacy and raw TikTok user shapes', () => {
     assert.equal(raw.avatar, 'https://example.com/raw.jpg');
 });
 
+test('member joins keep the numeric id and normalize the username fallback', () => {
+    const numeric = normalizeMember({ user: { userId: 91, uniqueId: 'Viewer_91', nickname: 'Viewer 91' } });
+    const withoutId = normalizeMember({ user: { uniqueId: 'Viewer_92', nickname: 'Viewer 92' } });
+    const comment = normalizeChat({ user: { uniqueId: 'Viewer_92', nickname: 'Viewer 92' }, comment: 'hey' });
+
+    assert.equal(numeric.userId, '91');
+    assert.equal(withoutId.userId, 'viewer_92');
+    // Joining and then commenting must resolve to the same player identity.
+    assert.equal(comment.userId, withoutId.userId);
+});
+
 test('normalizes gift value and detects unfinished streaks', () => {
     const pending = normalizeGift({
         user: { userId: '7', uniqueId: 'gifter' },

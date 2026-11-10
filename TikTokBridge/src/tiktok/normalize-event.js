@@ -14,10 +14,16 @@ function normalizeUser(data = {}) {
         .find(url => typeof url === 'string' && /^https?:\/\//i.test(url)) ||
         user.profilePictureUrl ||
         '';
-    const fallbackId = user.uniqueId || user.nickname || `guest-${Date.now()}`;
+    // The numeric id is the identity every trigger shares. Without one, fall back
+    // to the normalized @username so a member join and a later "hey" comment are
+    // recognized as the same viewer instead of spawning two characters.
+    const numericId = String(user.userId || '').trim();
+    const fallbackId = String(user.uniqueId || user.nickname || `guest-${Date.now()}`)
+        .trim()
+        .toLowerCase();
 
     return {
-        userId: String(user.userId || fallbackId),
+        userId: numericId || fallbackId,
         uniqueId: String(user.uniqueId || fallbackId),
         nickname: String(user.nickname || user.uniqueId || 'TikTok user'),
         avatar: String(avatar)

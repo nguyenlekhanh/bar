@@ -1386,10 +1386,15 @@ function processGameEvent(inputEvent) {
     const isKnownPlayer = event.userId && sessionPlayers.has(event.userId);
     const joinsByKeyword = event.type === 'chat' && event.action === 'join';
     const joinsBySocial = event.type === 'follow' || event.type === 'share';
-    event.joinedNow = Boolean((joinsByKeyword || joinsBySocial) && !isKnownPlayer);
+    // Joining the live is the same join the "hey" comment rule produces: same
+    // action, same spawn path, same welcome shot. Both triggers share the
+    // sessionPlayers identity, so joining and then commenting is one player.
+    const joinsByMember = event.type === 'member';
+    if (joinsByMember && !event.action) event.action = 'join';
+    event.joinedNow = Boolean((joinsByKeyword || joinsBySocial || joinsByMember) && !isKnownPlayer);
     if (!isTestEvent && metrics.source !== 'demo' && masterConfig.joinMode === 'keyword_only' && !isKnownPlayer) {
         const joinsByGift = event.type === 'gift' && masterConfig.giftAlwaysJoins;
-        event.spectatorOnly = !(joinsByKeyword || joinsByGift || joinsBySocial);
+        event.spectatorOnly = !(joinsByKeyword || joinsByGift || joinsBySocial || joinsByMember);
     }
     // A live test always shows the animation on a real avatar.
     if (isTestEvent) event.spectatorOnly = false;

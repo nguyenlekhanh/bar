@@ -141,7 +141,7 @@ namespace TikTokLiveGame
             bool joinFocus = liveEvent.action == "join" && liveEvent.joinedNow;
             bool socialFocus = liveEvent.type is "follow" or "share";
             bool requestsFocus = joinFocus || socialFocus || liveEvent.action is "camera" or "walk" or "vip" or "topdj" or "fireworks" or "medal";
-            if (requestsFocus && (liveEvent.type is "gift" or "chat" or "follow" or "share"))
+            if (requestsFocus && (liveEvent.type is "gift" or "chat" or "member" or "follow" or "share"))
             {
                 PlayerActor actor = playerManager.Find(liveEvent.userId);
                 if (actor == null) return;
